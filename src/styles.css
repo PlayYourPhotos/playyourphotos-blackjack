@@ -117,7 +117,7 @@ h2 {
 
 .card-image {
   width: 160px;
-  aspect-ratio: 63 / 89;
+  aspect-ratio: 3 / 4;
   object-fit: contain;
   background: #000;
   border-radius: 18px;
