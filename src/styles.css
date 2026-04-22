@@ -1,1 +1,145 @@
+* {
+  box-sizing: border-box;
+}
 
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  color: #fff;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 20px 16px 40px;
+  text-align: center;
+}
+
+.theme-ruby {
+  background: radial-gradient(circle at top, #4a0012 0%, #220008 45%, #120004 100%);
+}
+
+.theme-emerald {
+  background: radial-gradient(circle at top, #0f5132 0%, #063321 45%, #031d12 100%);
+}
+
+.theme-midnight {
+  background: radial-gradient(circle at top, #1f2a44 0%, #101827 45%, #070b12 100%);
+}
+
+.app-title {
+  margin: 0 0 18px;
+  font-size: 40px;
+  color: #f2d675;
+  text-shadow: 0 0 12px rgba(242, 214, 117, 0.28);
+}
+
+.control-panel {
+  max-width: 900px;
+  margin: 0 auto 22px;
+  padding: 20px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.control-label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.control-select {
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-size: 16px;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.primary-button,
+.secondary-button {
+  border: none;
+  border-radius: 18px;
+  padding: 16px 28px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #ff2b2b;
+}
+
+.secondary-button {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.status {
+  max-width: 900px;
+  margin: 0 auto 26px;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: rgba(10, 120, 74, 0.72);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+h2 {
+  margin: 24px 0 14px;
+  font-size: 26px;
+}
+
+.hand {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-height: 220px;
+  margin-bottom: 20px;
+}
+
+.card-image {
+  width: 180px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 4px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  background: #111;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .app-title {
+    font-size: 32px;
+  }
+
+  .card-image {
+    width: 140px;
+  }
+
+  .status {
+    font-size: 16px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+}
