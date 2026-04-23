@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const suits = ["C", "D", "H", "S"];
 const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -58,7 +58,8 @@ export default function App() {
   const [resultType, setResultType] = useState("none");
   const [resultOpen, setResultOpen] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
-  const [expandedImage, setExpandedImage] = useState(null);
+
+  const [expandedIndex, setExpandedIndex] = useState(null);
 
   const audioCtxRef = useRef(null);
 
@@ -73,6 +74,48 @@ export default function App() {
     () => (dealerRevealed ? getHandValue(dealer) : getCardValue(dealer[0] || "0")),
     [dealer, dealerRevealed]
   );
+
+  const visibleCards = useMemo(() => {
+    const dealerCards = dealer.map((card, i) => ({
+      src: i === 1 && !dealerRevealed ? backImage : cardImage(card),
+      alt: "Dealer card",
+    }));
+
+    const playerCards = player.map((card) => ({
+      src: cardImage(card),
+      alt: "Player card",
+    }));
+
+    return [...dealerCards, ...playerCards];
+  }, [dealer, player, dealerRevealed]);
+
+  const expandedImage =
+    expandedIndex !== null && visibleCards[expandedIndex]
+      ? visibleCards[expandedIndex]
+      : null;
+
+  useEffect(() => {
+    if (expandedIndex === null) return;
+
+    function handleKeyDown(e) {
+      if (e.key === "Escape") {
+        setExpandedIndex(null);
+      } else if (e.key === "ArrowRight") {
+        setExpandedIndex((prev) =>
+          prev === null ? 0 : (prev + 1) % visibleCards.length
+        );
+      } else if (e.key === "ArrowLeft") {
+        setExpandedIndex((prev) =>
+          prev === null
+            ? 0
+            : (prev - 1 + visibleCards.length) % visibleCards.length
+        );
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [expandedIndex, visibleCards.length]);
 
   function getAudioContext() {
     if (!soundOn) return null;
@@ -156,7 +199,7 @@ export default function App() {
   function startGame() {
     setResultOpen(false);
     setResultType("none");
-    setExpandedImage(null);
+    setExpandedIndex(null);
     setIsShuffling(true);
     setMessage("Shuffling...");
     setDealer([]);
@@ -235,13 +278,27 @@ export default function App() {
     }, 320);
   }
 
-  function handleCardExpand(imageSrc) {
+  function openExpandedCard(index) {
     if (isShuffling) return;
-    setExpandedImage(imageSrc);
+    setExpandedIndex(index);
   }
 
   function closeExpandedImage() {
-    setExpandedImage(null);
+    setExpandedIndex(null);
+  }
+
+  function showPrevImage() {
+    if (!visibleCards.length) return;
+    setExpandedIndex((prev) =>
+      prev === null ? 0 : (prev - 1 + visibleCards.length) % visibleCards.length
+    );
+  }
+
+  function showNextImage() {
+    if (!visibleCards.length) return;
+    setExpandedIndex((prev) =>
+      prev === null ? 0 : (prev + 1) % visibleCards.length
+    );
   }
 
   return (
@@ -301,6 +358,7 @@ export default function App() {
       <div className="hand dealer-hand">
         {dealer.map((card, i) => {
           const imageSrc = i === 1 && !dealerRevealed ? backImage : cardImage(card);
+          const combinedIndex = i;
 
           return (
             <img
@@ -308,7 +366,7 @@ export default function App() {
               src={imageSrc}
               alt="Dealer card"
               className={`card-image ${i === 1 && !dealerRevealed ? "dealer-hidden" : ""}`}
-              onClick={() => handleCardExpand(imageSrc)}
+              onClick={() => openExpandedCard(combinedIndex)}
             />
           );
         })}
@@ -318,6 +376,7 @@ export default function App() {
       <div className="hand player-hand">
         {player.map((card, i) => {
           const imageSrc = cardImage(card);
+          const combinedIndex = dealer.length + i;
 
           return (
             <img
@@ -325,7 +384,7 @@ export default function App() {
               src={imageSrc}
               alt="Player card"
               className="card-image"
-              onClick={() => handleCardExpand(imageSrc)}
+              onClick={() => openExpandedCard(combinedIndex)}
             />
           );
         })}
@@ -366,7 +425,23 @@ export default function App() {
             <button className="image-close-button" onClick={closeExpandedImage}>
               ×
             </button>
-            <img src={expandedImage} alt="Expanded card" className="image-full" />
+
+            {visibleCards.length > 1 && (
+              <>
+                <button className="image-nav-button image-nav-left" onClick={showPrevImage}>
+                  ‹
+                </button>
+                <button className="image-nav-button image-nav-right" onClick={showNextImage}>
+                  ›
+                </button>
+              </>
+            )}
+
+            <img
+              src={expandedImage.src}
+              alt={expandedImage.alt}
+              className="image-full"
+            />
           </div>
         </div>
       )}
