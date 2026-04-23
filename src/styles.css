@@ -1,3 +1,7 @@
+/* =========================
+   GLOBAL
+   ========================= */
+
 * {
   box-sizing: border-box;
 }
@@ -14,7 +18,9 @@ body {
   text-align: center;
 }
 
-/* THEMES */
+/* =========================
+   THEMES
+   ========================= */
 
 .theme-ruby {
   background: radial-gradient(circle at top, #4a0012 0%, #220008 45%, #120004 100%);
@@ -28,7 +34,9 @@ body {
   background: radial-gradient(circle at top, #1f2a44 0%, #101827 45%, #070b12 100%);
 }
 
-/* TITLE */
+/* =========================
+   TITLE
+   ========================= */
 
 .app-title {
   margin: 0 0 18px;
@@ -37,7 +45,9 @@ body {
   text-shadow: 0 0 12px rgba(242, 214, 117, 0.28);
 }
 
-/* CONTROLS */
+/* =========================
+   CONTROL PANEL
+   ========================= */
 
 .control-panel {
   max-width: 900px;
@@ -70,7 +80,9 @@ body {
   font-size: 16px;
 }
 
-/* BUTTONS */
+/* =========================
+   BUTTONS
+   ========================= */
 
 .buttons {
   display: flex;
@@ -99,7 +111,9 @@ body {
   background: rgba(255, 255, 255, 0.24);
 }
 
-/* STATUS */
+/* =========================
+   STATUS BAR
+   ========================= */
 
 .status {
   max-width: 900px;
@@ -111,14 +125,18 @@ body {
   font-weight: 700;
 }
 
-/* HEADINGS */
+/* =========================
+   HEADINGS
+   ========================= */
 
 h2 {
   margin: 24px 0 14px;
   font-size: 26px;
 }
 
-/* HAND LAYOUT */
+/* =========================
+   HAND LAYOUT
+   ========================= */
 
 .hand {
   display: flex;
@@ -129,20 +147,24 @@ h2 {
   margin-bottom: 20px;
 }
 
-/* CARDS */
+/* =========================
+   CARD IMAGE (FINAL FIXED)
+   ========================= */
 
 .card-image {
-  width: 160px;              /* Desktop size */
-  aspect-ratio: 3 / 4;      /* Card shape */
-  object-fit: contain;      /* 🔑 DO NOT CHANGE */
-  background: #000;
+  width: 160px;                 /* Desktop size */
+  aspect-ratio: 5 / 7;          /* Real card ratio (2.5 x 3.5) */
+  object-fit: cover;            /* Fill frame cleanly */
   border-radius: 18px;
   border: 4px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
   display: block;
+  background: #000;
 }
 
-/* MOBILE */
+/* =========================
+   MOBILE
+   ========================= */
 
 @media (max-width: 640px) {
   .app-title {
@@ -150,8 +172,8 @@ h2 {
   }
 
   .card-image {
-    width: 42vw;          /* 🔑 responsive mobile sizing */
-    max-width: 150px;
+    width: 38vw;                /* Controls size + height */
+    max-width: 135px;
   }
 
   .status {
