@@ -19,7 +19,6 @@ body {
 .bg-image-layer {
   position: fixed;
   inset: 0;
-  background-image: url("/casino-bg.jpg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -456,6 +455,10 @@ h2 {
 @media (max-width: 640px) {
   .app {
     padding: 14px 10px 28px;
+  }
+
+  .bg-image-layer {
+    filter: blur(8px) brightness(0.42);
   }
 
   .app-title {
