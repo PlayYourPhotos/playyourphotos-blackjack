@@ -461,6 +461,33 @@ h2 {
   font-weight: bold;
   cursor: pointer;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+  z-index: 5;
+}
+
+.image-nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  z-index: 4;
+}
+
+.image-nav-left {
+  left: -58px;
+}
+
+.image-nav-right {
+  right: -58px;
 }
 
 /* =========================
@@ -537,5 +564,19 @@ h2 {
     width: 32px;
     height: 32px;
     font-size: 20px;
+  }
+
+  .image-nav-button {
+    width: 38px;
+    height: 38px;
+    font-size: 24px;
+  }
+
+  .image-nav-left {
+    left: -14px;
+  }
+
+  .image-nav-right {
+    right: -14px;
   }
 }
