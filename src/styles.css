@@ -16,22 +16,61 @@ body {
   min-height: 100vh;
   padding: 20px 16px 40px;
   text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
 /* =========================
-   THEMES
+   BACKGROUND SYSTEM (NEW)
    ========================= */
 
-.theme-ruby {
-  background: radial-gradient(circle at top, #4a0012 0%, #220008 45%, #120004 100%);
-}
+/* ADD THIS IMAGE FILE:
+   /public/casino-bg.jpg
+*/
 
-.theme-emerald {
-  background: radial-gradient(circle at top, #0f5132 0%, #063321 45%, #031d12 100%);
-}
-
+.theme-ruby,
+.theme-emerald,
 .theme-midnight {
-  background: radial-gradient(circle at top, #1f2a44 0%, #101827 45%, #070b12 100%);
+  position: relative;
+}
+
+/* Background Image Layer */
+.theme-ruby::before,
+.theme-emerald::before,
+.theme-midnight::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("/casino-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  filter: blur(6px) brightness(0.5);
+  z-index: -2;
+}
+
+/* Theme Overlays */
+.theme-ruby::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(120, 0, 30, 0.7), rgba(40, 0, 10, 0.9));
+  z-index: -1;
+}
+
+.theme-emerald::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(0, 80, 50, 0.7), rgba(0, 30, 20, 0.9));
+  z-index: -1;
+}
+
+.theme-midnight::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, rgba(20, 30, 60, 0.7), rgba(10, 15, 30, 0.9));
+  z-index: -1;
 }
 
 /* =========================
@@ -83,10 +122,6 @@ body {
   background: rgba(0, 0, 0, 0.28);
   color: #fff;
   font-size: 16px;
-}
-
-.sound-group {
-  min-width: 160px;
 }
 
 .sound-toggle {
@@ -145,7 +180,7 @@ body {
 }
 
 /* =========================
-   STATUS BAR
+   STATUS
    ========================= */
 
 .status {
@@ -163,17 +198,6 @@ body {
   display: flex;
   justify-content: center;
   gap: 18px;
-  flex-wrap: wrap;
-  font-size: 15px;
-}
-
-/* =========================
-   HEADINGS
-   ========================= */
-
-h2 {
-  margin: 24px 0 14px;
-  font-size: 26px;
 }
 
 /* =========================
@@ -183,12 +207,9 @@ h2 {
 .hand {
   display: flex;
   justify-content: center;
-  align-items: center;
   flex-wrap: nowrap;
-  min-height: 220px;
-  margin-bottom: 20px;
-  padding: 0 12px;
   overflow-x: auto;
+  margin-bottom: 20px;
 }
 
 .hand .card-image {
@@ -200,7 +221,7 @@ h2 {
 }
 
 /* =========================
-   CARD IMAGE
+   CARDS
    ========================= */
 
 .card-image {
@@ -208,204 +229,18 @@ h2 {
   aspect-ratio: 5 / 7;
   object-fit: cover;
   border-radius: 18px;
-  border: 4px solid rgba(255, 255, 255, 0.9);
+  border: 4px solid white;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-  display: block;
   background: #000;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  flex: 0 0 auto;
+  transition: transform 0.25s ease;
   cursor: pointer;
 }
 
-/* =========================
-   DESKTOP HOVER ENLARGE
-   ========================= */
-
-@media (hover: hover) and (pointer: fine) {
-  .hand {
-    overflow: visible;
-  }
-
-  .hand .card-image {
-    position: relative;
-    z-index: 1;
-  }
-
-  .hand .card-image:hover {
-    transform: translateY(-12px) scale(1.45);
-    z-index: 20;
-    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.55);
-  }
-}
-
-/* =========================
-   SHUFFLE OVERLAY
-   ========================= */
-
-.shuffle-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 0, 0, 0.58);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 60;
-  backdrop-filter: blur(4px);
-  padding: 20px;
-}
-
-.shuffle-box {
-  width: 100%;
-  max-width: 320px;
-  padding: 28px 20px 22px;
-  border-radius: 22px;
-  background: linear-gradient(
-    180deg,
-    rgba(35, 8, 8, 0.97),
-    rgba(20, 4, 4, 0.97)
-  );
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
-}
-
-.shuffle-deck-stack {
-  position: relative;
-  width: 110px;
-  height: 154px;
-  margin: 0 auto 16px;
-}
-
-.shuffle-card-image {
-  position: absolute;
-  inset: 0;
-  width: 110px;
-  height: 154px;
-  object-fit: cover;
-  border-radius: 14px;
-  border: 3px solid rgba(255, 255, 255, 0.92);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.6) inset, 0 10px 18px rgba(0, 0, 0, 0.55);
-  display: block;
-}
-
-.shuffle-card-1 {
-  animation: shuffleCard1 0.7s ease-in-out infinite;
-}
-
-.shuffle-card-2 {
-  animation: shuffleCard2 0.7s ease-in-out infinite;
-}
-
-.shuffle-card-3 {
-  animation: shuffleCard3 0.7s ease-in-out infinite;
-}
-
-.shuffle-text {
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-}
-
-@keyframes shuffleCard1 {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate(-16px, -6px) rotate(-8deg);
-  }
-}
-
-@keyframes shuffleCard2 {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate(0, -10px) rotate(0deg);
-  }
-}
-
-@keyframes shuffleCard3 {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate(16px, -6px) rotate(8deg);
-  }
-}
-
-/* =========================
-   RESULT OVERLAY
-   ========================= */
-
-.result-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(10, 0, 0, 0.58);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  z-index: 50;
-  animation: fadeInOverlay 0.22s ease;
-  backdrop-filter: blur(4px);
-}
-
-.result-card {
-  width: 100%;
-  max-width: 360px;
-  background: linear-gradient(
-    180deg,
-    rgba(35, 8, 8, 0.97),
-    rgba(20, 4, 4, 0.97)
-  );
-  border-radius: 22px;
-  padding: 26px 20px 22px;
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.55);
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  animation: popIn 0.24s ease;
-}
-
-.result-title {
-  font-size: 34px;
-  font-weight: 700;
-  margin-bottom: 10px;
-}
-
-.result-text {
-  font-size: 18px;
-  margin-bottom: 18px;
-}
-
-.result-overlay.win .result-title {
-  color: #d4af37;
-  text-shadow: 0 0 14px rgba(212, 175, 55, 0.35);
-}
-
-.result-overlay.lose .result-title {
-  color: #ff5c5c;
-  text-shadow: 0 0 14px rgba(255, 92, 92, 0.3);
-}
-
-.result-overlay.push .result-title {
-  color: #f5e6c8;
-}
-
-@keyframes fadeInOverlay {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes popIn {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
+/* Hover enlarge (desktop only) */
+@media (hover: hover) {
+  .card-image:hover {
+    transform: scale(1.4) translateY(-10px);
+    z-index: 10;
   }
 }
 
@@ -416,54 +251,34 @@ h2 {
 .image-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.82);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 999;
-  padding: 20px;
-}
-
-.image-overlay-inner {
-  position: relative;
-  max-width: 90vw;
-  max-height: 90vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .image-full {
-  width: auto;
-  height: auto;
   max-width: 360px;
   max-height: 80vh;
   border-radius: 18px;
-  border: 5px solid #fff;
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.7),
-    0 0 0 2px rgba(255, 255, 255, 0.15) inset;
-  background: #000;
-  object-fit: cover;
+  border: 5px solid white;
 }
 
 .image-close-button {
   position: absolute;
-  top: -12px;
-  right: -12px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  top: 20px;
+  right: 20px;
+  font-size: 28px;
+  background: white;
   border: none;
-  background: #fff;
-  color: #000;
-  font-size: 22px;
-  font-weight: bold;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
-  z-index: 5;
 }
 
+/* NAV BUTTONS */
 .image-nav-button {
   position: absolute;
   top: 50%;
@@ -472,22 +287,17 @@ h2 {
   height: 46px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.92);
-  color: #111;
-  font-size: 30px;
-  line-height: 1;
-  font-weight: 700;
+  background: white;
+  font-size: 26px;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-  z-index: 4;
 }
 
 .image-nav-left {
-  left: -58px;
+  left: 20px;
 }
 
 .image-nav-right {
-  right: -58px;
+  right: 20px;
 }
 
 /* =========================
@@ -495,88 +305,29 @@ h2 {
    ========================= */
 
 @media (max-width: 640px) {
-  .app {
-    padding: 14px 10px 28px;
-  }
-
-  .app-title {
-    font-size: 32px;
-  }
-
-  .control-group,
-  .sound-group {
-    min-width: 100%;
-  }
-
-  .buttons {
-    gap: 10px;
-  }
-
-  .primary-button,
-  .secondary-button {
-    padding: 14px 20px;
-    font-size: 16px;
-  }
-
-  .status {
-    font-size: 16px;
-    padding: 14px 16px;
-  }
-
-  h2 {
-    font-size: 22px;
+  .card-image {
+    width: 30vw;
+    max-width: 120px;
   }
 
   .hand {
-    justify-content: center;
-    gap: 8px;
-    overflow-x: visible;
     flex-wrap: wrap;
-    padding: 0;
-    min-height: auto;
+    overflow: visible;
   }
 
   .hand .card-image {
     margin-left: 0;
   }
 
-  .card-image {
-    width: 30vw;
-    max-width: 120px;
-  }
-
-  .result-title {
-    font-size: 28px;
-  }
-
-  .result-text {
-    font-size: 16px;
-  }
-
   .image-full {
     max-width: 75vw;
-    max-height: 75vh;
-  }
-
-  .image-close-button {
-    top: -10px;
-    right: -10px;
-    width: 32px;
-    height: 32px;
-    font-size: 20px;
-  }
-
-  .image-nav-button {
-    width: 38px;
-    height: 38px;
-    font-size: 24px;
   }
 
   .image-nav-left {
-    left: -14px;
+    left: 5px;
   }
 
   .image-nav-right {
-    right: -14px;
+    right: 5px;
   }
 }
