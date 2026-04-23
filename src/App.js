@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 const suits = ["C", "D", "H", "S"];
 const values = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
@@ -14,7 +14,9 @@ const tableThemes = [
 function buildDeck() {
   const deck = [];
   for (const s of suits) {
-    for (const v of values) deck.push(v + s);
+    for (const v of values) {
+      deck.push(v + s);
+    }
   }
   return deck.sort(() => Math.random() - 0.5);
 }
@@ -52,25 +54,135 @@ export default function App() {
   const [gameOver, setGameOver] = useState(true);
   const [dealerRevealed, setDealerRevealed] = useState(true);
   const [table, setTable] = useState("ruby");
+  const [soundOn, setSoundOn] = useState(true);
+  const [resultType, setResultType] = useState("none");
+  const [resultOpen, setResultOpen] = useState(false);
+  const [isShuffling, setIsShuffling] = useState(false);
+
+  const audioCtxRef = useRef(null);
 
   const cardImage = (card) => `${DECK_FOLDER}/${card}.jpg`;
   const backImage = `${DECK_FOLDER}/Back-Cover.jpg`;
 
-  const startGame = () => {
-    const newDeck = buildDeck();
-    const p = [newDeck.pop(), newDeck.pop()];
-    const d = [newDeck.pop(), newDeck.pop()];
+  const tableClass =
+    tableThemes.find((t) => t.id === table)?.className || "theme-ruby";
 
-    setDeck(newDeck);
-    setPlayer(p);
-    setDealer(d);
-    setGameOver(false);
-    setDealerRevealed(false);
-    setMessage("Your move");
-  };
+  const playerTotal = useMemo(() => getHandValue(player), [player]);
+  const dealerTotal = useMemo(
+    () => (dealerRevealed ? getHandValue(dealer) : getCardValue(dealer[0] || "0")),
+    [dealer, dealerRevealed]
+  );
 
-  const hit = () => {
-    if (gameOver) return;
+  function getAudioContext() {
+    if (!soundOn) return null;
+    if (!audioCtxRef.current) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      audioCtxRef.current = new AudioContextClass();
+    }
+    if (audioCtxRef.current.state === "suspended") {
+      audioCtxRef.current.resume();
+    }
+    return audioCtxRef.current;
+  }
+
+  function beep({ frequency = 440, duration = 0.08, type = "sine", volume = 0.03 }) {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, ctx.currentTime);
+
+    gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    oscillator.start(ctx.currentTime);
+    oscillator.stop(ctx.currentTime + duration);
+  }
+
+  function playDealSound() {
+    beep({ frequency: 460, duration: 0.05, type: "triangle", volume: 0.025 });
+  }
+
+  function playFlipSound() {
+    beep({ frequency: 320, duration: 0.06, type: "square", volume: 0.02 });
+  }
+
+  function playWinSound() {
+    beep({ frequency: 520, duration: 0.08, type: "triangle", volume: 0.03 });
+    window.setTimeout(() => {
+      beep({ frequency: 660, duration: 0.09, type: "triangle", volume: 0.03 });
+    }, 90);
+    window.setTimeout(() => {
+      beep({ frequency: 820, duration: 0.11, type: "triangle", volume: 0.03 });
+    }, 180);
+  }
+
+  function playLoseSound() {
+    beep({ frequency: 300, duration: 0.09, type: "sawtooth", volume: 0.03 });
+    window.setTimeout(() => {
+      beep({ frequency: 230, duration: 0.11, type: "sawtooth", volume: 0.03 });
+    }, 90);
+  }
+
+  function playPushSound() {
+    beep({ frequency: 430, duration: 0.08, type: "sine", volume: 0.025 });
+    window.setTimeout(() => {
+      beep({ frequency: 430, duration: 0.08, type: "sine", volume: 0.025 });
+    }, 90);
+  }
+
+  function openResult(type, text) {
+    setResultType(type);
+    setMessage(text);
+    setGameOver(true);
+
+    if (type === "win") playWinSound();
+    if (type === "lose") playLoseSound();
+    if (type === "push") playPushSound();
+
+    window.setTimeout(() => {
+      setResultOpen(true);
+    }, 180);
+  }
+
+  function startGame() {
+    setResultOpen(false);
+    setResultType("none");
+    setIsShuffling(true);
+    setMessage("Shuffling...");
+    setDealer([]);
+    setPlayer([]);
+    setDealerRevealed(true);
+
+    window.setTimeout(() => {
+      const newDeck = buildDeck();
+      const p = [newDeck.pop(), newDeck.pop()];
+      const d = [newDeck.pop(), newDeck.pop()];
+
+      setDeck(newDeck);
+      setPlayer(p);
+      setDealer(d);
+      setGameOver(false);
+      setDealerRevealed(false);
+      setMessage("Your move");
+      setIsShuffling(false);
+
+      playDealSound();
+      window.setTimeout(playDealSound, 90);
+      window.setTimeout(playDealSound, 180);
+      window.setTimeout(playDealSound, 270);
+    }, 700);
+  }
+
+  function hit() {
+    if (gameOver || isShuffling) return;
 
     const newDeck = [...deck];
     const card = newDeck.pop();
@@ -79,43 +191,46 @@ export default function App() {
     const newPlayer = [...player, card];
     setPlayer(newPlayer);
     setDeck(newDeck);
+    playDealSound();
 
     if (getHandValue(newPlayer) > 21) {
       setDealerRevealed(true);
-      setMessage("Bust! Dealer wins");
-      setGameOver(true);
+      playFlipSound();
+      openResult("lose", "Bust! Dealer wins");
     }
-  };
+  }
 
-  const stand = () => {
-    if (gameOver) return;
+  function stand() {
+    if (gameOver || isShuffling) return;
 
     const newDeck = [...deck];
     const newDealer = [...dealer];
 
     setDealerRevealed(true);
+    playFlipSound();
 
-    while (getHandValue(newDealer) < 17) {
-      const card = newDeck.pop();
-      if (!card) break;
-      newDealer.push(card);
-    }
+    window.setTimeout(() => {
+      while (getHandValue(newDealer) < 17) {
+        const card = newDeck.pop();
+        if (!card) break;
+        newDealer.push(card);
+      }
 
-    setDealer(newDealer);
-    setDeck(newDeck);
+      setDealer(newDealer);
+      setDeck(newDeck);
 
-    const p = getHandValue(player);
-    const d = getHandValue(newDealer);
+      const p = getHandValue(player);
+      const d = getHandValue(newDealer);
 
-    if (d > 21 || p > d) setMessage("You win!");
-    else if (p < d) setMessage("Dealer wins");
-    else setMessage("Push");
-
-    setGameOver(true);
-  };
-
-  const tableClass =
-    tableThemes.find((t) => t.id === table)?.className || "theme-ruby";
+      if (d > 21 || p > d) {
+        openResult("win", "You win!");
+      } else if (p < d) {
+        openResult("lose", "Dealer wins");
+      } else {
+        openResult("push", "Push");
+      }
+    }, 320);
+  }
 
   return (
     <div className={`app ${tableClass}`}>
@@ -136,36 +251,54 @@ export default function App() {
             ))}
           </select>
         </div>
+
+        <div className="control-group sound-group">
+          <label className="control-label">Sound</label>
+          <button
+            className={`sound-toggle ${soundOn ? "sound-on" : "sound-off"}`}
+            onClick={() => setSoundOn((prev) => !prev)}
+          >
+            {soundOn ? "Sound On" : "Sound Off"}
+          </button>
+        </div>
       </div>
 
       <div className="buttons">
         <button className="primary-button" onClick={startGame}>
           New Game
         </button>
-        <button className="secondary-button" onClick={hit}>
+        <button className="secondary-button" onClick={hit} disabled={gameOver || isShuffling}>
           Hit
         </button>
-        <button className="secondary-button" onClick={stand}>
+        <button className="secondary-button" onClick={stand} disabled={gameOver || isShuffling}>
           Stand
         </button>
       </div>
 
-      <div className="status">{message}</div>
+      <div className="status">
+        {message}
+        {!gameOver && !isShuffling && (
+          <div className="totals">
+            <span>Player: {playerTotal}</span>
+            <span>Dealer: {dealerTotal}</span>
+          </div>
+        )}
+      </div>
 
       <h2>Dealer</h2>
-      <div className="hand">
+      <div className="hand dealer-hand">
         {dealer.map((card, i) => (
           <img
             key={i}
             src={i === 1 && !dealerRevealed ? backImage : cardImage(card)}
             alt="Dealer card"
-            className="card-image"
+            className={`card-image ${i === 1 && !dealerRevealed ? "dealer-hidden" : ""}`}
           />
         ))}
       </div>
 
       <h2>Player</h2>
-      <div className="hand">
+      <div className="hand player-hand">
         {player.map((card, i) => (
           <img
             key={i}
@@ -175,6 +308,35 @@ export default function App() {
           />
         ))}
       </div>
+
+      {isShuffling && (
+        <div className="shuffle-overlay">
+          <div className="shuffle-box">
+            <div className="shuffle-deck-stack">
+              <img src={backImage} alt="Shuffle" className="shuffle-card-image shuffle-card-1" />
+              <img src={backImage} alt="Shuffle" className="shuffle-card-image shuffle-card-2" />
+              <img src={backImage} alt="Shuffle" className="shuffle-card-image shuffle-card-3" />
+            </div>
+            <div className="shuffle-text">Shuffling...</div>
+          </div>
+        </div>
+      )}
+
+      {resultOpen && (
+        <div className={`result-overlay ${resultType}`} onClick={() => setResultOpen(false)}>
+          <div className="result-card" onClick={(e) => e.stopPropagation()}>
+            <div className="result-title">
+              {resultType === "win" && "You Win"}
+              {resultType === "lose" && "Dealer Wins"}
+              {resultType === "push" && "Push"}
+            </div>
+            <div className="result-text">{message}</div>
+            <button className="primary-button" onClick={() => setResultOpen(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
