@@ -106,9 +106,7 @@ export default function App() {
         );
       } else if (e.key === "ArrowLeft") {
         setExpandedIndex((prev) =>
-          prev === null
-            ? 0
-            : (prev - 1 + visibleCards.length) % visibleCards.length
+          prev === null ? 0 : (prev - 1 + visibleCards.length) % visibleCards.length
         );
       }
     }
@@ -303,7 +301,10 @@ export default function App() {
 
   return (
     <div className={`app ${tableClass}`}>
-      <div className="bg-image-layer" />
+      <div
+        className="bg-image-layer"
+        style={{ backgroundImage: "url('/casino-bg.jpg')" }}
+      />
       <div className="bg-color-layer" />
 
       <h1 className="app-title">Play Your Photos Blackjack</h1>
