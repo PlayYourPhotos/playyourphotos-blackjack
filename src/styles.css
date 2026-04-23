@@ -65,7 +65,7 @@ body {
 
 .desktop-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 18px;
   align-items: start;
   min-height: calc(100vh - 32px);
@@ -242,14 +242,14 @@ h2 {
   justify-content: center;
   align-items: center;
   flex-wrap: nowrap;
-  min-height: 170px;
+  min-height: 180px;
   margin-bottom: 8px;
   padding: 0 8px;
   overflow-x: auto;
 }
 
 .hand .card-image {
-  margin-left: -34px;
+  margin-left: -40px;
 }
 
 .hand .card-image:first-child {
@@ -257,7 +257,7 @@ h2 {
 }
 
 .card-image {
-  width: 138px;
+  width: 150px;
   aspect-ratio: 5 / 7;
   object-fit: cover;
   border-radius: 16px;
@@ -281,7 +281,7 @@ h2 {
   }
 
   .hand .card-image:hover {
-    transform: translateY(-10px) scale(1.28);
+    transform: translateY(-10px) scale(1.24);
     z-index: 20;
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.55);
   }
