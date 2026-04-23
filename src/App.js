@@ -307,100 +307,131 @@ export default function App() {
       />
       <div className="bg-color-layer" />
 
-      <h1 className="app-title">Play Your Photos Blackjack</h1>
+      <div className="desktop-layout">
+        <aside className="side-panel">
+          <div className="panel-room-glow" />
 
-      <div className="control-panel">
-        <div className="control-group">
-          <label className="control-label">Table Theme</label>
-          <select
-            className="control-select"
-            value={table}
-            onChange={(e) => setTable(e.target.value)}
-          >
-            {tableThemes.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-        </div>
+          <h1 className="app-title">Play Your Photos Blackjack</h1>
 
-        <div className="control-group sound-group">
-          <label className="control-label">Sound</label>
-          <button
-            className={`sound-toggle ${soundOn ? "sound-on" : "sound-off"}`}
-            onClick={() => setSoundOn((prev) => !prev)}
-          >
-            {soundOn ? "Sound On" : "Sound Off"}
-          </button>
-        </div>
-      </div>
+          <div className="control-panel side-box">
+            <div className="control-group">
+              <label className="control-label">Table Theme</label>
+              <select
+                className="control-select"
+                value={table}
+                onChange={(e) => setTable(e.target.value)}
+              >
+                {tableThemes.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-      <div className="buttons">
-        <button className="primary-button" onClick={startGame}>
-          New Game
-        </button>
-        <button className="secondary-button" onClick={hit} disabled={gameOver || isShuffling}>
-          Hit
-        </button>
-        <button className="secondary-button" onClick={stand} disabled={gameOver || isShuffling}>
-          Stand
-        </button>
-      </div>
-
-      <div className="status">
-        {message}
-        {!gameOver && !isShuffling && (
-          <div className="totals">
-            <span>Player: {playerTotal}</span>
-            <span>Dealer: {dealerTotal}</span>
+            <div className="control-group sound-group">
+              <label className="control-label">Sound</label>
+              <button
+                className={`sound-toggle ${soundOn ? "sound-on" : "sound-off"}`}
+                onClick={() => setSoundOn((prev) => !prev)}
+              >
+                {soundOn ? "Sound On" : "Sound Off"}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
 
-      <h2>Dealer</h2>
-      <div className="hand dealer-hand">
-        {dealer.map((card, i) => {
-          const imageSrc = i === 1 && !dealerRevealed ? backImage : cardImage(card);
-          const combinedIndex = i;
+          <div className="buttons side-box">
+            <button className="primary-button" onClick={startGame}>
+              New Game
+            </button>
+            <button
+              className="secondary-button"
+              onClick={hit}
+              disabled={gameOver || isShuffling}
+            >
+              Hit
+            </button>
+            <button
+              className="secondary-button"
+              onClick={stand}
+              disabled={gameOver || isShuffling}
+            >
+              Stand
+            </button>
+          </div>
 
-          return (
-            <img
-              key={i}
-              src={imageSrc}
-              alt="Dealer card"
-              className={`card-image ${i === 1 && !dealerRevealed ? "dealer-hidden" : ""}`}
-              onClick={() => openExpandedCard(combinedIndex)}
-            />
-          );
-        })}
-      </div>
+          <div className="status side-box">
+            {message}
+            {!gameOver && !isShuffling && (
+              <div className="totals">
+                <span>Player: {playerTotal}</span>
+                <span>Dealer: {dealerTotal}</span>
+              </div>
+            )}
+          </div>
+        </aside>
 
-      <h2>Player</h2>
-      <div className="hand player-hand">
-        {player.map((card, i) => {
-          const imageSrc = cardImage(card);
-          const combinedIndex = dealer.length + i;
+        <main className="game-panel">
+          <h2>Dealer</h2>
+          <div className="hand dealer-hand">
+            {dealer.map((card, i) => {
+              const imageSrc =
+                i === 1 && !dealerRevealed ? backImage : cardImage(card);
+              const combinedIndex = i;
 
-          return (
-            <img
-              key={i}
-              src={imageSrc}
-              alt="Player card"
-              className="card-image"
-              onClick={() => openExpandedCard(combinedIndex)}
-            />
-          );
-        })}
+              return (
+                <img
+                  key={i}
+                  src={imageSrc}
+                  alt="Dealer card"
+                  className={`card-image ${
+                    i === 1 && !dealerRevealed ? "dealer-hidden" : ""
+                  }`}
+                  onClick={() => openExpandedCard(combinedIndex)}
+                />
+              );
+            })}
+          </div>
+
+          <h2>Player</h2>
+          <div className="hand player-hand">
+            {player.map((card, i) => {
+              const imageSrc = cardImage(card);
+              const combinedIndex = dealer.length + i;
+
+              return (
+                <img
+                  key={i}
+                  src={imageSrc}
+                  alt="Player card"
+                  className="card-image"
+                  onClick={() => openExpandedCard(combinedIndex)}
+                />
+              );
+            })}
+          </div>
+        </main>
       </div>
 
       {isShuffling && (
         <div className="shuffle-overlay">
           <div className="shuffle-box">
             <div className="shuffle-deck-stack">
-              <img src={backImage} alt="Shuffle" className="shuffle-card-image shuffle-card-1" />
-              <img src={backImage} alt="Shuffle" className="shuffle-card-image shuffle-card-2" />
-              <img src={backImage} alt="Shuffle" className="shuffle-card-image shuffle-card-3" />
+              <img
+                src={backImage}
+                alt="Shuffle"
+                className="shuffle-card-image shuffle-card-1"
+              />
+              <img
+                src={backImage}
+                alt="Shuffle"
+                className="shuffle-card-image shuffle-card-2"
+              />
+              <img
+                src={backImage}
+                alt="Shuffle"
+                className="shuffle-card-image shuffle-card-3"
+              />
             </div>
             <div className="shuffle-text">Shuffling...</div>
           </div>
@@ -408,7 +439,10 @@ export default function App() {
       )}
 
       {resultOpen && (
-        <div className={`result-overlay ${resultType}`} onClick={() => setResultOpen(false)}>
+        <div
+          className={`result-overlay ${resultType}`}
+          onClick={() => setResultOpen(false)}
+        >
           <div className="result-card" onClick={(e) => e.stopPropagation()}>
             <div className="result-title">
               {resultType === "win" && "You Win"}
@@ -432,10 +466,16 @@ export default function App() {
 
             {visibleCards.length > 1 && (
               <>
-                <button className="image-nav-button image-nav-left" onClick={showPrevImage}>
+                <button
+                  className="image-nav-button image-nav-left"
+                  onClick={showPrevImage}
+                >
                   ‹
                 </button>
-                <button className="image-nav-button image-nav-right" onClick={showNextImage}>
+                <button
+                  className="image-nav-button image-nav-right"
+                  onClick={showNextImage}
+                >
                   ›
                 </button>
               </>
