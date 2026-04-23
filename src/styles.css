@@ -148,13 +148,13 @@ h2 {
 }
 
 /* =========================
-   CARD IMAGE (FINAL FIXED)
+   CARD IMAGE
    ========================= */
 
 .card-image {
-  width: 160px;                 /* Desktop size */
-  aspect-ratio: 5 / 7;          /* Real card ratio (2.5 x 3.5) */
-  object-fit: cover;            /* Fill frame cleanly */
+  width: 160px;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
   border-radius: 18px;
   border: 4px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
@@ -172,8 +172,8 @@ h2 {
   }
 
   .card-image {
-    width: 38vw;                /* Controls size + height */
-    max-width: 135px;
+    width: 46vw;
+    max-width: 170px;
   }
 
   .status {
