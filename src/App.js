@@ -58,6 +58,7 @@ export default function App() {
   const [resultType, setResultType] = useState("none");
   const [resultOpen, setResultOpen] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
+  const [expandedImage, setExpandedImage] = useState(null);
 
   const audioCtxRef = useRef(null);
 
@@ -155,6 +156,7 @@ export default function App() {
   function startGame() {
     setResultOpen(false);
     setResultType("none");
+    setExpandedImage(null);
     setIsShuffling(true);
     setMessage("Shuffling...");
     setDealer([]);
@@ -214,6 +216,7 @@ export default function App() {
         const card = newDeck.pop();
         if (!card) break;
         newDealer.push(card);
+        playDealSound();
       }
 
       setDealer(newDealer);
@@ -230,6 +233,15 @@ export default function App() {
         openResult("push", "Push");
       }
     }, 320);
+  }
+
+  function handleCardExpand(imageSrc) {
+    if (isShuffling) return;
+    setExpandedImage(imageSrc);
+  }
+
+  function closeExpandedImage() {
+    setExpandedImage(null);
   }
 
   return (
@@ -287,26 +299,36 @@ export default function App() {
 
       <h2>Dealer</h2>
       <div className="hand dealer-hand">
-        {dealer.map((card, i) => (
-          <img
-            key={i}
-            src={i === 1 && !dealerRevealed ? backImage : cardImage(card)}
-            alt="Dealer card"
-            className={`card-image ${i === 1 && !dealerRevealed ? "dealer-hidden" : ""}`}
-          />
-        ))}
+        {dealer.map((card, i) => {
+          const imageSrc = i === 1 && !dealerRevealed ? backImage : cardImage(card);
+
+          return (
+            <img
+              key={i}
+              src={imageSrc}
+              alt="Dealer card"
+              className={`card-image ${i === 1 && !dealerRevealed ? "dealer-hidden" : ""}`}
+              onClick={() => handleCardExpand(imageSrc)}
+            />
+          );
+        })}
       </div>
 
       <h2>Player</h2>
       <div className="hand player-hand">
-        {player.map((card, i) => (
-          <img
-            key={i}
-            src={cardImage(card)}
-            alt="Player card"
-            className="card-image"
-          />
-        ))}
+        {player.map((card, i) => {
+          const imageSrc = cardImage(card);
+
+          return (
+            <img
+              key={i}
+              src={imageSrc}
+              alt="Player card"
+              className="card-image"
+              onClick={() => handleCardExpand(imageSrc)}
+            />
+          );
+        })}
       </div>
 
       {isShuffling && (
@@ -334,6 +356,17 @@ export default function App() {
             <button className="primary-button" onClick={() => setResultOpen(false)}>
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {expandedImage && (
+        <div className="image-overlay" onClick={closeExpandedImage}>
+          <div className="image-overlay-inner" onClick={(e) => e.stopPropagation()}>
+            <button className="image-close-button" onClick={closeExpandedImage}>
+              ×
+            </button>
+            <img src={expandedImage} alt="Expanded card" className="image-full" />
           </div>
         </div>
       )}
