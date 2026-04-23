@@ -22,7 +22,7 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: blur(6px) brightness(1.5);
+  filter: blur(6px) brightness(3.5);
   z-index: -2;
 }
 
