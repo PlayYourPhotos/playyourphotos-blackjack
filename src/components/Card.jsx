@@ -7,19 +7,7 @@ const suitSymbols = {
   clubs: "♣",
 };
 
-const suitColors = {
-  hearts: "#ff4d4d",
-  diamonds: "#ff4d4d",
-  spades: "#ffffff",
-  clubs: "#ffffff",
-};
-
-export default function Card({
-  rank,
-  suit,
-  image,
-  faceDown = false,
-}) {
+export default function Card({ rank, suit, image, faceDown = false }) {
   return (
     <div className="card">
       <img
@@ -30,20 +18,14 @@ export default function Card({
 
       {!faceDown && (
         <>
-          <div
-            className="corner top-left"
-            style={{ color: suitColors[suit] }}
-          >
-            {rank}
-            <span>{suitSymbols[suit]}</span>
+          <div className="corner top-left">
+            <div className="corner-rank">{rank}</div>
+            <div className="corner-suit">{suitSymbols[suit]}</div>
           </div>
 
-          <div
-            className="corner bottom-right"
-            style={{ color: suitColors[suit] }}
-          >
-            {rank}
-            <span>{suitSymbols[suit]}</span>
+          <div className="corner bottom-right">
+            <div className="corner-rank">{rank}</div>
+            <div className="corner-suit">{suitSymbols[suit]}</div>
           </div>
         </>
       )}
