@@ -1,3 +1,28 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #0f172a;
+  font-family: Arial, sans-serif;
+}
+
+.demo-page {
+  min-height: 100vh;
+  padding: 20px;
+  background: #0f172a;
+}
+
+.demo-title {
+  color: white;
+  margin-bottom: 20px;
+  font-size: 32px;
+}
+
+.card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
 .card {
   position: relative;
   width: 120px;
@@ -6,6 +31,7 @@
   overflow: hidden;
   box-shadow: 0 8px 22px rgba(0,0,0,0.6);
   transition: transform 0.2s ease;
+  background: #111;
 }
 
 .card:hover {
@@ -21,14 +47,15 @@
 .corner {
   position: absolute;
   font-weight: bold;
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
-  text-shadow: 0 0 6px rgba(0,0,0,0.8);
+  text-shadow: 0 0 6px rgba(0,0,0,0.9);
+  z-index: 5;
 }
 
 .corner span {
   display: block;
-  font-size: 14px;
+  font-size: 18px;
 }
 
 .top-left {
