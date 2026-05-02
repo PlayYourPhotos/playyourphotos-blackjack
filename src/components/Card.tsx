@@ -1,12 +1,5 @@
 import React from "react";
 
-type CardProps = {
-  rank: string;
-  suit: "hearts" | "diamonds" | "spades" | "clubs";
-  image: string;
-  faceDown?: boolean;
-};
-
 const suitSymbols = {
   hearts: "♥",
   diamonds: "♦",
@@ -26,7 +19,7 @@ export default function Card({
   suit,
   image,
   faceDown = false,
-}: CardProps) {
+}) {
   return (
     <div className="card">
       <img
@@ -37,12 +30,18 @@ export default function Card({
 
       {!faceDown && (
         <>
-          <div className="corner top-left" style={{ color: suitColors[suit] }}>
+          <div
+            className="corner top-left"
+            style={{ color: suitColors[suit] }}
+          >
             {rank}
             <span>{suitSymbols[suit]}</span>
           </div>
 
-          <div className="corner bottom-right" style={{ color: suitColors[suit] }}>
+          <div
+            className="corner bottom-right"
+            style={{ color: suitColors[suit] }}
+          >
             {rank}
             <span>{suitSymbols[suit]}</span>
           </div>
@@ -51,4 +50,3 @@ export default function Card({
     </div>
   );
 }
-export default Card;
