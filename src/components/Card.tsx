@@ -51,3 +51,4 @@ export default function Card({
     </div>
   );
 }
+export default Card;
