@@ -17,7 +17,10 @@ export default function Card({
   const displayImage = faceDown ? "/cards/valkyra-hearts/back.jpg" : image;
 
   return (
-    <div className="card" onClick={!faceDown ? onClick : undefined}>
+    <div
+      className={`card ${faceDown ? "face-down" : "face-up"}`}
+      onClick={!faceDown ? onClick : undefined}
+    >
       <img
         src={displayImage}
         className="card-img"
