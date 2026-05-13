@@ -1,4 +1,4 @@
-import fullDeck from "../data/fullDeck";
+import fullDeck from "../data/fullDeck.js";
 import Card from "../components/Card";
 
 export default function Demo() {
