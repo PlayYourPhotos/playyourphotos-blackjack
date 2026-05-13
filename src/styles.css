@@ -23,6 +23,9 @@ body {
   border-radius: 24px;
   padding: 24px;
   height: fit-content;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.4),
+    0 0 20px rgba(255,255,255,0.04);
 }
 
 .game-title {
@@ -42,6 +45,7 @@ body {
   font-size: 18px;
   font-weight: 800;
   cursor: pointer;
+  transition: 0.2s ease;
 }
 
 .primary-button {
@@ -49,9 +53,18 @@ body {
   color: white;
 }
 
+.primary-button:hover {
+  background: #f02828;
+  transform: translateY(-2px);
+}
+
 .game-button {
   background: rgba(255, 255, 255, 0.14);
   color: white;
+}
+
+.game-button:hover {
+  background: rgba(255,255,255,0.2);
 }
 
 .game-button:disabled {
@@ -60,111 +73,151 @@ body {
 }
 
 .status-box {
-  margin-top: 10px;
+  margin-top: 12px;
   background: #08784a;
   border-radius: 16px;
   padding: 18px;
   display: grid;
   gap: 8px;
   font-size: 18px;
+  box-shadow:
+    inset 0 0 10px rgba(255,255,255,0.05),
+    0 8px 20px rgba(0,0,0,0.35);
 }
 
 .table-area {
   display: grid;
-  gap: 34px;
+  gap: 40px;
   align-content: start;
   justify-items: center;
 }
 
 .hand-section {
   text-align: center;
+  width: 100%;
 }
 
 .hand-section h2 {
   font-size: 34px;
-  margin: 0 0 14px;
+  margin: 0 0 18px;
+  color: #f5e6b3;
 }
 
 .hand-row {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 18px;
 }
+
+/* =========================
+   CARD DESIGN
+========================= */
 
 .card {
   position: relative;
   width: 190px;
-  aspect-ratio: 4 / 5;
+
+  /* REAL PLAYING CARD SHAPE */
+  aspect-ratio: 5 / 7;
+
   border-radius: 18px;
   overflow: hidden;
   background: #111;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.45),
+    0 0 10px rgba(255,255,255,0.06);
+
   transition: transform 0.2s ease;
 }
 
 .card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px) scale(1.015);
 }
 
 .card-image,
 .card-img {
   width: 100%;
   height: 100%;
+
+  /* KEEP HEAD/FACE VISIBLE */
   object-fit: cover;
+  object-position: center top;
 }
+
+/* =========================
+   CARD CORNERS
+========================= */
 
 .corner {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
+
   line-height: 0.8;
   font-weight: 700;
+
   text-shadow:
-    0 1px 3px rgba(0,0,0,0.95),
-    0 0 2px rgba(0,0,0,0.9);
+    0 2px 4px rgba(0,0,0,0.95),
+    0 0 4px rgba(0,0,0,0.9);
+
   z-index: 5;
   color: white;
 }
 
 .top-left {
-  top: 6px;
-  left: 6px;
+  top: 8px;
+  left: 8px;
 }
 
 .bottom-right {
-  bottom: 6px;
-  right: 6px;
+  bottom: 8px;
+  right: 8px;
   transform: rotate(180deg);
 }
 
+/* SMALLER NUMBERS */
+
 .corner-rank {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 900;
   line-height: 1;
   height: 18px;
+
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* BIGGER SUITS */
+
 .corner-suit {
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 900;
+
   line-height: 0.8;
   margin-top: -2px;
-  height: 24px;
+
+  height: 28px;
+
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+/* =========================
+   LANDING PAGE
+========================= */
 
 .landing-page {
   min-height: 100vh;
+
   background:
     linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.82)),
     #071633;
+
   display: flex;
   align-items: center;
   justify-content: center;
@@ -174,11 +227,18 @@ body {
 .landing-overlay {
   background: rgba(0,0,0,0.55);
   backdrop-filter: blur(4px);
+
   border-radius: 24px;
+
   padding: 50px 40px;
   text-align: center;
+
   max-width: 520px;
   width: 100%;
+
+  box-shadow:
+    0 10px 40px rgba(0,0,0,0.6),
+    0 0 20px rgba(255,215,0,0.08);
 }
 
 .landing-title {
@@ -197,14 +257,22 @@ body {
 
 .launch-button {
   display: inline-block;
+
   margin-top: 34px;
   padding: 16px 34px;
+
   background: #c91d1d;
   color: white;
+
   text-decoration: none;
   font-weight: 700;
+
   border-radius: 12px;
+
   transition: 0.2s ease;
+
+  box-shadow:
+    0 6px 18px rgba(0,0,0,0.4);
 }
 
 .launch-button:hover {
@@ -212,7 +280,12 @@ body {
   transform: translateY(-2px);
 }
 
+/* =========================
+   MOBILE
+========================= */
+
 @media (max-width: 768px) {
+
   .blackjack-page {
     grid-template-columns: 1fr;
     padding: 16px;
@@ -230,13 +303,13 @@ body {
     font-size: 28px;
   }
 
+  .hand-row {
+    gap: 10px;
+  }
+
   .card {
     width: 31vw;
     max-width: 150px;
-  }
-
-  .hand-row {
-    gap: 10px;
   }
 
   .corner-rank {
@@ -245,8 +318,8 @@ body {
   }
 
   .corner-suit {
-    font-size: 22px;
-    height: 20px;
+    font-size: 26px;
+    height: 22px;
   }
 
   .landing-title {
