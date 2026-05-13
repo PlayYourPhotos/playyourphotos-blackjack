@@ -20,7 +20,7 @@ body {
   letter-spacing: 1px;
 }
 
-/* SUPPORTS BOTH CLASS NAMES */
+/* GRID */
 .card-grid,
 .deck-grid {
   display: grid;
@@ -52,51 +52,56 @@ body {
   object-fit: cover;
 }
 
-/* CASINO STYLE CORNERS */
+/* CORNERS */
 .corner {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
-  line-height: 0.9;
+  line-height: 0.8;
   font-weight: 700;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.95);
+  text-shadow:
+    0 1px 3px rgba(0,0,0,0.95),
+    0 0 2px rgba(0,0,0,0.9);
   z-index: 5;
-  opacity: 0.92;
   color: white;
 }
 
 .top-left {
-  top: 4px;
-  left: 4px;
+  top: 6px;
+  left: 6px;
 }
 
 .bottom-right {
-  bottom: 4px;
-  right: 4px;
+  bottom: 6px;
+  right: 6px;
   transform: rotate(180deg);
 }
 
+/* SMALLER NUMBERS */
 .corner-rank {
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 800;
-  height: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.corner-suit {
-  font-size: 20px;
-  font-weight: 800;
+  line-height: 1;
   height: 18px;
-  margin-top: -1px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* LANDING PAGE */
+/* BIGGER SUITS */
+.corner-suit {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 0.8;
+  margin-top: -2px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* LANDING */
 .landing-page {
   min-height: 100vh;
   background:
@@ -166,13 +171,13 @@ body {
   }
 
   .corner-rank {
-    font-size: 12px;
-    height: 12px;
+    font-size: 14px;
+    height: 14px;
   }
 
   .corner-suit {
-    font-size: 16px;
-    height: 14px;
+    font-size: 22px;
+    height: 20px;
   }
 
   .landing-title {
