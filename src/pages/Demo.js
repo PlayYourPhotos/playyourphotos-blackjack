@@ -11,7 +11,7 @@ export default function Demo() {
           <Card
             key={index}
             rank={card.rank}
-            suit={card.suit as any}
+            suit={card.suit}
             image={card.image}
           />
         ))}
