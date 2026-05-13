@@ -1,19 +1,17 @@
-import React from "react";
+import fullDeck from "../data/fullDeck";
 import Card from "../components/Card";
-import { demoDeck } from "../data/demoDeck";
-import "../styles.css";
 
 export default function Demo() {
   return (
     <div className="demo-page">
-      <h1 className="demo-title">Valkyra Hearts Deck</h1>
+      <h1 className="demo-title">Valkyra Full Deck</h1>
 
-      <div className="card-grid">
-        {demoDeck.map((card, index) => (
+      <div className="deck-grid">
+        {fullDeck.map((card, index) => (
           <Card
             key={index}
             rank={card.rank}
-            suit={card.suit}
+            suit={card.suit as any}
             image={card.image}
           />
         ))}
