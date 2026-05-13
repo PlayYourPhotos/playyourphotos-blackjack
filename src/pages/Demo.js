@@ -31,6 +31,24 @@ function handTotal(hand) {
   return total;
 }
 
+function resultType(message) {
+  const lower = message.toLowerCase();
+
+  if (lower.includes("you win") || lower.includes("dealer busts")) {
+    return "win";
+  }
+
+  if (lower.includes("dealer wins") || lower.includes("bust")) {
+    return "lose";
+  }
+
+  if (lower.includes("push") || lower.includes("draw")) {
+    return "draw";
+  }
+
+  return "";
+}
+
 export default function Demo() {
   const startingDeck = useMemo(() => shuffleDeck(fullDeck), []);
 
@@ -40,10 +58,13 @@ export default function Demo() {
   const [gameStarted, setGameStarted] = useState(false);
   const [dealerRevealed, setDealerRevealed] = useState(false);
   const [message, setMessage] = useState("Click New Game to start");
+
   const [galleryCards, setGalleryCards] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
+  const [showResultOverlay, setShowResultOverlay] = useState(false);
 
   const playerTotal = handTotal(playerHand);
+
   const dealerTotal = dealerRevealed
     ? handTotal(dealerHand)
     : dealerHand[0]
@@ -62,7 +83,18 @@ export default function Demo() {
     setDealerHand(dealer);
     setDealerRevealed(false);
     setGameStarted(true);
+    setShowResultOverlay(false);
     setMessage("Your move");
+  }
+
+  function endGame(finalMessage) {
+    setDealerRevealed(true);
+    setGameStarted(false);
+    setMessage(finalMessage);
+
+    setTimeout(() => {
+      setShowResultOverlay(true);
+    }, 450);
   }
 
   function hit() {
@@ -77,9 +109,7 @@ export default function Demo() {
     setDeck(newDeck);
 
     if (newTotal > 21) {
-      setDealerRevealed(true);
-      setGameStarted(false);
-      setMessage("Bust! Dealer wins");
+      endGame("Bust! Dealer wins");
     }
   }
 
@@ -99,13 +129,15 @@ export default function Demo() {
 
     setDealerHand(newDealerHand);
     setDeck(newDeck);
-    setDealerRevealed(true);
-    setGameStarted(false);
 
-    if (finalDealer > 21) setMessage("Dealer busts — you win!");
-    else if (finalPlayer > finalDealer) setMessage("You win!");
-    else if (finalPlayer < finalDealer) setMessage("Dealer wins");
-    else setMessage("Push — draw");
+    let finalMessage = "";
+
+    if (finalDealer > 21) finalMessage = "Dealer busts — you win!";
+    else if (finalPlayer > finalDealer) finalMessage = "You win!";
+    else if (finalPlayer < finalDealer) finalMessage = "Dealer wins";
+    else finalMessage = "Push — draw";
+
+    endGame(finalMessage);
   }
 
   function openGallery(cards, index) {
@@ -130,8 +162,14 @@ export default function Demo() {
     );
   }
 
+  function closeResultOverlay() {
+    setShowResultOverlay(false);
+  }
+
   const activeGalleryCard =
     galleryIndex !== null ? galleryCards[galleryIndex] : null;
+
+  const activeResultType = resultType(message);
 
   return (
     <div className="blackjack-page">
@@ -199,6 +237,35 @@ export default function Demo() {
           </div>
         </section>
       </main>
+
+      {showResultOverlay && (
+        <div className={`result-overlay ${activeResultType}`}>
+          <div className="result-box">
+            <button className="result-close" onClick={closeResultOverlay}>
+              ×
+            </button>
+
+            <div className="result-label">
+              {activeResultType === "win"
+                ? "VICTORY"
+                : activeResultType === "lose"
+                ? "DEFEAT"
+                : "DRAW"}
+            </div>
+
+            <div className="result-message">{message}</div>
+
+            <div className="result-scores">
+              <span>Player: {playerTotal}</span>
+              <span>Dealer: {handTotal(dealerHand)}</span>
+            </div>
+
+            <button className="result-button" onClick={newGame}>
+              Deal Again
+            </button>
+          </div>
+        </div>
+      )}
 
       {activeGalleryCard && (
         <div className="gallery-overlay">
