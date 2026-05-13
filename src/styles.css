@@ -23,9 +23,6 @@ body {
   border-radius: 24px;
   padding: 24px;
   height: fit-content;
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.4),
-    0 0 20px rgba(255,255,255,0.04);
 }
 
 .game-title {
@@ -45,7 +42,6 @@ body {
   font-size: 18px;
   font-weight: 800;
   cursor: pointer;
-  transition: 0.2s ease;
 }
 
 .primary-button {
@@ -53,18 +49,9 @@ body {
   color: white;
 }
 
-.primary-button:hover {
-  background: #f02828;
-  transform: translateY(-2px);
-}
-
 .game-button {
   background: rgba(255, 255, 255, 0.14);
   color: white;
-}
-
-.game-button:hover {
-  background: rgba(255,255,255,0.2);
 }
 
 .game-button:disabled {
@@ -80,9 +67,6 @@ body {
   display: grid;
   gap: 8px;
   font-size: 18px;
-  box-shadow:
-    inset 0 0 10px rgba(255,255,255,0.05),
-    0 8px 20px rgba(0,0,0,0.35);
 }
 
 .table-area {
@@ -110,114 +94,146 @@ body {
   gap: 18px;
 }
 
-/* =========================
-   CARD DESIGN
-========================= */
-
+/* CARD */
 .card {
   position: relative;
   width: 190px;
-
-  /* REAL PLAYING CARD SHAPE */
   aspect-ratio: 5 / 7;
-
   border-radius: 18px;
   overflow: hidden;
   background: #111;
-
+  border: 4px solid #ffffff;
   box-shadow:
-    0 8px 24px rgba(0,0,0,0.45),
-    0 0 10px rgba(255,255,255,0.06);
-
-  transition: transform 0.2s ease;
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 10px rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
 }
 
 .card:hover {
   transform: translateY(-4px) scale(1.015);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(255, 255, 255, 0.28);
 }
 
-.card-image,
 .card-img {
   width: 100%;
   height: 100%;
-
-  /* KEEP HEAD/FACE VISIBLE */
   object-fit: cover;
   object-position: center top;
+  display: block;
 }
-
-/* =========================
-   CARD CORNERS
-========================= */
 
 .corner {
   position: absolute;
   display: flex;
   flex-direction: column;
   align-items: center;
-
   line-height: 0.8;
   font-weight: 700;
-
   text-shadow:
-    0 2px 4px rgba(0,0,0,0.95),
-    0 0 4px rgba(0,0,0,0.9);
-
+    0 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 4px rgba(0, 0, 0, 0.9);
   z-index: 5;
   color: white;
 }
 
 .top-left {
-  top: 8px;
-  left: 8px;
+  top: 7px;
+  left: 7px;
 }
 
 .bottom-right {
-  bottom: 8px;
-  right: 8px;
+  bottom: 7px;
+  right: 7px;
   transform: rotate(180deg);
 }
-
-/* SMALLER NUMBERS */
 
 .corner-rank {
   font-size: 18px;
   font-weight: 900;
   line-height: 1;
   height: 18px;
-
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
-/* BIGGER SUITS */
 
 .corner-suit {
   font-size: 34px;
   font-weight: 900;
-
   line-height: 0.8;
   margin-top: -2px;
-
   height: 28px;
-
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* =========================
-   LANDING PAGE
-========================= */
+/* GALLERY */
+.gallery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
+.gallery-card .card {
+  width: min(420px, 78vw);
+  cursor: default;
+}
+
+.gallery-close {
+  position: fixed;
+  top: 22px;
+  right: 28px;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111;
+  font-size: 34px;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.gallery-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111;
+  font-size: 42px;
+  font-weight: 900;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.gallery-prev {
+  left: 28px;
+}
+
+.gallery-next {
+  right: 28px;
+}
+
+/* LANDING */
 .landing-page {
   min-height: 100vh;
-
   background:
     linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.82)),
     #071633;
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,18 +243,11 @@ body {
 .landing-overlay {
   background: rgba(0,0,0,0.55);
   backdrop-filter: blur(4px);
-
   border-radius: 24px;
-
   padding: 50px 40px;
   text-align: center;
-
   max-width: 520px;
   width: 100%;
-
-  box-shadow:
-    0 10px 40px rgba(0,0,0,0.6),
-    0 0 20px rgba(255,215,0,0.08);
 }
 
 .landing-title {
@@ -257,35 +266,17 @@ body {
 
 .launch-button {
   display: inline-block;
-
   margin-top: 34px;
   padding: 16px 34px;
-
   background: #c91d1d;
   color: white;
-
   text-decoration: none;
   font-weight: 700;
-
   border-radius: 12px;
-
-  transition: 0.2s ease;
-
-  box-shadow:
-    0 6px 18px rgba(0,0,0,0.4);
 }
 
-.launch-button:hover {
-  background: #e12626;
-  transform: translateY(-2px);
-}
-
-/* =========================
-   MOBILE
-========================= */
-
+/* MOBILE */
 @media (max-width: 768px) {
-
   .blackjack-page {
     grid-template-columns: 1fr;
     padding: 16px;
@@ -310,6 +301,7 @@ body {
   .card {
     width: 31vw;
     max-width: 150px;
+    border-width: 3px;
   }
 
   .corner-rank {
@@ -322,15 +314,20 @@ body {
     height: 22px;
   }
 
-  .landing-title {
-    font-size: 42px;
+  .gallery-card .card {
+    width: min(360px, 82vw);
   }
 
-  .landing-subtitle {
-    font-size: 16px;
+  .gallery-prev {
+    left: 12px;
   }
 
-  .landing-overlay {
-    padding: 30px 20px;
+  .gallery-next {
+    right: 12px;
+  }
+
+  .gallery-close {
+    top: 14px;
+    right: 14px;
   }
 }
