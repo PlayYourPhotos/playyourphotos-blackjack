@@ -7,13 +7,21 @@ const suitSymbols = {
   clubs: "♣",
 };
 
-export default function Card({ rank, suit, image, faceDown = false }) {
+export default function Card({
+  rank,
+  suit,
+  image,
+  faceDown = false,
+  onClick,
+}) {
+  const displayImage = faceDown ? "/cards/valkyra-hearts/back.jpg" : image;
+
   return (
-    <div className="card">
+    <div className="card" onClick={!faceDown ? onClick : undefined}>
       <img
-        src={faceDown ? "/cards/demo-hearts/back.jpg" : image}
+        src={displayImage}
         className="card-img"
-        alt={`${rank} of ${suit}`}
+        alt={faceDown ? "Card back" : `${rank} of ${suit}`}
       />
 
       {!faceDown && (
