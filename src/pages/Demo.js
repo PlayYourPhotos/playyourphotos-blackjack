@@ -40,9 +40,15 @@ export default function Demo() {
   const [gameStarted, setGameStarted] = useState(false);
   const [dealerRevealed, setDealerRevealed] = useState(false);
   const [message, setMessage] = useState("Click New Game to start");
+  const [galleryCards, setGalleryCards] = useState([]);
+  const [galleryIndex, setGalleryIndex] = useState(null);
 
   const playerTotal = handTotal(playerHand);
-  const dealerTotal = dealerRevealed ? handTotal(dealerHand) : dealerHand[0] ? cardValue(dealerHand[0].rank) : 0;
+  const dealerTotal = dealerRevealed
+    ? handTotal(dealerHand)
+    : dealerHand[0]
+    ? cardValue(dealerHand[0].rank)
+    : 0;
 
   function newGame() {
     const freshDeck = shuffleDeck(fullDeck);
@@ -96,16 +102,36 @@ export default function Demo() {
     setDealerRevealed(true);
     setGameStarted(false);
 
-    if (finalDealer > 21) {
-      setMessage("Dealer busts — you win!");
-    } else if (finalPlayer > finalDealer) {
-      setMessage("You win!");
-    } else if (finalPlayer < finalDealer) {
-      setMessage("Dealer wins");
-    } else {
-      setMessage("Push — draw");
-    }
+    if (finalDealer > 21) setMessage("Dealer busts — you win!");
+    else if (finalPlayer > finalDealer) setMessage("You win!");
+    else if (finalPlayer < finalDealer) setMessage("Dealer wins");
+    else setMessage("Push — draw");
   }
+
+  function openGallery(cards, index) {
+    setGalleryCards(cards);
+    setGalleryIndex(index);
+  }
+
+  function closeGallery() {
+    setGalleryCards([]);
+    setGalleryIndex(null);
+  }
+
+  function previousCard() {
+    setGalleryIndex((current) =>
+      current === 0 ? galleryCards.length - 1 : current - 1
+    );
+  }
+
+  function nextCard() {
+    setGalleryIndex((current) =>
+      current === galleryCards.length - 1 ? 0 : current + 1
+    );
+  }
+
+  const activeGalleryCard =
+    galleryIndex !== null ? galleryCards[galleryIndex] : null;
 
   return (
     <div className="blackjack-page">
@@ -116,11 +142,19 @@ export default function Demo() {
           New Game
         </button>
 
-        <button className="game-button" onClick={hit} disabled={!gameStarted || dealerRevealed}>
+        <button
+          className="game-button"
+          onClick={hit}
+          disabled={!gameStarted || dealerRevealed}
+        >
           Hit
         </button>
 
-        <button className="game-button" onClick={stand} disabled={!gameStarted || dealerRevealed}>
+        <button
+          className="game-button"
+          onClick={stand}
+          disabled={!gameStarted || dealerRevealed}
+        >
           Stand
         </button>
 
@@ -143,6 +177,7 @@ export default function Demo() {
                 suit={card.suit}
                 image={card.image}
                 faceDown={index === 1 && !dealerRevealed}
+                onClick={() => openGallery(dealerHand, index)}
               />
             ))}
           </div>
@@ -158,11 +193,36 @@ export default function Demo() {
                 rank={card.rank}
                 suit={card.suit}
                 image={card.image}
+                onClick={() => openGallery(playerHand, index)}
               />
             ))}
           </div>
         </section>
       </main>
+
+      {activeGalleryCard && (
+        <div className="gallery-overlay">
+          <button className="gallery-close" onClick={closeGallery}>
+            ×
+          </button>
+
+          <button className="gallery-nav gallery-prev" onClick={previousCard}>
+            ‹
+          </button>
+
+          <div className="gallery-card">
+            <Card
+              rank={activeGalleryCard.rank}
+              suit={activeGalleryCard.suit}
+              image={activeGalleryCard.image}
+            />
+          </div>
+
+          <button className="gallery-nav gallery-next" onClick={nextCard}>
+            ›
+          </button>
+        </div>
+      )}
     </div>
   );
 }
