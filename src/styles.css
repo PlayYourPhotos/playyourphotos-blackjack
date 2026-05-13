@@ -9,27 +9,89 @@ body {
   box-sizing: border-box;
 }
 
-.demo-page {
-  padding: 20px;
-}
-
-.demo-title {
-  font-size: 44px;
-  font-weight: 800;
-  margin-bottom: 28px;
-  letter-spacing: 1px;
-}
-
-/* GRID */
-.card-grid,
-.deck-grid {
+.blackjack-page {
+  min-height: 100vh;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 190px));
-  gap: 16px;
-  max-width: 1700px;
+  grid-template-columns: 320px 1fr;
+  gap: 30px;
+  padding: 24px;
+  background: #071633;
 }
 
-/* CARD */
+.game-panel {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 24px;
+  padding: 24px;
+  height: fit-content;
+}
+
+.game-title {
+  font-size: 38px;
+  line-height: 1.05;
+  margin: 0 0 28px;
+  color: #f5e6b3;
+}
+
+.primary-button,
+.game-button {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #d42323;
+  color: white;
+}
+
+.game-button {
+  background: rgba(255, 255, 255, 0.14);
+  color: white;
+}
+
+.game-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.status-box {
+  margin-top: 10px;
+  background: #08784a;
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+  font-size: 18px;
+}
+
+.table-area {
+  display: grid;
+  gap: 34px;
+  align-content: start;
+  justify-items: center;
+}
+
+.hand-section {
+  text-align: center;
+}
+
+.hand-section h2 {
+  font-size: 34px;
+  margin: 0 0 14px;
+}
+
+.hand-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
 .card {
   position: relative;
   width: 190px;
@@ -52,7 +114,6 @@ body {
   object-fit: cover;
 }
 
-/* CORNERS */
 .corner {
   position: absolute;
   display: flex;
@@ -78,7 +139,6 @@ body {
   transform: rotate(180deg);
 }
 
-/* SMALLER NUMBERS */
 .corner-rank {
   font-size: 18px;
   font-weight: 800;
@@ -89,7 +149,6 @@ body {
   justify-content: center;
 }
 
-/* BIGGER SUITS */
 .corner-suit {
   font-size: 28px;
   font-weight: 900;
@@ -101,7 +160,6 @@ body {
   justify-content: center;
 }
 
-/* LANDING */
 .landing-page {
   min-height: 100vh;
   background:
@@ -154,20 +212,31 @@ body {
   transform: translateY(-2px);
 }
 
-/* MOBILE */
 @media (max-width: 768px) {
-  .demo-title {
-    font-size: 30px;
+  .blackjack-page {
+    grid-template-columns: 1fr;
+    padding: 16px;
   }
 
-  .card-grid,
-  .deck-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+  .game-panel {
+    padding: 18px;
+  }
+
+  .game-title {
+    font-size: 34px;
+  }
+
+  .hand-section h2 {
+    font-size: 28px;
   }
 
   .card {
-    width: 100%;
+    width: 31vw;
+    max-width: 150px;
+  }
+
+  .hand-row {
+    gap: 10px;
   }
 
   .corner-rank {
