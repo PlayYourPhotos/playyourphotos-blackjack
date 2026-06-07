@@ -515,4 +515,23 @@ body {
   .landing-overlay {
     padding: 30px 20px;
   }
+  /* Larger symbols inside gallery modal */
+.gallery-card .corner-rank {
+  font-size: 26px;
+  height: 26px;
+}
+
+.gallery-card .corner-suit {
+  font-size: 44px;
+  height: 38px;
+}
+
+.gallery-card .top-left {
+  top: 10px;
+  left: 10px;
+}
+
+.gallery-card .bottom-right {
+  bottom: 10px;
+  right: 10px;
 }
