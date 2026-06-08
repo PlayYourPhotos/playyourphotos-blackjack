@@ -2,12 +2,32 @@ import { useMemo, useState } from "react";
 import fullDeck from "../data/fullDeck.js";
 import Card from "../components/Card";
 
+const tableThemes = {
+  ruby: {
+    name: "Ruby Table",
+    className: "theme-ruby",
+    background: "/backgrounds/ruby.jpg",
+  },
+  midnight: {
+    name: "Midnight Table",
+    className: "theme-midnight",
+    background: "/backgrounds/midnight.jpg",
+  },
+  emerald: {
+    name: "Emerald Table",
+    className: "theme-emerald",
+    background: "/backgrounds/emerald.jpg",
+  },
+};
+
 function shuffleDeck(deck) {
   const copy = [...deck];
+
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
+
   return copy;
 }
 
@@ -31,9 +51,11 @@ function handTotal(hand) {
 
 function resultType(message) {
   const lower = message.toLowerCase();
+
   if (lower.includes("you win") || lower.includes("dealer busts")) return "win";
   if (lower.includes("dealer wins") || lower.includes("bust")) return "lose";
   if (lower.includes("push") || lower.includes("draw")) return "draw";
+
   return "";
 }
 
@@ -47,11 +69,15 @@ export default function Demo() {
   const [gameStarted, setGameStarted] = useState(false);
   const [dealerRevealed, setDealerRevealed] = useState(false);
   const [message, setMessage] = useState("Click New Game to start");
+
   const [galleryCards, setGalleryCards] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
 
+  const currentTheme = tableThemes[theme];
+
   const playerTotal = handTotal(playerHand);
+
   const dealerTotal = dealerRevealed
     ? handTotal(dealerHand)
     : dealerHand[0]
@@ -60,6 +86,7 @@ export default function Demo() {
 
   function newGame() {
     const freshDeck = shuffleDeck(fullDeck);
+
     const player = [freshDeck[0], freshDeck[2]];
     const dealer = [freshDeck[1], freshDeck[3]];
 
@@ -86,6 +113,7 @@ export default function Demo() {
     if (!gameStarted || dealerRevealed || deck.length === 0) return;
 
     const newHand = [...playerHand, deck[0]];
+
     setPlayerHand(newHand);
     setDeck(deck.slice(1));
 
@@ -145,7 +173,12 @@ export default function Demo() {
   const activeResultType = resultType(message);
 
   return (
-    <div className={`blackjack-page theme-${theme}`}>
+    <div
+      className={`blackjack-page ${currentTheme.className}`}
+      style={{
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.76), rgba(0,0,0,0.88)), url(${currentTheme.background})`,
+      }}
+    >
       <aside className="game-panel">
         <h1 className="game-title">Valkyra Blackjack</h1>
 
@@ -153,8 +186,8 @@ export default function Demo() {
           <label>Table Theme</label>
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>
             <option value="midnight">Midnight Table</option>
-            <option value="emerald">Emerald Table</option>
             <option value="ruby">Ruby Table</option>
+            <option value="emerald">Emerald Table</option>
           </select>
         </div>
 
@@ -188,6 +221,7 @@ export default function Demo() {
       <main className="table-area">
         <section className="hand-section">
           <h2>Dealer</h2>
+
           <div className="hand-row">
             {dealerHand.map((card, index) => (
               <Card
@@ -204,6 +238,7 @@ export default function Demo() {
 
         <section className="hand-section">
           <h2>Player</h2>
+
           <div className="hand-row">
             {playerHand.map((card, index) => (
               <Card
