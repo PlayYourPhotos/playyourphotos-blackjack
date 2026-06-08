@@ -280,17 +280,51 @@ body {
 
 .result-box {
   width: 520px;
-  background: rgba(0,20,60,0.95);
   border-radius: 28px;
   padding: 40px;
   text-align: center;
   position: relative;
 }
 
+/* WIN */
+
+.result-overlay.win .result-box {
+  background: rgba(0,40,120,0.96);
+
+  box-shadow:
+    0 0 40px rgba(0,120,255,0.35);
+}
+
+.result-overlay.win .result-label {
+  color: #7dc3ff;
+}
+
+/* LOSE */
+
+.result-overlay.lose .result-box {
+  background: rgba(90,45,0,0.96);
+
+  box-shadow:
+    0 0 40px rgba(255,180,0,0.30);
+}
+
+.result-overlay.lose .result-label {
+  color: #ffd36d;
+}
+
+/* DRAW */
+
+.result-overlay.draw .result-box {
+  background: rgba(50,50,50,0.96);
+}
+
+.result-overlay.draw .result-label {
+  color: #ffffff;
+}
+
 .result-label {
   font-size: 1.3rem;
   letter-spacing: 4px;
-  color: #ffe7a3;
   margin-bottom: 20px;
 }
 
@@ -331,12 +365,14 @@ body {
   cursor: pointer;
 }
 
+/* MOBILE */
+
 @media (max-width: 768px) {
+
   .blackjack-page {
     grid-template-columns: 1fr;
     gap: 18px;
     padding: 14px;
-    min-height: 100vh;
     background-attachment: scroll;
   }
 
@@ -370,20 +406,18 @@ body {
   .game-button {
     padding: 16px;
     font-size: 1.1rem;
-    border-radius: 16px;
   }
 
   .status-box {
     font-size: 1rem;
     padding: 14px;
     line-height: 1.4;
-    border-radius: 16px;
   }
 
   .status-box strong,
   .status-box span {
     display: block;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
   }
 
   .table-area {
