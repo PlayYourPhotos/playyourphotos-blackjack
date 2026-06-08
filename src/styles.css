@@ -1,7 +1,3 @@
-/* =========================
-   GLOBAL
-========================= */
-
 body {
   margin: 0;
   font-family: Georgia, serif;
@@ -13,114 +9,63 @@ body {
   box-sizing: border-box;
 }
 
-/* =========================
-   LANDING PAGE
-========================= */
-
 .landing-page {
   min-height: 100vh;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background:
-    linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)),
-    url("/backgrounds/midnight.jpg");
-
   background-size: cover;
   background-position: center;
 }
 
 .landing-overlay {
   text-align: center;
-
   background: rgba(0,0,0,0.45);
-
   padding: 60px;
-
   border-radius: 30px;
-
   backdrop-filter: blur(8px);
-
-  box-shadow:
-    0 0 40px rgba(0,0,0,0.5);
 }
 
 .landing-title {
   font-size: 5rem;
   margin: 0;
-
   color: #ffe7a3;
-
-  text-shadow:
-    0 0 20px rgba(255,215,120,0.35);
 }
 
 .landing-subtitle {
   font-size: 1.5rem;
-
-  margin-top: 10px;
-  margin-bottom: 40px;
-
-  color: #f3dfaa;
+  margin: 10px 0 40px;
 }
 
 .launch-button {
   display: inline-block;
-
   padding: 20px 40px;
-
   background: #e51e1e;
   color: white;
-
   text-decoration: none;
-
   font-size: 1.3rem;
   font-weight: bold;
-
   border-radius: 18px;
-
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
 }
-
-.launch-button:hover {
-  transform: translateY(-3px);
-  opacity: 0.92;
-}
-
-/* =========================
-   BLACKJACK PAGE
-========================= */
 
 .blackjack-page {
   min-height: 100vh;
-
   display: grid;
   grid-template-columns: 320px 1fr;
-
   gap: 30px;
-
   padding: 24px;
-
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-
   position: relative;
 }
 
 .blackjack-page::before {
   content: "";
-
   position: absolute;
   inset: 0;
-
   background: rgba(0,0,0,0.48);
-
   z-index: 0;
 }
 
@@ -130,97 +75,54 @@ body {
   z-index: 1;
 }
 
-/* =========================
-   LEFT PANEL
-========================= */
-
 .game-panel {
   background: rgba(0,0,0,0.42);
-
   backdrop-filter: blur(8px);
-
   border-radius: 26px;
-
   padding: 26px;
-
   display: flex;
   flex-direction: column;
-
   gap: 24px;
-
   height: fit-content;
-
-  box-shadow:
-    0 0 30px rgba(0,0,0,0.35);
 }
 
 .game-title {
   margin: 0;
-
   font-size: 3rem;
   line-height: 1;
-
   color: #ffe7a3;
 }
-
-/* =========================
-   THEME BOX
-========================= */
 
 .theme-box {
   display: flex;
   flex-direction: column;
-
   gap: 12px;
 }
 
 .theme-box label {
   font-size: 1.2rem;
   font-weight: bold;
-
   color: #ffe7a3;
 }
 
 .theme-box select {
   padding: 16px;
-
   border-radius: 16px;
-
   border: 2px solid rgba(255,255,255,0.25);
-
   background: rgba(0,0,0,0.55);
-
   color: white;
-
   font-size: 1rem;
   font-weight: bold;
 }
 
-/* =========================
-   BUTTONS
-========================= */
-
 .primary-button,
 .game-button {
   border: none;
-
   border-radius: 18px;
-
   padding: 22px;
-
   font-size: 1.3rem;
   font-weight: bold;
-
   cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    opacity 0.2s ease;
-}
-
-.primary-button:hover,
-.game-button:hover {
-  transform: translateY(-2px);
 }
 
 .primary-button {
@@ -233,122 +135,65 @@ body {
   color: white;
 }
 
-/* =========================
-   STATUS BOX
-========================= */
-
 .status-box {
   background: rgba(35,70,170,0.72);
-
   border-radius: 20px;
-
   padding: 20px;
-
   line-height: 1.6;
-
   font-size: 1.2rem;
   font-weight: bold;
 }
 
-/* =========================
-   TABLE AREA
-========================= */
-
 .table-area {
   display: flex;
   flex-direction: column;
-
   align-items: center;
-
   gap: 60px;
 }
-
-/* =========================
-   HAND SECTION
-========================= */
 
 .hand-section {
   display: flex;
   flex-direction: column;
-
   align-items: center;
-
   gap: 20px;
 }
 
 .hand-section h2 {
   margin: 0;
-
   font-size: 4rem;
-
   color: #ffe7a3;
-
-  text-shadow:
-    0 0 15px rgba(255,215,120,0.25);
 }
 
 .hand-row {
   display: flex;
   gap: 20px;
-
   flex-wrap: wrap;
-
   justify-content: center;
 }
-
-/* =========================
-   CARD
-========================= */
 
 .card {
   width: 180px;
   height: 252px;
-
   position: relative;
-
   border-radius: 20px;
-
   overflow: hidden;
-
   border: 4px solid white;
-
   background: #111;
-
   cursor: pointer;
-
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.card:hover {
-  transform: scale(1.03);
-
-  box-shadow:
-    0 0 18px rgba(255,255,255,0.55);
 }
 
 .card-img {
   width: 100%;
   height: 100%;
-
   object-fit: cover;
 }
 
-/* =========================
-   CARD CORNERS
-========================= */
-
 .corner {
   position: absolute;
-
   font-size: 2rem;
   font-weight: bold;
-
   color: white;
-
-  text-shadow:
-    0 0 6px black;
+  text-shadow: 0 0 6px black;
 }
 
 .top-left {
@@ -359,99 +204,54 @@ body {
 .bottom-right {
   bottom: 10px;
   right: 12px;
-
   transform: rotate(180deg);
 }
-
-/* =========================
-   GALLERY MODAL
-========================= */
 
 .gallery-overlay {
   position: fixed;
   inset: 0;
-
   background: rgba(0,0,0,0.88);
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   z-index: 999;
-}
-
-.gallery-content {
-  position: relative;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  height: 100%;
 }
 
 .gallery-card {
   width: 420px;
   height: 588px;
-
-  position: relative;
-
-  border-radius: 24px;
-
-  overflow: hidden;
-
-  border: 5px solid white;
-
-  box-shadow:
-    0 0 40px rgba(255,255,255,0.22);
 }
 
-.gallery-card img {
-  width: 100%;
-  height: 100%;
-
-  object-fit: cover;
+.gallery-card .card {
+  width: 420px;
+  height: 588px;
 }
 
 .gallery-close {
   position: absolute;
-
   top: 20px;
   right: 20px;
-
   width: 60px;
   height: 60px;
-
   border-radius: 50%;
-
   border: none;
-
   background: white;
   color: black;
-
   font-size: 2rem;
   font-weight: bold;
-
   cursor: pointer;
 }
 
 .gallery-nav {
   position: absolute;
-
   width: 70px;
   height: 70px;
-
   border-radius: 50%;
-
   border: none;
-
   background: white;
   color: black;
-
   font-size: 3rem;
   font-weight: bold;
-
   cursor: pointer;
 }
 
@@ -463,114 +263,73 @@ body {
   right: 40px;
 }
 
-/* =========================
-   RESULT OVERLAY
-========================= */
-
 .result-overlay {
   position: fixed;
   inset: 0;
-
   background: rgba(0,0,0,0.76);
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   z-index: 1000;
 }
 
 .result-box {
   width: 520px;
-
   background: rgba(0,20,60,0.95);
-
   border-radius: 28px;
-
   padding: 40px;
-
   text-align: center;
-
   position: relative;
-
-  border: 2px solid rgba(255,255,255,0.15);
-
-  box-shadow:
-    0 0 40px rgba(0,0,0,0.45);
 }
 
 .result-label {
   font-size: 1.3rem;
   letter-spacing: 4px;
-
   color: #ffe7a3;
-
   margin-bottom: 20px;
 }
 
-.result-title {
+.result-message {
   font-size: 3rem;
   font-weight: bold;
-
   margin-bottom: 20px;
 }
 
-.result-score {
+.result-scores {
   font-size: 1.3rem;
-
   margin-bottom: 30px;
 }
 
 .result-button {
   border: none;
-
   border-radius: 16px;
-
   padding: 18px 36px;
-
   background: #e51e1e;
   color: white;
-
   font-size: 1.3rem;
   font-weight: bold;
-
   cursor: pointer;
 }
 
 .result-close {
   position: absolute;
-
   top: 16px;
   right: 16px;
-
   width: 48px;
   height: 48px;
-
   border-radius: 50%;
-
   border: none;
-
   background: white;
   color: black;
-
   font-size: 1.8rem;
   font-weight: bold;
-
   cursor: pointer;
 }
 
-/* =========================
-   MOBILE
-========================= */
-
 @media (max-width: 768px) {
-
   .blackjack-page {
     grid-template-columns: 1fr;
-  }
-
-  .game-panel {
-    width: 100%;
+    background-attachment: scroll;
   }
 
   .hand-section h2 {
@@ -582,7 +341,8 @@ body {
     height: 182px;
   }
 
-  .gallery-card {
+  .gallery-card,
+  .gallery-card .card {
     width: 280px;
     height: 392px;
   }
@@ -600,12 +360,7 @@ body {
     right: 10px;
   }
 
-  .result-box {
-    width: 90%;
-    padding: 30px;
-  }
-
-  .result-title {
-    font-size: 2.2rem;
+  .landing-title {
+    font-size: 3rem;
   }
 }
