@@ -144,6 +144,11 @@ body {
   font-weight: bold;
 }
 
+.status-box strong,
+.status-box span {
+  display: block;
+}
+
 .table-area {
   display: flex;
   flex-direction: column;
@@ -329,38 +334,137 @@ body {
 @media (max-width: 768px) {
   .blackjack-page {
     grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 14px;
+    min-height: 100vh;
     background-attachment: scroll;
   }
 
+  .game-panel {
+    width: 100%;
+    padding: 18px;
+    gap: 14px;
+    border-radius: 20px;
+  }
+
+  .game-title {
+    font-size: 2.7rem;
+    line-height: 0.95;
+  }
+
+  .theme-box {
+    gap: 8px;
+  }
+
+  .theme-box label {
+    font-size: 1rem;
+  }
+
+  .theme-box select {
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 14px;
+  }
+
+  .primary-button,
+  .game-button {
+    padding: 16px;
+    font-size: 1.1rem;
+    border-radius: 16px;
+  }
+
+  .status-box {
+    font-size: 1rem;
+    padding: 14px;
+    line-height: 1.4;
+    border-radius: 16px;
+  }
+
+  .status-box strong,
+  .status-box span {
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .table-area {
+    gap: 28px;
+  }
+
+  .hand-section {
+    gap: 12px;
+  }
+
   .hand-section h2 {
-    font-size: 3rem;
+    font-size: 2.7rem;
+  }
+
+  .hand-row {
+    gap: 12px;
   }
 
   .card {
-    width: 130px;
-    height: 182px;
+    width: 120px;
+    height: 168px;
+    border-radius: 16px;
+    border-width: 3px;
+  }
+
+  .corner {
+    font-size: 1.4rem;
+  }
+
+  .top-left {
+    top: 7px;
+    left: 8px;
+  }
+
+  .bottom-right {
+    bottom: 7px;
+    right: 8px;
   }
 
   .gallery-card,
   .gallery-card .card {
-    width: 280px;
-    height: 392px;
+    width: 300px;
+    height: 420px;
   }
 
   .gallery-nav {
-    width: 56px;
-    height: 56px;
+    width: 54px;
+    height: 54px;
+    font-size: 2.2rem;
   }
 
   .gallery-prev {
-    left: 10px;
+    left: 8px;
   }
 
   .gallery-next {
-    right: 10px;
+    right: 8px;
+  }
+
+  .gallery-close {
+    width: 48px;
+    height: 48px;
+    font-size: 1.8rem;
+    top: 14px;
+    right: 14px;
+  }
+
+  .result-box {
+    width: 92%;
+    padding: 26px;
+  }
+
+  .result-message {
+    font-size: 2rem;
   }
 
   .landing-title {
     font-size: 3rem;
+  }
+
+  .landing-overlay {
+    padding: 34px;
   }
 }
