@@ -1,3 +1,16 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #071633;
+  color: white;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* THEMES */
+
 .theme-midnight {
   --page-bg: radial-gradient(circle at top, #102142 0%, #06152f 55%, #020916 100%);
   --panel-bg: rgba(0, 0, 0, 0.35);
@@ -17,4 +30,497 @@
   --panel-bg: rgba(50, 0, 0, 0.42);
   --status-bg: #7a2f00;
   --gold: #e5c23a;
+}
+
+/* LAYOUT */
+
+.blackjack-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 30px;
+  padding: 24px;
+  background: var(--page-bg);
+}
+
+.game-panel {
+  background: var(--panel-bg);
+  border-radius: 24px;
+  padding: 24px;
+  height: fit-content;
+}
+
+.game-title {
+  font-size: 38px;
+  line-height: 1.05;
+  margin: 0 0 28px;
+  color: var(--gold);
+}
+
+/* THEME SELECTOR */
+
+.theme-box {
+  margin-bottom: 22px;
+}
+
+.theme-box label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--gold);
+}
+
+.theme-box select {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(0,0,0,0.3);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* BUTTONS */
+
+.primary-button,
+.game-button {
+  width: 100%;
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 14px;
+  font-size: 18px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primary-button {
+  background: #d42323;
+  color: white;
+}
+
+.game-button {
+  background: rgba(255, 255, 255, 0.14);
+  color: white;
+}
+
+.game-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.status-box {
+  margin-top: 12px;
+  background: var(--status-bg);
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 8px;
+  font-size: 18px;
+}
+
+/* TABLE */
+
+.table-area {
+  display: grid;
+  gap: 40px;
+  align-content: start;
+  justify-items: center;
+}
+
+.hand-section {
+  text-align: center;
+  width: 100%;
+}
+
+.hand-section h2 {
+  font-size: 34px;
+  margin: 0 0 18px;
+  color: var(--gold);
+}
+
+.hand-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+/* CARDS */
+
+.card {
+  position: relative;
+  width: 190px;
+  aspect-ratio: 5 / 7;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #111;
+  border: 4px solid #ffffff;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 0 10px rgba(255, 255, 255, 0.2);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  cursor: pointer;
+  animation: dealIn 0.32s ease both;
+}
+
+.card:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.6),
+    0 0 18px rgba(255, 255, 255, 0.28);
+}
+
+.card-img,
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+.corner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 0.8;
+  font-weight: 700;
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.95),
+    0 0 4px rgba(0, 0, 0, 0.9);
+  z-index: 5;
+  color: white;
+}
+
+.top-left {
+  top: 7px;
+  left: 7px;
+}
+
+.bottom-right {
+  bottom: 7px;
+  right: 7px;
+  transform: rotate(180deg);
+}
+
+.corner-rank {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.corner-suit {
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 0.8;
+  margin-top: -2px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ANIMATION */
+
+@keyframes dealIn {
+  from {
+    opacity: 0;
+    transform: translateY(-18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* RESULT OVERLAY */
+
+.result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.result-box {
+  position: relative;
+  width: min(520px, 86vw);
+  border-radius: 28px;
+  padding: 42px 34px 34px;
+  text-align: center;
+  background: rgba(4, 16, 36, 0.96);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.result-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 999px;
+  background: white;
+  color: #111;
+  font-size: 28px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.result-label {
+  font-size: 20px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  margin-bottom: 12px;
+}
+
+.result-message {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.05;
+  margin-bottom: 20px;
+}
+
+.result-scores {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  font-size: 18px;
+  margin-bottom: 28px;
+}
+
+.result-button {
+  border: none;
+  border-radius: 14px;
+  background: #d42323;
+  color: white;
+  padding: 14px 28px;
+  font-size: 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+/* GALLERY */
+
+.gallery-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gallery-card .card {
+  width: min(420px, 78vw);
+  cursor: default;
+}
+
+.gallery-card .corner-rank {
+  font-size: 26px;
+  height: 26px;
+}
+
+.gallery-card .corner-suit {
+  font-size: 44px;
+  height: 38px;
+}
+
+.gallery-card .top-left {
+  top: 10px;
+  left: 10px;
+}
+
+.gallery-card .bottom-right {
+  bottom: 10px;
+  right: 10px;
+}
+
+.gallery-close {
+  position: fixed;
+  top: 22px;
+  right: 28px;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111;
+  font-size: 34px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.gallery-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111;
+  font-size: 42px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.gallery-prev {
+  left: 28px;
+}
+
+.gallery-next {
+  right: 28px;
+}
+
+/* LANDING */
+
+.landing-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.82)),
+    #071633;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.landing-overlay {
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  border-radius: 24px;
+  padding: 50px 40px;
+  text-align: center;
+  max-width: 520px;
+  width: 100%;
+}
+
+.landing-title {
+  font-size: 64px;
+  font-weight: 900;
+  margin: 0;
+  color: #f5e6b3;
+  letter-spacing: 2px;
+}
+
+.landing-subtitle {
+  margin-top: 14px;
+  font-size: 20px;
+  color: #ddd;
+}
+
+.launch-button {
+  display: inline-block;
+  margin-top: 34px;
+  padding: 16px 34px;
+  background: #c91d1d;
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  border-radius: 12px;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+  .blackjack-page {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .game-panel {
+    padding: 18px;
+  }
+
+  .game-title {
+    font-size: 34px;
+  }
+
+  .hand-section h2 {
+    font-size: 28px;
+  }
+
+  .hand-row {
+    gap: 10px;
+  }
+
+  .card {
+    width: 31vw;
+    max-width: 150px;
+    border-width: 3px;
+  }
+
+  .corner-rank {
+    font-size: 14px;
+    height: 14px;
+  }
+
+  .corner-suit {
+    font-size: 26px;
+    height: 22px;
+  }
+
+  .gallery-card .card {
+    width: min(360px, 82vw);
+  }
+
+  .gallery-card .corner-rank {
+    font-size: 22px;
+    height: 22px;
+  }
+
+  .gallery-card .corner-suit {
+    font-size: 38px;
+    height: 32px;
+  }
+
+  .gallery-prev {
+    left: 12px;
+  }
+
+  .gallery-next {
+    right: 12px;
+  }
+
+  .gallery-close {
+    top: 14px;
+    right: 14px;
+  }
+
+  .result-message {
+    font-size: 32px;
+  }
+
+  .result-scores {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .landing-title {
+    font-size: 42px;
+  }
+
+  .landing-subtitle {
+    font-size: 16px;
+  }
+
+  .landing-overlay {
+    padding: 30px 20px;
+  }
 }
