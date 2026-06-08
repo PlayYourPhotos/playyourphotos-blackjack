@@ -176,7 +176,7 @@ export default function Demo() {
     <div
       className={`blackjack-page ${currentTheme.className}`}
       style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.76), rgba(0,0,0,0.88)), url(${currentTheme.background})`,
+        backgroundImage: `url(${currentTheme.background})`,
       }}
     >
       <aside className="game-panel">
