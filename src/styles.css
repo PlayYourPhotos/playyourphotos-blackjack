@@ -82,7 +82,7 @@ body {
   padding: 26px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
   height: fit-content;
 }
 
@@ -96,17 +96,17 @@ body {
 .theme-box {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .theme-box label {
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: bold;
   color: #ffe7a3;
 }
 
 .theme-box select {
-  padding: 16px;
+  padding: 14px;
   border-radius: 16px;
   border: 2px solid rgba(255,255,255,0.25);
   background: rgba(0,0,0,0.55);
@@ -115,12 +115,52 @@ body {
   font-weight: bold;
 }
 
+.bank-box {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 16px;
+  padding: 14px;
+  display: grid;
+  gap: 6px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #ffe7a3;
+}
+
+.chip-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.chip-button {
+  border: 2px solid rgba(255,255,255,0.35);
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #ffffff, #d9b85f 40%, #7a4b00 100%);
+  color: #111;
+  font-weight: 900;
+  font-size: 0.95rem;
+  padding: 12px 4px;
+  cursor: pointer;
+}
+
+.chip-button.active {
+  outline: 3px solid #ffe7a3;
+  transform: translateY(-2px);
+}
+
+.chip-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .primary-button,
-.game-button {
+.game-button,
+.reset-button {
   border: none;
   border-radius: 18px;
-  padding: 22px;
-  font-size: 1.3rem;
+  padding: 20px;
+  font-size: 1.2rem;
   font-weight: bold;
   cursor: pointer;
 }
@@ -135,12 +175,25 @@ body {
   color: white;
 }
 
+.reset-button {
+  background: rgba(255,255,255,0.1);
+  color: #ffe7a3;
+  border: 1px solid rgba(255,255,255,0.16);
+}
+
+.primary-button:disabled,
+.game-button:disabled,
+.reset-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .status-box {
   background: rgba(35,70,170,0.72);
   border-radius: 20px;
-  padding: 20px;
-  line-height: 1.6;
-  font-size: 1.2rem;
+  padding: 18px;
+  line-height: 1.5;
+  font-size: 1.1rem;
   font-weight: bold;
 }
 
@@ -286,33 +339,23 @@ body {
   position: relative;
 }
 
-/* WIN */
-
 .result-overlay.win .result-box {
   background: rgba(0,40,120,0.96);
-
-  box-shadow:
-    0 0 40px rgba(0,120,255,0.35);
+  box-shadow: 0 0 40px rgba(0,120,255,0.35);
 }
 
 .result-overlay.win .result-label {
   color: #7dc3ff;
 }
 
-/* LOSE */
-
 .result-overlay.lose .result-box {
   background: rgba(90,45,0,0.96);
-
-  box-shadow:
-    0 0 40px rgba(255,180,0,0.30);
+  box-shadow: 0 0 40px rgba(255,180,0,0.30);
 }
 
 .result-overlay.lose .result-label {
   color: #ffd36d;
 }
-
-/* DRAW */
 
 .result-overlay.draw .result-box {
   background: rgba(50,50,50,0.96);
@@ -337,6 +380,8 @@ body {
 .result-scores {
   font-size: 1.3rem;
   margin-bottom: 30px;
+  display: grid;
+  gap: 6px;
 }
 
 .result-button {
@@ -365,10 +410,7 @@ body {
   cursor: pointer;
 }
 
-/* MOBILE */
-
 @media (max-width: 768px) {
-
   .blackjack-page {
     grid-template-columns: 1fr;
     gap: 18px;
@@ -402,8 +444,23 @@ body {
     border-radius: 14px;
   }
 
+  .bank-box {
+    font-size: 1rem;
+    padding: 12px;
+  }
+
+  .chip-row {
+    gap: 6px;
+  }
+
+  .chip-button {
+    padding: 10px 3px;
+    font-size: 0.9rem;
+  }
+
   .primary-button,
-  .game-button {
+  .game-button,
+  .reset-button {
     padding: 16px;
     font-size: 1.1rem;
   }
