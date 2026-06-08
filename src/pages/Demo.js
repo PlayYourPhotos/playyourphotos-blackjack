@@ -20,6 +20,8 @@ const tableThemes = {
   },
 };
 
+const chipValues = [25, 50, 100, 250];
+
 function shuffleDeck(deck) {
   const copy = [...deck];
 
@@ -70,6 +72,10 @@ export default function Demo() {
   const [dealerRevealed, setDealerRevealed] = useState(false);
   const [message, setMessage] = useState("Click New Game to start");
 
+  const [balance, setBalance] = useState(1000);
+  const [currentBet, setCurrentBet] = useState(50);
+  const [activeRoundBet, setActiveRoundBet] = useState(0);
+
   const [galleryCards, setGalleryCards] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
@@ -84,11 +90,33 @@ export default function Demo() {
     ? cardValue(dealerHand[0].rank)
     : 0;
 
+  function settleBet(finalMessage, finalBet) {
+    const type = resultType(finalMessage);
+
+    if (type === "win") {
+      setBalance((current) => current + finalBet * 2);
+    }
+
+    if (type === "draw") {
+      setBalance((current) => current + finalBet);
+    }
+  }
+
   function newGame() {
+    if (gameStarted) return;
+
+    if (balance < currentBet) {
+      setMessage("Not enough chips for that bet");
+      return;
+    }
+
     const freshDeck = shuffleDeck(fullDeck);
 
     const player = [freshDeck[0], freshDeck[2]];
     const dealer = [freshDeck[1], freshDeck[3]];
+
+    setBalance((current) => current - currentBet);
+    setActiveRoundBet(currentBet);
 
     setDeck(freshDeck.slice(4));
     setPlayerHand(player);
@@ -100,9 +128,12 @@ export default function Demo() {
   }
 
   function endGame(finalMessage) {
+    const finalBet = activeRoundBet;
+
     setDealerRevealed(true);
     setGameStarted(false);
     setMessage(finalMessage);
+    settleBet(finalMessage, finalBet);
 
     setTimeout(() => {
       setShowResultOverlay(true);
@@ -167,6 +198,15 @@ export default function Demo() {
     );
   }
 
+  function resetBank() {
+    if (gameStarted) return;
+
+    setBalance(1000);
+    setCurrentBet(50);
+    setActiveRoundBet(0);
+    setMessage("Bank reset. Click New Game to start");
+  }
+
   const activeGalleryCard =
     galleryIndex !== null ? galleryCards[galleryIndex] : null;
 
@@ -191,7 +231,29 @@ export default function Demo() {
           </select>
         </div>
 
-        <button className="primary-button" onClick={newGame}>
+        <div className="bank-box">
+          <span>Balance: {balance}</span>
+          <span>Bet: {currentBet}</span>
+        </div>
+
+        <div className="chip-row">
+          {chipValues.map((chip) => (
+            <button
+              key={chip}
+              className={`chip-button ${currentBet === chip ? "active" : ""}`}
+              onClick={() => setCurrentBet(chip)}
+              disabled={gameStarted || chip > balance}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+
+        <button
+          className="primary-button"
+          onClick={newGame}
+          disabled={gameStarted || balance < currentBet}
+        >
           New Game
         </button>
 
@@ -209,6 +271,14 @@ export default function Demo() {
           disabled={!gameStarted || dealerRevealed}
         >
           Stand
+        </button>
+
+        <button
+          className="reset-button"
+          onClick={resetBank}
+          disabled={gameStarted}
+        >
+          Reset Bank
         </button>
 
         <div className="status-box">
@@ -276,6 +346,8 @@ export default function Demo() {
             <div className="result-scores">
               <span>Player: {playerTotal}</span>
               <span>Dealer: {handTotal(dealerHand)}</span>
+              <span>Bet: {activeRoundBet}</span>
+              <span>Balance: {balance}</span>
             </div>
 
             <button className="result-button" onClick={newGame}>
