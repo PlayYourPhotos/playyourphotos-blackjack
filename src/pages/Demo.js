@@ -224,6 +224,7 @@ export default function Demo() {
 
         <div className="theme-box">
           <label>Table Theme</label>
+
           <select value={theme} onChange={(e) => setTheme(e.target.value)}>
             <option value="midnight">Midnight Table</option>
             <option value="ruby">Ruby Table</option>
@@ -249,37 +250,41 @@ export default function Demo() {
           ))}
         </div>
 
-        <button
-          className="primary-button"
-          onClick={newGame}
-          disabled={gameStarted || balance < currentBet}
-        >
-          New Game
-        </button>
+        <div className="button-grid">
 
-        <button
-          className="game-button"
-          onClick={hit}
-          disabled={!gameStarted || dealerRevealed}
-        >
-          Hit
-        </button>
+          <button
+            className="primary-button"
+            onClick={newGame}
+            disabled={gameStarted || balance < currentBet}
+          >
+            New Game
+          </button>
 
-        <button
-          className="game-button"
-          onClick={stand}
-          disabled={!gameStarted || dealerRevealed}
-        >
-          Stand
-        </button>
+          <button
+            className="game-button"
+            onClick={hit}
+            disabled={!gameStarted || dealerRevealed}
+          >
+            Hit
+          </button>
 
-        <button
-          className="reset-button"
-          onClick={resetBank}
-          disabled={gameStarted}
-        >
-          Reset Bank
-        </button>
+          <button
+            className="game-button"
+            onClick={stand}
+            disabled={!gameStarted || dealerRevealed}
+          >
+            Stand
+          </button>
+
+          <button
+            className="reset-button"
+            onClick={resetBank}
+            disabled={gameStarted}
+          >
+            Reset Bank
+          </button>
+
+        </div>
 
         <div className="status-box">
           <strong>{message}</strong>
