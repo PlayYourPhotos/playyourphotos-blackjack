@@ -8,11 +8,13 @@ const tableThemes = {
     className: "theme-ruby",
     background: "/backgrounds/ruby.jpg",
   },
+
   midnight: {
     name: "Midnight Table",
     className: "theme-midnight",
     background: "/backgrounds/midnight.jpg",
   },
+
   emerald: {
     name: "Emerald Table",
     className: "theme-emerald",
@@ -20,13 +22,12 @@ const tableThemes = {
   },
 };
 
-const chipValues = [25, 50, 100, 250];
-
 function shuffleDeck(deck) {
   const copy = [...deck];
 
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
+
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
 
@@ -35,13 +36,21 @@ function shuffleDeck(deck) {
 
 function cardValue(rank) {
   if (["J", "Q", "K"].includes(rank)) return 10;
+
   if (rank === "A") return 11;
+
   return Number(rank);
 }
 
 function handTotal(hand) {
-  let total = hand.reduce((sum, card) => sum + cardValue(card.rank), 0);
-  let aces = hand.filter((card) => card.rank === "A").length;
+  let total = hand.reduce(
+    (sum, card) => sum + cardValue(card.rank),
+    0
+  );
+
+  let aces = hand.filter(
+    (card) => card.rank === "A"
+  ).length;
 
   while (total > 21 && aces > 0) {
     total -= 10;
@@ -54,31 +63,65 @@ function handTotal(hand) {
 function resultType(message) {
   const lower = message.toLowerCase();
 
-  if (lower.includes("you win") || lower.includes("dealer busts")) return "win";
-  if (lower.includes("dealer wins") || lower.includes("bust")) return "lose";
-  if (lower.includes("push") || lower.includes("draw")) return "draw";
+  if (
+    lower.includes("you win") ||
+    lower.includes("dealer busts")
+  ) {
+    return "win";
+  }
+
+  if (
+    lower.includes("dealer wins") ||
+    lower.includes("bust")
+  ) {
+    return "lose";
+  }
+
+  if (
+    lower.includes("push") ||
+    lower.includes("draw")
+  ) {
+    return "draw";
+  }
 
   return "";
 }
 
 export default function Demo() {
-  const startingDeck = useMemo(() => shuffleDeck(fullDeck), []);
+  const startingDeck = useMemo(
+    () => shuffleDeck(fullDeck),
+    []
+  );
 
   const [theme, setTheme] = useState("midnight");
+
   const [deck, setDeck] = useState(startingDeck);
+
   const [playerHand, setPlayerHand] = useState([]);
+
   const [dealerHand, setDealerHand] = useState([]);
+
   const [gameStarted, setGameStarted] = useState(false);
-  const [dealerRevealed, setDealerRevealed] = useState(false);
-  const [message, setMessage] = useState("Click New Game to start");
+
+  const [dealerRevealed, setDealerRevealed] =
+    useState(false);
+
+  const [message, setMessage] = useState(
+    "Click New Game to start"
+  );
+
+  const [galleryCards, setGalleryCards] =
+    useState([]);
+
+  const [galleryIndex, setGalleryIndex] =
+    useState(null);
+
+  const [showResultOverlay, setShowResultOverlay] =
+    useState(false);
 
   const [balance, setBalance] = useState(1000);
-  const [currentBet, setCurrentBet] = useState(50);
-  const [activeRoundBet, setActiveRoundBet] = useState(0);
 
-  const [galleryCards, setGalleryCards] = useState([]);
-  const [galleryIndex, setGalleryIndex] = useState(null);
-  const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const [bet, setBet] = useState(50);
 
   const currentTheme = tableThemes[theme];
 
@@ -90,50 +133,77 @@ export default function Demo() {
     ? cardValue(dealerHand[0].rank)
     : 0;
 
-  function settleBet(finalMessage, finalBet) {
-    const type = resultType(finalMessage);
+  function placeBet(amount) {
+    if (gameStarted) return;
 
-    if (type === "win") {
-      setBalance((current) => current + finalBet * 2);
-    }
+    setBet(amount);
+  }
 
-    if (type === "draw") {
-      setBalance((current) => current + finalBet);
-    }
+  function resetBank() {
+    if (gameStarted) return;
+
+    setBalance(1000);
+
+    setBet(50);
+
+    setMessage("Bank reset to 1000");
   }
 
   function newGame() {
-    if (gameStarted) return;
+    if (balance < bet) {
+      setMessage("Not enough balance");
 
-    if (balance < currentBet) {
-      setMessage("Not enough chips for that bet");
       return;
     }
 
     const freshDeck = shuffleDeck(fullDeck);
 
-    const player = [freshDeck[0], freshDeck[2]];
-    const dealer = [freshDeck[1], freshDeck[3]];
+    const player = [
+      freshDeck[0],
+      freshDeck[2],
+    ];
 
-    setBalance((current) => current - currentBet);
-    setActiveRoundBet(currentBet);
+    const dealer = [
+      freshDeck[1],
+      freshDeck[3],
+    ];
+
+    setBalance((prev) => prev - bet);
 
     setDeck(freshDeck.slice(4));
+
     setPlayerHand(player);
+
     setDealerHand(dealer);
+
     setDealerRevealed(false);
+
     setGameStarted(true);
+
     setShowResultOverlay(false);
+
     setMessage("Your move");
   }
 
   function endGame(finalMessage) {
-    const finalBet = activeRoundBet;
-
     setDealerRevealed(true);
+
     setGameStarted(false);
+
     setMessage(finalMessage);
-    settleBet(finalMessage, finalBet);
+
+    if (
+      finalMessage.includes("You win") ||
+      finalMessage.includes("Dealer busts")
+    ) {
+      setBalance((prev) => prev + bet * 2);
+    }
+
+    else if (
+      finalMessage.includes("Push")
+    ) {
+      setBalance((prev) => prev + bet);
+    }
 
     setTimeout(() => {
       setShowResultOverlay(true);
@@ -141,11 +211,21 @@ export default function Demo() {
   }
 
   function hit() {
-    if (!gameStarted || dealerRevealed || deck.length === 0) return;
+    if (
+      !gameStarted ||
+      dealerRevealed ||
+      deck.length === 0
+    ) {
+      return;
+    }
 
-    const newHand = [...playerHand, deck[0]];
+    const newHand = [
+      ...playerHand,
+      deck[0],
+    ];
 
     setPlayerHand(newHand);
+
     setDeck(deck.slice(1));
 
     if (handTotal(newHand) > 21) {
@@ -154,63 +234,85 @@ export default function Demo() {
   }
 
   function stand() {
-    if (!gameStarted || dealerRevealed) return;
+    if (!gameStarted || dealerRevealed) {
+      return;
+    }
 
     let newDeck = [...deck];
+
     let newDealerHand = [...dealerHand];
 
-    while (handTotal(newDealerHand) < 17 && newDeck.length > 0) {
+    while (
+      handTotal(newDealerHand) < 17 &&
+      newDeck.length > 0
+    ) {
       newDealerHand.push(newDeck[0]);
+
       newDeck = newDeck.slice(1);
     }
 
-    const finalPlayer = handTotal(playerHand);
-    const finalDealer = handTotal(newDealerHand);
+    const finalPlayer =
+      handTotal(playerHand);
+
+    const finalDealer =
+      handTotal(newDealerHand);
 
     setDealerHand(newDealerHand);
+
     setDeck(newDeck);
 
-    if (finalDealer > 21) endGame("Dealer busts — you win!");
-    else if (finalPlayer > finalDealer) endGame("You win!");
-    else if (finalPlayer < finalDealer) endGame("Dealer wins");
-    else endGame("Push — draw");
+    if (finalDealer > 21) {
+      endGame("Dealer busts — you win!");
+    }
+
+    else if (finalPlayer > finalDealer) {
+      endGame("You win!");
+    }
+
+    else if (finalPlayer < finalDealer) {
+      endGame("Dealer wins");
+    }
+
+    else {
+      endGame("Push — draw");
+    }
   }
 
   function openGallery(cards, index) {
     setGalleryCards(cards);
+
     setGalleryIndex(index);
   }
 
   function closeGallery() {
     setGalleryCards([]);
+
     setGalleryIndex(null);
   }
 
   function previousCard() {
     setGalleryIndex((current) =>
-      current === 0 ? galleryCards.length - 1 : current - 1
+      current === 0
+        ? galleryCards.length - 1
+        : current - 1
     );
   }
 
   function nextCard() {
     setGalleryIndex((current) =>
-      current === galleryCards.length - 1 ? 0 : current + 1
+      current === galleryCards.length - 1
+        ? 0
+        : current + 1
     );
   }
 
-  function resetBank() {
-    if (gameStarted) return;
-
-    setBalance(1000);
-    setCurrentBet(50);
-    setActiveRoundBet(0);
-    setMessage("Bank reset. Click New Game to start");
-  }
-
   const activeGalleryCard =
-    galleryIndex !== null ? galleryCards[galleryIndex] : null;
+    galleryIndex !== null
+      ? galleryCards[galleryIndex]
+      : null;
 
-  const activeResultType = resultType(message);
+  const activeResultType =
+    resultType(message);
 
   return (
     <div
@@ -220,50 +322,91 @@ export default function Demo() {
       }}
     >
       <aside className="game-panel">
-        <h1 className="game-title">Valkyra Blackjack</h1>
+        <h1 className="game-title">
+          Valkyra Blackjack
+        </h1>
 
         <div className="theme-box">
           <label>Table Theme</label>
 
-          <select value={theme} onChange={(e) => setTheme(e.target.value)}>
-            <option value="midnight">Midnight Table</option>
-            <option value="ruby">Ruby Table</option>
-            <option value="emerald">Emerald Table</option>
+          <select
+            value={theme}
+            onChange={(e) =>
+              setTheme(e.target.value)
+            }
+          >
+            <option value="midnight">
+              Midnight Table
+            </option>
+
+            <option value="ruby">
+              Ruby Table
+            </option>
+
+            <option value="emerald">
+              Emerald Table
+            </option>
           </select>
         </div>
 
         <div className="bank-box">
-          <span>Balance: {balance}</span>
-          <span>Bet: {currentBet}</span>
+          <div>Balance: {balance}</div>
+
+          <div>Bet: {bet}</div>
         </div>
 
         <div className="chip-row">
-          {chipValues.map((chip) => (
-            <button
-              key={chip}
-              className={`chip-button ${currentBet === chip ? "active" : ""}`}
-              onClick={() => setCurrentBet(chip)}
-              disabled={gameStarted || chip > balance}
-            >
-              {chip}
-            </button>
-          ))}
+          <button
+            className="chip-button"
+            onClick={() => placeBet(25)}
+          >
+            25
+          </button>
+
+          <button
+            className="chip-button"
+            onClick={() => placeBet(50)}
+          >
+            50
+          </button>
+
+          <button
+            className="chip-button"
+            onClick={() => placeBet(100)}
+          >
+            100
+          </button>
+
+          <button
+            className="chip-button"
+            onClick={() => placeBet(250)}
+          >
+            250
+          </button>
         </div>
 
         <div className="button-grid">
-
           <button
             className="primary-button"
             onClick={newGame}
-            disabled={gameStarted || balance < currentBet}
           >
             New Game
           </button>
 
           <button
+            className="reset-button"
+            onClick={resetBank}
+          >
+            Reset Bank
+          </button>
+
+          <button
             className="game-button"
             onClick={hit}
-            disabled={!gameStarted || dealerRevealed}
+            disabled={
+              !gameStarted ||
+              dealerRevealed
+            }
           >
             Hit
           </button>
@@ -271,25 +414,21 @@ export default function Demo() {
           <button
             className="game-button"
             onClick={stand}
-            disabled={!gameStarted || dealerRevealed}
+            disabled={
+              !gameStarted ||
+              dealerRevealed
+            }
           >
             Stand
           </button>
-
-          <button
-            className="reset-button"
-            onClick={resetBank}
-            disabled={gameStarted}
-          >
-            Reset Bank
-          </button>
-
         </div>
 
         <div className="status-box">
           <strong>{message}</strong>
-          <span>Player: {playerTotal}</span>
-          <span>Dealer: {dealerTotal}</span>
+
+          <div>Player: {playerTotal}</div>
+
+          <div>Dealer: {dealerTotal}</div>
         </div>
       </aside>
 
@@ -304,8 +443,16 @@ export default function Demo() {
                 rank={card.rank}
                 suit={card.suit}
                 image={card.image}
-                faceDown={index === 1 && !dealerRevealed}
-                onClick={() => openGallery(dealerHand, index)}
+                faceDown={
+                  index === 1 &&
+                  !dealerRevealed
+                }
+                onClick={() =>
+                  openGallery(
+                    dealerHand,
+                    index
+                  )
+                }
               />
             ))}
           </div>
@@ -321,7 +468,12 @@ export default function Demo() {
                 rank={card.rank}
                 suit={card.suit}
                 image={card.image}
-                onClick={() => openGallery(playerHand, index)}
+                onClick={() =>
+                  openGallery(
+                    playerHand,
+                    index
+                  )
+                }
               />
             ))}
           </div>
@@ -329,11 +481,15 @@ export default function Demo() {
       </main>
 
       {showResultOverlay && (
-        <div className={`result-overlay ${activeResultType}`}>
+        <div
+          className={`result-overlay ${activeResultType}`}
+        >
           <div className="result-box">
             <button
               className="result-close"
-              onClick={() => setShowResultOverlay(false)}
+              onClick={() =>
+                setShowResultOverlay(false)
+              }
             >
               ×
             </button>
@@ -346,16 +502,33 @@ export default function Demo() {
                 : "DRAW"}
             </div>
 
-            <div className="result-message">{message}</div>
-
-            <div className="result-scores">
-              <span>Player: {playerTotal}</span>
-              <span>Dealer: {handTotal(dealerHand)}</span>
-              <span>Bet: {activeRoundBet}</span>
-              <span>Balance: {balance}</span>
+            <div className="result-message">
+              {message}
             </div>
 
-            <button className="result-button" onClick={newGame}>
+            <div className="result-scores">
+              <div>
+                Player: {playerTotal}
+              </div>
+
+              <div>
+                Dealer:{" "}
+                {handTotal(dealerHand)}
+              </div>
+
+              <div>
+                Bet: {bet}
+              </div>
+
+              <div>
+                Balance: {balance}
+              </div>
+            </div>
+
+            <button
+              className="result-button"
+              onClick={newGame}
+            >
               Deal Again
             </button>
           </div>
@@ -364,11 +537,17 @@ export default function Demo() {
 
       {activeGalleryCard && (
         <div className="gallery-overlay">
-          <button className="gallery-close" onClick={closeGallery}>
+          <button
+            className="gallery-close"
+            onClick={closeGallery}
+          >
             ×
           </button>
 
-          <button className="gallery-nav gallery-prev" onClick={previousCard}>
+          <button
+            className="gallery-nav gallery-prev"
+            onClick={previousCard}
+          >
             ‹
           </button>
 
@@ -380,7 +559,10 @@ export default function Demo() {
             />
           </div>
 
-          <button className="gallery-nav gallery-next" onClick={nextCard}>
+          <button
+            className="gallery-nav gallery-next"
+            onClick={nextCard}
+          >
             ›
           </button>
         </div>
