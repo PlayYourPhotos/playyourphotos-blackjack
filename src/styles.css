@@ -12,27 +12,24 @@ body {
 /* THEMES */
 
 .theme-midnight {
-  --page-bg: radial-gradient(circle at top, #102142 0%, #06152f 55%, #020916 100%);
-  --panel-bg: rgba(0, 0, 0, 0.35);
+  --panel-bg: rgba(0, 0, 0, 0.42);
   --status-bg: #233a6b;
   --gold: #f5e6b3;
 }
 
 .theme-emerald {
-  --page-bg: radial-gradient(circle at top, #063b27 0%, #031f16 55%, #010b08 100%);
-  --panel-bg: rgba(0, 40, 24, 0.42);
+  --panel-bg: rgba(0, 40, 24, 0.46);
   --status-bg: #08784a;
   --gold: #f5e6b3;
 }
 
 .theme-ruby {
-  --page-bg: radial-gradient(circle at top, #3b0508 0%, #1b0205 55%, #080001 100%);
-  --panel-bg: rgba(50, 0, 0, 0.42);
+  --panel-bg: rgba(50, 0, 0, 0.46);
   --status-bg: #7a2f00;
   --gold: #e5c23a;
 }
 
-/* LAYOUT */
+/* MAIN LAYOUT */
 
 .blackjack-page {
   min-height: 100vh;
@@ -40,14 +37,27 @@ body {
   grid-template-columns: 320px 1fr;
   gap: 30px;
   padding: 24px;
-  background: var(--page-bg);
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+  transition:
+    background-image 0.5s ease,
+    background-color 0.5s ease;
 }
+
+/* LEFT PANEL */
 
 .game-panel {
   background: var(--panel-bg);
   border-radius: 24px;
   padding: 24px;
   height: fit-content;
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.42),
+    inset 0 0 22px rgba(255, 255, 255, 0.03);
 }
 
 .game-title {
@@ -75,8 +85,8 @@ body {
   width: 100%;
   padding: 14px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.22);
-  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background: rgba(0, 0, 0, 0.35);
   color: white;
   font-size: 16px;
   font-weight: 700;
@@ -101,15 +111,25 @@ body {
   color: white;
 }
 
+.primary-button:hover {
+  background: #f02b2b;
+}
+
 .game-button {
   background: rgba(255, 255, 255, 0.14);
   color: white;
+}
+
+.game-button:hover {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .game-button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* STATUS */
 
 .status-box {
   margin-top: 12px;
@@ -121,7 +141,7 @@ body {
   font-size: 18px;
 }
 
-/* TABLE */
+/* TABLE AREA */
 
 .table-area {
   display: grid;
@@ -148,7 +168,7 @@ body {
   gap: 18px;
 }
 
-/* CARDS */
+/* CARD */
 
 .card {
   position: relative;
@@ -388,13 +408,15 @@ body {
   right: 28px;
 }
 
-/* LANDING */
+/* LANDING PAGE */
 
 .landing-page {
   min-height: 100vh;
   background:
-    linear-gradient(rgba(0,0,0,0.72), rgba(0,0,0,0.82)),
-    #071633;
+    linear-gradient(rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.82)),
+    url("/backgrounds/midnight.jpg");
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -402,7 +424,7 @@ body {
 }
 
 .landing-overlay {
-  background: rgba(0,0,0,0.55);
+  background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   border-radius: 24px;
   padding: 50px 40px;
@@ -442,6 +464,7 @@ body {
   .blackjack-page {
     grid-template-columns: 1fr;
     padding: 16px;
+    background-attachment: scroll;
   }
 
   .game-panel {
