@@ -5,12 +5,90 @@
 body {
   margin: 0;
   font-family: Georgia, serif;
-  background: #050505;
+  background: #000;
   color: #fff4cf;
 }
 
 * {
   box-sizing: border-box;
+}
+
+/* =========================
+   LANDING PAGE
+========================= */
+
+.landing-page {
+  min-height: 100vh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background:
+    linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)),
+    url("/backgrounds/midnight.jpg");
+
+  background-size: cover;
+  background-position: center;
+}
+
+.landing-overlay {
+  text-align: center;
+
+  background: rgba(0,0,0,0.45);
+
+  padding: 60px;
+
+  border-radius: 30px;
+
+  backdrop-filter: blur(8px);
+
+  box-shadow:
+    0 0 40px rgba(0,0,0,0.5);
+}
+
+.landing-title {
+  font-size: 5rem;
+  margin: 0;
+
+  color: #ffe7a3;
+
+  text-shadow:
+    0 0 20px rgba(255,215,120,0.35);
+}
+
+.landing-subtitle {
+  font-size: 1.5rem;
+
+  margin-top: 10px;
+  margin-bottom: 40px;
+
+  color: #f3dfaa;
+}
+
+.launch-button {
+  display: inline-block;
+
+  padding: 20px 40px;
+
+  background: #e51e1e;
+  color: white;
+
+  text-decoration: none;
+
+  font-size: 1.3rem;
+  font-weight: bold;
+
+  border-radius: 18px;
+
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.launch-button:hover {
+  transform: translateY(-3px);
+  opacity: 0.92;
 }
 
 /* =========================
@@ -22,6 +100,7 @@ body {
 
   display: grid;
   grid-template-columns: 320px 1fr;
+
   gap: 30px;
 
   padding: 24px;
@@ -32,57 +111,47 @@ body {
   background-attachment: fixed;
 
   position: relative;
-  overflow: hidden;
-
-  transition:
-    background-image 0.5s ease,
-    background-color 0.5s ease;
 }
-
-/* DARK CINEMATIC OVERLAY */
 
 .blackjack-page::before {
   content: "";
+
   position: absolute;
   inset: 0;
 
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(0,0,0,0.48);
 
   z-index: 0;
 }
 
-/* KEEP CONTENT ABOVE OVERLAY */
-
 .game-panel,
-.table-area,
-.gallery-overlay,
-.result-overlay {
+.table-area {
   position: relative;
   z-index: 1;
 }
 
 /* =========================
-   LEFT CONTROL PANEL
+   LEFT PANEL
 ========================= */
 
 .game-panel {
+  background: rgba(0,0,0,0.42);
+
   backdrop-filter: blur(8px);
 
-  background: rgba(0, 0, 0, 0.45);
+  border-radius: 26px;
 
-  border-radius: 24px;
-
-  padding: 24px;
+  padding: 26px;
 
   display: flex;
   flex-direction: column;
-  gap: 20px;
+
+  gap: 24px;
 
   height: fit-content;
 
   box-shadow:
-    0 0 30px rgba(0,0,0,0.35),
-    inset 0 0 30px rgba(255,255,255,0.03);
+    0 0 30px rgba(0,0,0,0.35);
 }
 
 .game-title {
@@ -92,38 +161,36 @@ body {
   line-height: 1;
 
   color: #ffe7a3;
-
-  text-shadow:
-    0 0 10px rgba(255,215,120,0.4);
 }
 
 /* =========================
-   THEME SELECTOR
+   THEME BOX
 ========================= */
 
-.theme-selector {
+.theme-box {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+
+  gap: 12px;
 }
 
-.theme-selector label {
-  font-size: 1.1rem;
+.theme-box label {
+  font-size: 1.2rem;
   font-weight: bold;
 
   color: #ffe7a3;
 }
 
-.theme-selector select {
-  background: rgba(0,0,0,0.55);
-
-  border: 2px solid rgba(255,255,255,0.2);
+.theme-box select {
+  padding: 16px;
 
   border-radius: 16px;
 
-  color: white;
+  border: 2px solid rgba(255,255,255,0.25);
 
-  padding: 14px;
+  background: rgba(0,0,0,0.55);
+
+  color: white;
 
   font-size: 1rem;
   font-weight: bold;
@@ -133,41 +200,35 @@ body {
    BUTTONS
 ========================= */
 
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.controls button {
+.primary-button,
+.game-button {
   border: none;
 
   border-radius: 18px;
 
-  padding: 20px;
+  padding: 22px;
 
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: bold;
 
   cursor: pointer;
 
   transition:
     transform 0.2s ease,
-    opacity 0.2s ease,
-    background 0.2s ease;
+    opacity 0.2s ease;
 }
 
-.controls button:hover {
+.primary-button:hover,
+.game-button:hover {
   transform: translateY(-2px);
 }
 
-.new-game-btn {
-  background: #e41f1f;
+.primary-button {
+  background: #e51e1e;
   color: white;
 }
 
-.hit-btn,
-.stand-btn {
+.game-button {
   background: rgba(255,255,255,0.18);
   color: white;
 }
@@ -177,19 +238,16 @@ body {
 ========================= */
 
 .status-box {
+  background: rgba(35,70,170,0.72);
+
   border-radius: 20px;
 
   padding: 20px;
 
-  background: rgba(40,80,180,0.65);
-
   line-height: 1.6;
 
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: bold;
-
-  box-shadow:
-    0 0 20px rgba(0,0,0,0.25);
 }
 
 /* =========================
@@ -199,37 +257,42 @@ body {
 .table-area {
   display: flex;
   flex-direction: column;
-  gap: 50px;
 
   align-items: center;
+
+  gap: 60px;
 }
 
 /* =========================
-   HAND SECTIONS
+   HAND SECTION
 ========================= */
 
 .hand-section {
   display: flex;
   flex-direction: column;
+
   align-items: center;
 
   gap: 20px;
 }
 
-.hand-title {
-  font-size: 4rem;
+.hand-section h2 {
   margin: 0;
+
+  font-size: 4rem;
 
   color: #ffe7a3;
 
   text-shadow:
-    0 0 15px rgba(255,220,120,0.35);
+    0 0 15px rgba(255,215,120,0.25);
 }
 
-.hand-cards {
+.hand-row {
   display: flex;
   gap: 20px;
+
   flex-wrap: wrap;
+
   justify-content: center;
 }
 
@@ -237,19 +300,19 @@ body {
    CARD
 ========================= */
 
-.playing-card {
+.card {
   width: 180px;
   height: 252px;
+
+  position: relative;
 
   border-radius: 20px;
 
   overflow: hidden;
 
-  position: relative;
+  border: 4px solid white;
 
   background: #111;
-
-  border: 4px solid white;
 
   cursor: pointer;
 
@@ -258,14 +321,14 @@ body {
     box-shadow 0.2s ease;
 }
 
-.playing-card:hover {
+.card:hover {
   transform: scale(1.03);
 
   box-shadow:
     0 0 18px rgba(255,255,255,0.55);
 }
 
-.playing-card img {
+.card-img {
   width: 100%;
   height: 100%;
 
@@ -276,12 +339,11 @@ body {
    CARD CORNERS
 ========================= */
 
-.card-corner {
+.corner {
   position: absolute;
 
-  font-weight: bold;
-
   font-size: 2rem;
+  font-weight: bold;
 
   color: white;
 
@@ -333,16 +395,16 @@ body {
   width: 420px;
   height: 588px;
 
+  position: relative;
+
   border-radius: 24px;
 
   overflow: hidden;
 
   border: 5px solid white;
 
-  position: relative;
-
   box-shadow:
-    0 0 40px rgba(255,255,255,0.25);
+    0 0 40px rgba(255,255,255,0.22);
 }
 
 .gallery-card img {
@@ -362,10 +424,10 @@ body {
   height: 60px;
 
   border-radius: 50%;
+
   border: none;
 
   background: white;
-
   color: black;
 
   font-size: 2rem;
@@ -381,10 +443,10 @@ body {
   height: 70px;
 
   border-radius: 50%;
+
   border: none;
 
   background: white;
-
   color: black;
 
   font-size: 3rem;
@@ -409,7 +471,7 @@ body {
   position: fixed;
   inset: 0;
 
-  background: rgba(0,0,0,0.75);
+  background: rgba(0,0,0,0.76);
 
   display: flex;
   align-items: center;
@@ -421,7 +483,7 @@ body {
 .result-box {
   width: 520px;
 
-  background: rgba(0,20,60,0.92);
+  background: rgba(0,20,60,0.95);
 
   border-radius: 28px;
 
@@ -431,7 +493,7 @@ body {
 
   position: relative;
 
-  border: 2px solid rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.15);
 
   box-shadow:
     0 0 40px rgba(0,0,0,0.45);
@@ -466,13 +528,13 @@ body {
 
   padding: 18px 36px;
 
+  background: #e51e1e;
+  color: white;
+
   font-size: 1.3rem;
   font-weight: bold;
 
   cursor: pointer;
-
-  background: #e41f1f;
-  color: white;
 }
 
 .result-close {
@@ -485,57 +547,16 @@ body {
   height: 48px;
 
   border-radius: 50%;
+
   border: none;
 
   background: white;
-
   color: black;
 
   font-size: 1.8rem;
   font-weight: bold;
 
   cursor: pointer;
-}
-
-/* =========================
-   DEALER FLIP
-========================= */
-
-.flip-card {
-  perspective: 1000px;
-}
-
-.flip-inner {
-  position: relative;
-
-  width: 100%;
-  height: 100%;
-
-  transition: transform 0.7s;
-
-  transform-style: preserve-3d;
-}
-
-.flip-card.flipped .flip-inner {
-  transform: rotateY(180deg);
-}
-
-.flip-front,
-.flip-back {
-  position: absolute;
-
-  width: 100%;
-  height: 100%;
-
-  backface-visibility: hidden;
-
-  border-radius: 20px;
-
-  overflow: hidden;
-}
-
-.flip-front {
-  transform: rotateY(180deg);
 }
 
 /* =========================
@@ -552,11 +573,11 @@ body {
     width: 100%;
   }
 
-  .hand-title {
+  .hand-section h2 {
     font-size: 3rem;
   }
 
-  .playing-card {
+  .card {
     width: 130px;
     height: 182px;
   }
@@ -566,17 +587,17 @@ body {
     height: 392px;
   }
 
+  .gallery-nav {
+    width: 56px;
+    height: 56px;
+  }
+
   .gallery-prev {
     left: 10px;
   }
 
   .gallery-next {
     right: 10px;
-  }
-
-  .gallery-nav {
-    width: 56px;
-    height: 56px;
   }
 
   .result-box {
