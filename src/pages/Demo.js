@@ -4,12 +4,10 @@ import Card from "../components/Card";
 
 function shuffleDeck(deck) {
   const copy = [...deck];
-
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
-
   return copy;
 }
 
@@ -33,38 +31,27 @@ function handTotal(hand) {
 
 function resultType(message) {
   const lower = message.toLowerCase();
-
-  if (lower.includes("you win") || lower.includes("dealer busts")) {
-    return "win";
-  }
-
-  if (lower.includes("dealer wins") || lower.includes("bust")) {
-    return "lose";
-  }
-
-  if (lower.includes("push") || lower.includes("draw")) {
-    return "draw";
-  }
-
+  if (lower.includes("you win") || lower.includes("dealer busts")) return "win";
+  if (lower.includes("dealer wins") || lower.includes("bust")) return "lose";
+  if (lower.includes("push") || lower.includes("draw")) return "draw";
   return "";
 }
 
 export default function Demo() {
   const startingDeck = useMemo(() => shuffleDeck(fullDeck), []);
 
+  const [theme, setTheme] = useState("midnight");
   const [deck, setDeck] = useState(startingDeck);
   const [playerHand, setPlayerHand] = useState([]);
   const [dealerHand, setDealerHand] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [dealerRevealed, setDealerRevealed] = useState(false);
   const [message, setMessage] = useState("Click New Game to start");
-
   const [galleryCards, setGalleryCards] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
 
   const playerTotal = handTotal(playerHand);
-
   const dealerTotal = dealerRevealed
     ? handTotal(dealerHand)
     : dealerHand[0]
@@ -73,12 +60,10 @@ export default function Demo() {
 
   function newGame() {
     const freshDeck = shuffleDeck(fullDeck);
-
     const player = [freshDeck[0], freshDeck[2]];
     const dealer = [freshDeck[1], freshDeck[3]];
-    const remainingDeck = freshDeck.slice(4);
 
-    setDeck(remainingDeck);
+    setDeck(freshDeck.slice(4));
     setPlayerHand(player);
     setDealerHand(dealer);
     setDealerRevealed(false);
@@ -100,15 +85,11 @@ export default function Demo() {
   function hit() {
     if (!gameStarted || dealerRevealed || deck.length === 0) return;
 
-    const newCard = deck[0];
-    const newPlayerHand = [...playerHand, newCard];
-    const newDeck = deck.slice(1);
-    const newTotal = handTotal(newPlayerHand);
+    const newHand = [...playerHand, deck[0]];
+    setPlayerHand(newHand);
+    setDeck(deck.slice(1));
 
-    setPlayerHand(newPlayerHand);
-    setDeck(newDeck);
-
-    if (newTotal > 21) {
+    if (handTotal(newHand) > 21) {
       endGame("Bust! Dealer wins");
     }
   }
@@ -130,14 +111,10 @@ export default function Demo() {
     setDealerHand(newDealerHand);
     setDeck(newDeck);
 
-    let finalMessage = "";
-
-    if (finalDealer > 21) finalMessage = "Dealer busts — you win!";
-    else if (finalPlayer > finalDealer) finalMessage = "You win!";
-    else if (finalPlayer < finalDealer) finalMessage = "Dealer wins";
-    else finalMessage = "Push — draw";
-
-    endGame(finalMessage);
+    if (finalDealer > 21) endGame("Dealer busts — you win!");
+    else if (finalPlayer > finalDealer) endGame("You win!");
+    else if (finalPlayer < finalDealer) endGame("Dealer wins");
+    else endGame("Push — draw");
   }
 
   function openGallery(cards, index) {
@@ -162,19 +139,24 @@ export default function Demo() {
     );
   }
 
-  function closeResultOverlay() {
-    setShowResultOverlay(false);
-  }
-
   const activeGalleryCard =
     galleryIndex !== null ? galleryCards[galleryIndex] : null;
 
   const activeResultType = resultType(message);
 
   return (
-    <div className="blackjack-page">
+    <div className={`blackjack-page theme-${theme}`}>
       <aside className="game-panel">
         <h1 className="game-title">Valkyra Blackjack</h1>
+
+        <div className="theme-box">
+          <label>Table Theme</label>
+          <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+            <option value="midnight">Midnight Table</option>
+            <option value="emerald">Emerald Table</option>
+            <option value="ruby">Ruby Table</option>
+          </select>
+        </div>
 
         <button className="primary-button" onClick={newGame}>
           New Game
@@ -206,7 +188,6 @@ export default function Demo() {
       <main className="table-area">
         <section className="hand-section">
           <h2>Dealer</h2>
-
           <div className="hand-row">
             {dealerHand.map((card, index) => (
               <Card
@@ -223,7 +204,6 @@ export default function Demo() {
 
         <section className="hand-section">
           <h2>Player</h2>
-
           <div className="hand-row">
             {playerHand.map((card, index) => (
               <Card
@@ -241,7 +221,10 @@ export default function Demo() {
       {showResultOverlay && (
         <div className={`result-overlay ${activeResultType}`}>
           <div className="result-box">
-            <button className="result-close" onClick={closeResultOverlay}>
+            <button
+              className="result-close"
+              onClick={() => setShowResultOverlay(false)}
+            >
               ×
             </button>
 
