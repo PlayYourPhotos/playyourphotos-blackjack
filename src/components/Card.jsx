@@ -14,21 +14,19 @@ export default function Card({
   faceDown = false,
   onClick,
 }) {
-  const displayImage = faceDown ? "/cards/valkyra-hearts/back.jpg" : image;
-
   return (
     <div
       className={`card ${faceDown ? "face-down" : "face-up"}`}
       onClick={!faceDown ? onClick : undefined}
     >
-      <img
-        src={displayImage}
-        className="card-img"
-        alt={faceDown ? "Card back" : `${rank} of ${suit}`}
-      />
+      <div className="card-inner">
+        <div className="card-front">
+          <img
+            src={image}
+            className="card-img"
+            alt={`${rank} of ${suit}`}
+          />
 
-      {!faceDown && (
-        <>
           <div className="corner top-left">
             <div className="corner-rank">{rank}</div>
             <div className="corner-suit">{suitSymbols[suit]}</div>
@@ -38,8 +36,16 @@ export default function Card({
             <div className="corner-rank">{rank}</div>
             <div className="corner-suit">{suitSymbols[suit]}</div>
           </div>
-        </>
-      )}
+        </div>
+
+        <div className="card-back">
+          <img
+            src="/cards/valkyra-hearts/back.jpg"
+            className="card-img"
+            alt="Card back"
+          />
+        </div>
+      </div>
     </div>
   );
 }
