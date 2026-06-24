@@ -125,11 +125,11 @@ export default function Demo() {
   }
 
   function playDeal() {
-    playSound("/sounds/deal.mp3");
+    playSound("/sounds/deal.m4a");
   }
 
   function playWin() {
-    playSound("/sounds/win.mp3");
+    playSound("/sounds/win.m4a");
   }
 
   function playLose() {
