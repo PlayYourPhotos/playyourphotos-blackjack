@@ -51,10 +51,18 @@ function handTotal(hand) {
   return total;
 }
 
+function isBlackjack(hand) {
+  return hand.length === 2 && handTotal(hand) === 21;
+}
+
 function resultType(message) {
   const lower = message.toLowerCase();
 
-  if (lower.includes("you win") || lower.includes("dealer busts")) {
+  if (
+    lower.includes("blackjack") ||
+    lower.includes("you win") ||
+    lower.includes("dealer busts")
+  ) {
     return "win";
   }
 
@@ -121,6 +129,35 @@ export default function Demo() {
     setMessage("Bank reset to 1000");
   }
 
+  function settleBet(finalMessage, finalRoundBet, blackjackPayout = false) {
+    const type = resultType(finalMessage);
+
+    if (blackjackPayout) {
+      setBalance((prev) => prev + Math.floor(finalRoundBet * 2.5));
+      return;
+    }
+
+    if (type === "win") {
+      setBalance((prev) => prev + finalRoundBet * 2);
+    }
+
+    if (type === "draw") {
+      setBalance((prev) => prev + finalRoundBet);
+    }
+  }
+
+  function endGame(finalMessage, finalRoundBet = roundBet, blackjackPayout = false) {
+    setDealerRevealed(true);
+    setGameStarted(false);
+    setMessage(finalMessage);
+
+    settleBet(finalMessage, finalRoundBet, blackjackPayout);
+
+    setTimeout(() => {
+      setShowResultOverlay(true);
+    }, 450);
+  }
+
   function newGame() {
     if (gameStarted) return;
 
@@ -134,6 +171,9 @@ export default function Demo() {
     const player = [freshDeck[0], freshDeck[2]];
     const dealer = [freshDeck[1], freshDeck[3]];
 
+    const playerHasBlackjack = isBlackjack(player);
+    const dealerHasBlackjack = isBlackjack(dealer);
+
     setBalance((prev) => prev - bet);
     setRoundBet(bet);
 
@@ -145,30 +185,18 @@ export default function Demo() {
     setShowResultOverlay(false);
     setHasDoubled(false);
     setMessage("Your move");
-  }
 
-  function settleBet(finalMessage, finalRoundBet) {
-    const type = resultType(finalMessage);
-
-    if (type === "win") {
-      setBalance((prev) => prev + finalRoundBet * 2);
+    if (playerHasBlackjack || dealerHasBlackjack) {
+      setTimeout(() => {
+        if (playerHasBlackjack && dealerHasBlackjack) {
+          endGame("Blackjack push — draw", bet, false);
+        } else if (playerHasBlackjack) {
+          endGame("Blackjack! You win 3:2", bet, true);
+        } else {
+          endGame("Dealer Blackjack wins", bet, false);
+        }
+      }, 450);
     }
-
-    if (type === "draw") {
-      setBalance((prev) => prev + finalRoundBet);
-    }
-  }
-
-  function endGame(finalMessage, finalRoundBet = roundBet) {
-    setDealerRevealed(true);
-    setGameStarted(false);
-    setMessage(finalMessage);
-
-    settleBet(finalMessage, finalRoundBet);
-
-    setTimeout(() => {
-      setShowResultOverlay(true);
-    }, 450);
   }
 
   function hit() {
