@@ -22,6 +22,12 @@ const tableThemes = {
   },
 };
 
+function playSound(path) {
+  const sound = new Audio(path);
+  sound.volume = 0.55;
+  sound.play().catch(() => {});
+}
+
 function shuffleDeck(deck) {
   const copy = [...deck];
 
@@ -114,13 +120,33 @@ export default function Demo() {
     balance >= roundBet &&
     !hasDoubled;
 
+  function playClick() {
+    playSound("/sounds/click.mp3");
+  }
+
+  function playDeal() {
+    playSound("/sounds/deal.mp3");
+  }
+
+  function playWin() {
+    playSound("/sounds/win.mp3");
+  }
+
+  function playLose() {
+    playSound("/sounds/lose.mp3");
+  }
+
   function placeBet(amount) {
     if (gameStarted) return;
+
+    playClick();
     setBet(amount);
   }
 
   function resetBank() {
     if (gameStarted) return;
+
+    playClick();
 
     setBalance(1000);
     setBet(50);
@@ -153,6 +179,16 @@ export default function Demo() {
 
     settleBet(finalMessage, finalRoundBet, blackjackPayout);
 
+    const type = resultType(finalMessage);
+
+    if (type === "win") {
+      playWin();
+    } else if (type === "lose") {
+      playLose();
+    } else {
+      playClick();
+    }
+
     setTimeout(() => {
       setShowResultOverlay(true);
     }, 450);
@@ -161,10 +197,15 @@ export default function Demo() {
   function newGame() {
     if (gameStarted) return;
 
+    playClick();
+
     if (balance < bet) {
       setMessage("Not enough balance");
+      playLose();
       return;
     }
+
+    playDeal();
 
     const freshDeck = shuffleDeck(fullDeck);
 
@@ -201,6 +242,9 @@ export default function Demo() {
 
   function hit() {
     if (!gameStarted || dealerRevealed || deck.length === 0) return;
+
+    playClick();
+    playDeal();
 
     const newHand = [...playerHand, deck[0]];
 
@@ -241,11 +285,17 @@ export default function Demo() {
   function stand() {
     if (!gameStarted || dealerRevealed) return;
 
+    playClick();
+    playDeal();
+
     playDealerAndFinish(playerHand, deck, roundBet);
   }
 
   function doubleDown() {
     if (!canDoubleDown || deck.length === 0) return;
+
+    playClick();
+    playDeal();
 
     const doubledBet = roundBet * 2;
     const newPlayerHand = [...playerHand, deck[0]];
@@ -266,22 +316,28 @@ export default function Demo() {
   }
 
   function openGallery(cards, index) {
+    playClick();
     setGalleryCards(cards);
     setGalleryIndex(index);
   }
 
   function closeGallery() {
+    playClick();
     setGalleryCards([]);
     setGalleryIndex(null);
   }
 
   function previousCard() {
+    playClick();
+
     setGalleryIndex((current) =>
       current === 0 ? galleryCards.length - 1 : current - 1
     );
   }
 
   function nextCard() {
+    playClick();
+
     setGalleryIndex((current) =>
       current === galleryCards.length - 1 ? 0 : current + 1
     );
@@ -305,7 +361,13 @@ export default function Demo() {
         <div className="theme-box">
           <label>Table Theme</label>
 
-          <select value={theme} onChange={(e) => setTheme(e.target.value)}>
+          <select
+            value={theme}
+            onChange={(e) => {
+              playClick();
+              setTheme(e.target.value);
+            }}
+          >
             <option value="midnight">Midnight Table</option>
             <option value="ruby">Ruby Table</option>
             <option value="emerald">Emerald Table</option>
@@ -318,29 +380,53 @@ export default function Demo() {
         </div>
 
         <div className="chip-row">
-          <button className="chip-button" onClick={() => placeBet(25)}>
+          <button
+            className="chip-button"
+            onClick={() => placeBet(25)}
+            disabled={gameStarted}
+          >
             25
           </button>
 
-          <button className="chip-button" onClick={() => placeBet(50)}>
+          <button
+            className="chip-button"
+            onClick={() => placeBet(50)}
+            disabled={gameStarted}
+          >
             50
           </button>
 
-          <button className="chip-button" onClick={() => placeBet(100)}>
+          <button
+            className="chip-button"
+            onClick={() => placeBet(100)}
+            disabled={gameStarted}
+          >
             100
           </button>
 
-          <button className="chip-button" onClick={() => placeBet(250)}>
+          <button
+            className="chip-button"
+            onClick={() => placeBet(250)}
+            disabled={gameStarted}
+          >
             250
           </button>
         </div>
 
         <div className="button-grid">
-          <button className="primary-button" onClick={newGame}>
+          <button
+            className="primary-button"
+            onClick={newGame}
+            disabled={gameStarted}
+          >
             New Game
           </button>
 
-          <button className="reset-button" onClick={resetBank}>
+          <button
+            className="reset-button"
+            onClick={resetBank}
+            disabled={gameStarted}
+          >
             Reset Bank
           </button>
 
@@ -416,7 +502,10 @@ export default function Demo() {
           <div className="result-box">
             <button
               className="result-close"
-              onClick={() => setShowResultOverlay(false)}
+              onClick={() => {
+                playClick();
+                setShowResultOverlay(false);
+              }}
             >
               ×
             </button>
