@@ -174,6 +174,8 @@ export default function Demo() {
 
   function endGame(finalMessage, finalRoundBet = roundBet, blackjackPayout = false) {
     setDealerRevealed(true);
+    playDeal();
+
     setGameStarted(false);
     setMessage(finalMessage);
 
@@ -261,6 +263,7 @@ export default function Demo() {
     let newDealerHand = [...dealerHand];
 
     while (handTotal(newDealerHand) < 17 && newDeck.length > 0) {
+      playDeal();
       newDealerHand.push(newDeck[0]);
       newDeck = newDeck.slice(1);
     }
@@ -286,7 +289,6 @@ export default function Demo() {
     if (!gameStarted || dealerRevealed) return;
 
     playClick();
-    playDeal();
 
     playDealerAndFinish(playerHand, deck, roundBet);
   }
