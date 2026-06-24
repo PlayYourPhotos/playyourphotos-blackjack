@@ -264,16 +264,19 @@ body {
   height: 100%;
   position: relative;
   border-radius: 20px;
-  transition: transform 0.7s ease;
   transform-style: preserve-3d;
 }
 
+/* NO animation when card first appears face down */
 .card.face-down .card-inner {
   transform: rotateY(180deg);
+  transition: none;
 }
 
+/* ONLY animate when card reveals */
 .card.face-up .card-inner {
   transform: rotateY(0deg);
+  transition: transform 0.7s ease;
 }
 
 .card-front,
