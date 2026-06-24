@@ -247,15 +247,55 @@ body {
   justify-content: center;
 }
 
+/* CARD + FLIP */
+
 .card {
   width: 200px;
   height: 280px;
   position: relative;
   border-radius: 20px;
+  background: transparent;
+  cursor: pointer;
+  perspective: 1000px;
+}
+
+.card-inner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 20px;
+  transition: transform 0.7s ease;
+  transform-style: preserve-3d;
+}
+
+.card.face-down .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card.face-up .card-inner {
+  transform: rotateY(0deg);
+}
+
+.card-front,
+.card-back {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
   overflow: hidden;
   border: 4px solid white;
   background: #111;
-  cursor: pointer;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-front {
+  transform: rotateY(0deg);
+}
+
+.card-back {
+  transform: rotateY(180deg);
 }
 
 .card-img {
