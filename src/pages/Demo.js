@@ -83,12 +83,25 @@ function resultType(message) {
   return "";
 }
 
+function handOutcome(playerTotal, dealerTotal) {
+  if (playerTotal > 21) return "lose";
+  if (dealerTotal > 21) return "win";
+  if (playerTotal > dealerTotal) return "win";
+  if (playerTotal < dealerTotal) return "lose";
+  return "draw";
+}
+
+function outcomeLabel(outcome) {
+  if (outcome === "win") return "WIN";
+  if (outcome === "lose") return "LOSE";
+  return "PUSH";
+}
+
 export default function Demo() {
   const startingDeck = useMemo(() => shuffleDeck(fullDeck), []);
 
   const [theme, setTheme] = useState("midnight");
   const [deck, setDeck] = useState(startingDeck);
-  const [playerHand, setPlayerHand] = useState([]);
   const [dealerHand, setDealerHand] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [dealerRevealed, setDealerRevealed] = useState(false);
@@ -103,9 +116,16 @@ export default function Demo() {
   const [roundBet, setRoundBet] = useState(0);
   const [hasDoubled, setHasDoubled] = useState(false);
 
-  const currentTheme = tableThemes[theme];
+  const [playerHands, setPlayerHands] = useState([[]]);
+  const [activeHandIndex, setActiveHandIndex] = useState(0);
+  const [splitMode, setSplitMode] = useState(false);
+  const [handBets, setHandBets] = useState([0]);
+  const [completedHands, setCompletedHands] = useState([]);
+  const [splitResults, setSplitResults] = useState([]);
 
-  const playerTotal = handTotal(playerHand);
+  const currentTheme = tableThemes[theme];
+  const activePlayerHand = playerHands[activeHandIndex] || [];
+  const playerTotal = handTotal(activePlayerHand);
 
   const dealerTotal = dealerRevealed
     ? handTotal(dealerHand)
@@ -115,10 +135,19 @@ export default function Demo() {
 
   const canDoubleDown =
     gameStarted &&
+    !splitMode &&
     !dealerRevealed &&
-    playerHand.length === 2 &&
+    activePlayerHand.length === 2 &&
     balance >= roundBet &&
     !hasDoubled;
+
+  const canSplit =
+    gameStarted &&
+    !splitMode &&
+    !dealerRevealed &&
+    activePlayerHand.length === 2 &&
+    activePlayerHand[0]?.rank === activePlayerHand[1]?.rank &&
+    balance >= roundBet;
 
   function playClick() {
     playSound("/sounds/click.mp3");
@@ -152,10 +181,16 @@ export default function Demo() {
     setBet(50);
     setRoundBet(0);
     setHasDoubled(false);
+    setPlayerHands([[]]);
+    setActiveHandIndex(0);
+    setSplitMode(false);
+    setHandBets([0]);
+    setCompletedHands([]);
+    setSplitResults([]);
     setMessage("Bank reset to 1000");
   }
 
-  function settleBet(finalMessage, finalRoundBet, blackjackPayout = false) {
+  function settleSingleBet(finalMessage, finalRoundBet, blackjackPayout = false) {
     const type = resultType(finalMessage);
 
     if (blackjackPayout) {
@@ -172,6 +207,17 @@ export default function Demo() {
     }
   }
 
+  function settleSplitBets(results) {
+    let payout = 0;
+
+    results.forEach((result) => {
+      if (result.outcome === "win") payout += result.bet * 2;
+      if (result.outcome === "draw") payout += result.bet;
+    });
+
+    setBalance((prev) => prev + payout);
+  }
+
   function endGame(finalMessage, finalRoundBet = roundBet, blackjackPayout = false) {
     setDealerRevealed(true);
     playDeal();
@@ -179,7 +225,7 @@ export default function Demo() {
     setGameStarted(false);
     setMessage(finalMessage);
 
-    settleBet(finalMessage, finalRoundBet, blackjackPayout);
+    settleSingleBet(finalMessage, finalRoundBet, blackjackPayout);
 
     const type = resultType(finalMessage);
 
@@ -188,6 +234,60 @@ export default function Demo() {
     } else if (type === "lose") {
       playLose();
     } else {
+      playClick();
+    }
+
+    setTimeout(() => {
+      setShowResultOverlay(true);
+    }, 450);
+  }
+
+  function finishSplitGame(finalHands, remainingDeck, finalCompletedHands) {
+    let newDeck = [...remainingDeck];
+    let newDealerHand = [...dealerHand];
+
+    while (handTotal(newDealerHand) < 17 && newDeck.length > 0) {
+      playDeal();
+      newDealerHand.push(newDeck[0]);
+      newDeck = newDeck.slice(1);
+    }
+
+    const finalDealerTotal = handTotal(newDealerHand);
+
+    const results = finalHands.map((hand, index) => {
+      const total = handTotal(hand);
+      const betForHand = handBets[index] || roundBet;
+      const outcome = handOutcome(total, finalDealerTotal);
+
+      return {
+        handIndex: index,
+        total,
+        bet: betForHand,
+        outcome,
+      };
+    });
+
+    setDealerHand(newDealerHand);
+    setDeck(newDeck);
+    setCompletedHands(finalCompletedHands);
+    setSplitResults(results);
+    setDealerRevealed(true);
+    setGameStarted(false);
+
+    settleSplitBets(results);
+
+    const wins = results.filter((r) => r.outcome === "win").length;
+    const losses = results.filter((r) => r.outcome === "lose").length;
+    const draws = results.filter((r) => r.outcome === "draw").length;
+
+    if (wins > losses) {
+      setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
+      playWin();
+    } else if (losses > wins) {
+      setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
+      playLose();
+    } else {
+      setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
       playClick();
     }
 
@@ -221,12 +321,17 @@ export default function Demo() {
     setRoundBet(bet);
 
     setDeck(freshDeck.slice(4));
-    setPlayerHand(player);
+    setPlayerHands([player]);
     setDealerHand(dealer);
     setDealerRevealed(false);
     setGameStarted(true);
     setShowResultOverlay(false);
     setHasDoubled(false);
+    setActiveHandIndex(0);
+    setSplitMode(false);
+    setHandBets([bet]);
+    setCompletedHands([false]);
+    setSplitResults([]);
     setMessage("Your move");
 
     if (playerHasBlackjack || dealerHasBlackjack) {
@@ -242,19 +347,50 @@ export default function Demo() {
     }
   }
 
+  function updateActiveHand(newHand, newDeck) {
+    const updatedHands = [...playerHands];
+    updatedHands[activeHandIndex] = newHand;
+
+    setPlayerHands(updatedHands);
+    setDeck(newDeck);
+
+    return updatedHands;
+  }
+
+  function moveToNextSplitHand(updatedHands, updatedDeck, updatedCompletedHands) {
+    const nextIndex = updatedCompletedHands.findIndex((done) => !done);
+
+    if (nextIndex === -1) {
+      finishSplitGame(updatedHands, updatedDeck, updatedCompletedHands);
+      return;
+    }
+
+    setActiveHandIndex(nextIndex);
+    setCompletedHands(updatedCompletedHands);
+    setMessage(`Playing hand ${nextIndex + 1}`);
+  }
+
   function hit() {
     if (!gameStarted || dealerRevealed || deck.length === 0) return;
 
     playClick();
     playDeal();
 
-    const newHand = [...playerHand, deck[0]];
-
-    setPlayerHand(newHand);
-    setDeck(deck.slice(1));
+    const newHand = [...activePlayerHand, deck[0]];
+    const newDeck = deck.slice(1);
+    const updatedHands = updateActiveHand(newHand, newDeck);
 
     if (handTotal(newHand) > 21) {
-      endGame("Bust! Dealer wins");
+      if (splitMode) {
+        const updatedCompletedHands = [...completedHands];
+        updatedCompletedHands[activeHandIndex] = true;
+
+        setMessage(`Hand ${activeHandIndex + 1} busts`);
+
+        moveToNextSplitHand(updatedHands, newDeck, updatedCompletedHands);
+      } else {
+        endGame("Bust! Dealer wins");
+      }
     }
   }
 
@@ -290,7 +426,15 @@ export default function Demo() {
 
     playClick();
 
-    playDealerAndFinish(playerHand, deck, roundBet);
+    if (splitMode) {
+      const updatedCompletedHands = [...completedHands];
+      updatedCompletedHands[activeHandIndex] = true;
+
+      moveToNextSplitHand(playerHands, deck, updatedCompletedHands);
+      return;
+    }
+
+    playDealerAndFinish(activePlayerHand, deck, roundBet);
   }
 
   function doubleDown() {
@@ -300,13 +444,14 @@ export default function Demo() {
     playDeal();
 
     const doubledBet = roundBet * 2;
-    const newPlayerHand = [...playerHand, deck[0]];
+    const newPlayerHand = [...activePlayerHand, deck[0]];
     const remainingDeck = deck.slice(1);
 
     setBalance((prev) => prev - roundBet);
     setRoundBet(doubledBet);
+    setHandBets([doubledBet]);
     setHasDoubled(true);
-    setPlayerHand(newPlayerHand);
+    setPlayerHands([newPlayerHand]);
     setDeck(remainingDeck);
 
     if (handTotal(newPlayerHand) > 21) {
@@ -315,6 +460,31 @@ export default function Demo() {
     }
 
     playDealerAndFinish(newPlayerHand, remainingDeck, doubledBet);
+  }
+
+  function splitPair() {
+    if (!canSplit || deck.length < 2) return;
+
+    playClick();
+    playDeal();
+
+    const firstCard = activePlayerHand[0];
+    const secondCard = activePlayerHand[1];
+
+    const firstHand = [firstCard, deck[0]];
+    const secondHand = [secondCard, deck[1]];
+    const remainingDeck = deck.slice(2);
+
+    setBalance((prev) => prev - roundBet);
+    setDeck(remainingDeck);
+    setPlayerHands([firstHand, secondHand]);
+    setActiveHandIndex(0);
+    setSplitMode(true);
+    setHandBets([roundBet, roundBet]);
+    setCompletedHands([false, false]);
+    setSplitResults([]);
+    setHasDoubled(false);
+    setMessage("Split active — playing hand 1");
   }
 
   function openGallery(cards, index) {
@@ -348,7 +518,13 @@ export default function Demo() {
   const activeGalleryCard =
     galleryIndex !== null ? galleryCards[galleryIndex] : null;
 
-  const activeResultType = resultType(message);
+  const activeResultType = splitMode && splitResults.length > 0
+    ? splitResults.some((r) => r.outcome === "win")
+      ? "win"
+      : splitResults.some((r) => r.outcome === "lose")
+      ? "lose"
+      : "draw"
+    : resultType(message);
 
   return (
     <div
@@ -378,7 +554,8 @@ export default function Demo() {
 
         <div className="bank-box">
           <div>Balance: {balance}</div>
-          <div>Bet: {gameStarted ? roundBet : bet}</div>
+          <div>Bet: {gameStarted ? handBets[activeHandIndex] || roundBet : bet}</div>
+          {splitMode && <div>Active Hand: {activeHandIndex + 1}</div>}
         </div>
 
         <div className="chip-row">
@@ -455,6 +632,14 @@ export default function Demo() {
           >
             Double
           </button>
+
+          <button
+            className="split-button"
+            onClick={splitPair}
+            disabled={!canSplit}
+          >
+            Split
+          </button>
         </div>
 
         <div className="status-box">
@@ -485,17 +670,57 @@ export default function Demo() {
         <section className="hand-section">
           <h2>Player</h2>
 
-          <div className="hand-row">
-            {playerHand.map((card, index) => (
-              <Card
-                key={index}
-                rank={card.rank}
-                suit={card.suit}
-                image={card.image}
-                onClick={() => openGallery(playerHand, index)}
-              />
-            ))}
-          </div>
+          {!splitMode && (
+            <div className="hand-row">
+              {activePlayerHand.map((card, index) => (
+                <Card
+                  key={index}
+                  rank={card.rank}
+                  suit={card.suit}
+                  image={card.image}
+                  onClick={() => openGallery(activePlayerHand, index)}
+                />
+              ))}
+            </div>
+          )}
+
+          {splitMode && (
+            <div className="split-hands">
+              {playerHands.map((hand, handIndex) => (
+                <div
+                  key={handIndex}
+                  className={`split-hand ${
+                    handIndex === activeHandIndex && gameStarted
+                      ? "active"
+                      : ""
+                  }`}
+                >
+                  <div className="split-label">
+                    Hand {handIndex + 1} — {handTotal(hand)}
+                    {completedHands[handIndex] && " ✓"}
+                  </div>
+
+                  <div className="hand-row split-row">
+                    {hand.map((card, cardIndex) => (
+                      <Card
+                        key={cardIndex}
+                        rank={card.rank}
+                        suit={card.suit}
+                        image={card.image}
+                        onClick={() => openGallery(hand, cardIndex)}
+                      />
+                    ))}
+                  </div>
+
+                  {splitResults[handIndex] && (
+                    <div className={`split-result ${splitResults[handIndex].outcome}`}>
+                      {outcomeLabel(splitResults[handIndex].outcome)}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 
@@ -523,10 +748,26 @@ export default function Demo() {
             <div className="result-message">{message}</div>
 
             <div className="result-scores">
-              <div>Player: {playerTotal}</div>
-              <div>Dealer: {handTotal(dealerHand)}</div>
-              <div>Bet: {roundBet}</div>
-              <div>Balance: {balance}</div>
+              {!splitMode && (
+                <>
+                  <div>Player: {playerTotal}</div>
+                  <div>Dealer: {handTotal(dealerHand)}</div>
+                  <div>Bet: {roundBet}</div>
+                  <div>Balance: {balance}</div>
+                </>
+              )}
+
+              {splitMode && splitResults.length > 0 && (
+                <>
+                  <div>Dealer: {handTotal(dealerHand)}</div>
+                  {splitResults.map((result) => (
+                    <div key={result.handIndex}>
+                      Hand {result.handIndex + 1}: {outcomeLabel(result.outcome)} — Bet {result.bet}
+                    </div>
+                  ))}
+                  <div>Balance: {balance}</div>
+                </>
+              )}
             </div>
 
             <button className="result-button" onClick={newGame}>
