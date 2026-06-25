@@ -8,13 +8,11 @@ const tableThemes = {
     className: "theme-ruby",
     background: "/backgrounds/ruby.jpg",
   },
-
   midnight: {
     name: "Midnight Table",
     className: "theme-midnight",
     background: "/backgrounds/midnight.jpg",
   },
-
   emerald: {
     name: "Emerald Table",
     className: "theme-emerald",
@@ -86,21 +84,15 @@ function resultType(message) {
 
   if (lower.includes("push") || lower.includes("draw")) return "draw";
 
-  if (
-    lower.includes("dealer blackjack wins") ||
-    lower.includes("dealer wins") ||
-    lower.includes("bust")
-  ) {
-    return "lose";
-  }
+  if (lower.includes("dealer bust")) return "win";
 
-  if (
-    lower.includes("blackjack") ||
-    lower.includes("you win") ||
-    lower.includes("dealer busts")
-  ) {
-    return "win";
-  }
+  if (lower.includes("dealer blackjack wins")) return "lose";
+  if (lower.includes("dealer wins")) return "lose";
+
+  if (lower.includes("you win")) return "win";
+  if (lower.includes("blackjack")) return "win";
+
+  if (lower.includes("bust")) return "lose";
 
   return "";
 }
@@ -179,6 +171,22 @@ export default function Demo() {
     activePlayerHand[0]?.rank === activePlayerHand[1]?.rank &&
     balance >= roundBet;
 
+  function playClick() {
+    playSound("/sounds/click.mp3");
+  }
+
+  function playDeal() {
+    playSound("/sounds/deal.m4a");
+  }
+
+  function playWin() {
+    playSound("/sounds/win.m4a");
+  }
+
+  function playLose() {
+    playSound("/sounds/lose.mp3");
+  }
+
   function saveStats(nextStats) {
     setStats(nextStats);
     localStorage.setItem("memoryDeckBlackjackStats", JSON.stringify(nextStats));
@@ -187,7 +195,10 @@ export default function Demo() {
   function updateStats(updater) {
     setStats((current) => {
       const nextStats = updater(current);
-      localStorage.setItem("memoryDeckBlackjackStats", JSON.stringify(nextStats));
+      localStorage.setItem(
+        "memoryDeckBlackjackStats",
+        JSON.stringify(nextStats)
+      );
       return nextStats;
     });
   }
@@ -221,26 +232,13 @@ export default function Demo() {
     updateStats((current) => ({
       ...current,
       gamesPlayed: current.gamesPlayed + results.length,
-      wins: current.wins + results.filter((r) => r.outcome === "win").length,
-      losses: current.losses + results.filter((r) => r.outcome === "lose").length,
-      pushes: current.pushes + results.filter((r) => r.outcome === "draw").length,
+      wins:
+        current.wins + results.filter((r) => r.outcome === "win").length,
+      losses:
+        current.losses + results.filter((r) => r.outcome === "lose").length,
+      pushes:
+        current.pushes + results.filter((r) => r.outcome === "draw").length,
     }));
-  }
-
-  function playClick() {
-    playSound("/sounds/click.mp3");
-  }
-
-  function playDeal() {
-    playSound("/sounds/deal.m4a");
-  }
-
-  function playWin() {
-    playSound("/sounds/win.m4a");
-  }
-
-  function playLose() {
-    playSound("/sounds/lose.mp3");
   }
 
   function placeBet(amount) {
@@ -269,7 +267,11 @@ export default function Demo() {
     setMessage("Bank reset to 1000");
   }
 
-  function settleSingleBet(finalMessage, finalRoundBet, blackjackPayout = false) {
+  function settleSingleBet(
+    finalMessage,
+    finalRoundBet,
+    blackjackPayout = false
+  ) {
     const type = resultType(finalMessage);
 
     let payout = 0;
@@ -308,7 +310,11 @@ export default function Demo() {
     }
   }
 
-  function endGame(finalMessage, finalRoundBet = roundBet, blackjackPayout = false) {
+  function endGame(
+    finalMessage,
+    finalRoundBet = roundBet,
+    blackjackPayout = false
+  ) {
     setDealerRevealed(true);
     playDeal();
 
@@ -448,7 +454,11 @@ export default function Demo() {
     return updatedHands;
   }
 
-  function moveToNextSplitHand(updatedHands, updatedDeck, updatedCompletedHands) {
+  function moveToNextSplitHand(
+    updatedHands,
+    updatedDeck,
+    updatedCompletedHands
+  ) {
     const nextIndex = updatedCompletedHands.findIndex((done) => !done);
 
     if (nextIndex === -1) {
