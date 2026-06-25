@@ -2,23 +2,28 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
 import Demo from "./pages/Demo.js";
+import Platform from "./pages/Platform.js";
 
 function Home() {
   return (
-    <div
-      className="landing-page"
-      style={{
-        backgroundImage:
-          "linear-gradient(rgba(0,0,0,0.65), rgba(0,0,0,0.75)), url('/backgrounds/midnight.jpg')",
-      }}
-    >
+    <div className="landing-page">
       <div className="landing-overlay">
-        <h1 className="landing-title">BLACKJACK</h1>
-        <p className="landing-subtitle">Powered by Memory Deck</p>
+        <h1 className="landing-title">Play Your Photos</h1>
+        <p className="landing-subtitle">
+          Create a Memory Deck. Play it everywhere.
+        </p>
 
-        <Link to="/demo" className="launch-button">
-          Launch Demo Deck
-        </Link>
+        <div className="landing-buttons">
+          <Link to="/platform" className="launch-button">
+            Enter Platform
+          </Link>
+
+          <Link to="/demo" className="launch-button secondary-launch">
+            Play Blackjack
+          </Link>
+        </div>
+
+        <p className="landing-powered">Powered by Memory Deck technology</p>
       </div>
     </div>
   );
@@ -29,6 +34,7 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/platform" element={<Platform />} />
         <Route path="/demo" element={<Demo />} />
       </Routes>
     </Router>
