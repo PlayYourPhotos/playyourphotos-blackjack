@@ -22,6 +22,26 @@ const tableThemes = {
   },
 };
 
+const defaultStats = {
+  gamesPlayed: 0,
+  wins: 0,
+  losses: 0,
+  pushes: 0,
+  blackjacks: 0,
+  splits: 0,
+  doubleDowns: 0,
+  highestBalance: 1000,
+};
+
+function loadStats() {
+  try {
+    const saved = localStorage.getItem("memoryDeckBlackjackStats");
+    return saved ? { ...defaultStats, ...JSON.parse(saved) } : defaultStats;
+  } catch {
+    return defaultStats;
+  }
+}
+
 function playSound(path) {
   const sound = new Audio(path);
   sound.volume = 0.55;
@@ -64,20 +84,22 @@ function isBlackjack(hand) {
 function resultType(message) {
   const lower = message.toLowerCase();
 
+  if (lower.includes("push") || lower.includes("draw")) return "draw";
+
+  if (
+    lower.includes("dealer blackjack wins") ||
+    lower.includes("dealer wins") ||
+    lower.includes("bust")
+  ) {
+    return "lose";
+  }
+
   if (
     lower.includes("blackjack") ||
     lower.includes("you win") ||
     lower.includes("dealer busts")
   ) {
     return "win";
-  }
-
-  if (lower.includes("dealer wins") || lower.includes("bust")) {
-    return "lose";
-  }
-
-  if (lower.includes("push") || lower.includes("draw")) {
-    return "draw";
   }
 
   return "";
@@ -110,6 +132,7 @@ export default function Demo() {
   const [galleryCards, setGalleryCards] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
   const [showResultOverlay, setShowResultOverlay] = useState(false);
+  const [showStatsOverlay, setShowStatsOverlay] = useState(false);
 
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(50);
@@ -123,6 +146,8 @@ export default function Demo() {
   const [completedHands, setCompletedHands] = useState([]);
   const [splitResults, setSplitResults] = useState([]);
 
+  const [stats, setStats] = useState(loadStats);
+
   const currentTheme = tableThemes[theme];
   const activePlayerHand = playerHands[activeHandIndex] || [];
   const playerTotal = handTotal(activePlayerHand);
@@ -132,6 +157,11 @@ export default function Demo() {
     : dealerHand[0]
     ? cardValue(dealerHand[0].rank)
     : 0;
+
+  const winRate =
+    stats.gamesPlayed > 0
+      ? Math.round((stats.wins / stats.gamesPlayed) * 100)
+      : 0;
 
   const canDoubleDown =
     gameStarted &&
@@ -148,6 +178,54 @@ export default function Demo() {
     activePlayerHand.length === 2 &&
     activePlayerHand[0]?.rank === activePlayerHand[1]?.rank &&
     balance >= roundBet;
+
+  function saveStats(nextStats) {
+    setStats(nextStats);
+    localStorage.setItem("memoryDeckBlackjackStats", JSON.stringify(nextStats));
+  }
+
+  function updateStats(updater) {
+    setStats((current) => {
+      const nextStats = updater(current);
+      localStorage.setItem("memoryDeckBlackjackStats", JSON.stringify(nextStats));
+      return nextStats;
+    });
+  }
+
+  function updateHighestBalance(nextBalance) {
+    updateStats((current) => ({
+      ...current,
+      highestBalance: Math.max(current.highestBalance, nextBalance),
+    }));
+  }
+
+  function resetStats() {
+    playClick();
+    saveStats(defaultStats);
+  }
+
+  function recordSingleResult(finalMessage, blackjackPayout = false) {
+    const type = resultType(finalMessage);
+
+    updateStats((current) => ({
+      ...current,
+      gamesPlayed: current.gamesPlayed + 1,
+      wins: current.wins + (type === "win" ? 1 : 0),
+      losses: current.losses + (type === "lose" ? 1 : 0),
+      pushes: current.pushes + (type === "draw" ? 1 : 0),
+      blackjacks: current.blackjacks + (blackjackPayout ? 1 : 0),
+    }));
+  }
+
+  function recordSplitResults(results) {
+    updateStats((current) => ({
+      ...current,
+      gamesPlayed: current.gamesPlayed + results.length,
+      wins: current.wins + results.filter((r) => r.outcome === "win").length,
+      losses: current.losses + results.filter((r) => r.outcome === "lose").length,
+      pushes: current.pushes + results.filter((r) => r.outcome === "draw").length,
+    }));
+  }
 
   function playClick() {
     playSound("/sounds/click.mp3");
@@ -178,6 +256,7 @@ export default function Demo() {
     playClick();
 
     setBalance(1000);
+    updateHighestBalance(1000);
     setBet(50);
     setRoundBet(0);
     setHasDoubled(false);
@@ -193,17 +272,22 @@ export default function Demo() {
   function settleSingleBet(finalMessage, finalRoundBet, blackjackPayout = false) {
     const type = resultType(finalMessage);
 
+    let payout = 0;
+
     if (blackjackPayout) {
-      setBalance((prev) => prev + Math.floor(finalRoundBet * 2.5));
-      return;
+      payout = Math.floor(finalRoundBet * 2.5);
+    } else if (type === "win") {
+      payout = finalRoundBet * 2;
+    } else if (type === "draw") {
+      payout = finalRoundBet;
     }
 
-    if (type === "win") {
-      setBalance((prev) => prev + finalRoundBet * 2);
-    }
-
-    if (type === "draw") {
-      setBalance((prev) => prev + finalRoundBet);
+    if (payout > 0) {
+      setBalance((prev) => {
+        const nextBalance = prev + payout;
+        updateHighestBalance(nextBalance);
+        return nextBalance;
+      });
     }
   }
 
@@ -215,7 +299,13 @@ export default function Demo() {
       if (result.outcome === "draw") payout += result.bet;
     });
 
-    setBalance((prev) => prev + payout);
+    if (payout > 0) {
+      setBalance((prev) => {
+        const nextBalance = prev + payout;
+        updateHighestBalance(nextBalance);
+        return nextBalance;
+      });
+    }
   }
 
   function endGame(finalMessage, finalRoundBet = roundBet, blackjackPayout = false) {
@@ -226,6 +316,7 @@ export default function Demo() {
     setMessage(finalMessage);
 
     settleSingleBet(finalMessage, finalRoundBet, blackjackPayout);
+    recordSingleResult(finalMessage, blackjackPayout);
 
     const type = resultType(finalMessage);
 
@@ -275,19 +366,19 @@ export default function Demo() {
     setGameStarted(false);
 
     settleSplitBets(results);
+    recordSplitResults(results);
 
     const wins = results.filter((r) => r.outcome === "win").length;
     const losses = results.filter((r) => r.outcome === "lose").length;
     const draws = results.filter((r) => r.outcome === "draw").length;
 
+    setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
+
     if (wins > losses) {
-      setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
       playWin();
     } else if (losses > wins) {
-      setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
       playLose();
     } else {
-      setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
       playClick();
     }
 
@@ -443,6 +534,11 @@ export default function Demo() {
     playClick();
     playDeal();
 
+    updateStats((current) => ({
+      ...current,
+      doubleDowns: current.doubleDowns + 1,
+    }));
+
     const doubledBet = roundBet * 2;
     const newPlayerHand = [...activePlayerHand, deck[0]];
     const remainingDeck = deck.slice(1);
@@ -467,6 +563,11 @@ export default function Demo() {
 
     playClick();
     playDeal();
+
+    updateStats((current) => ({
+      ...current,
+      splits: current.splits + 1,
+    }));
 
     const firstCard = activePlayerHand[0];
     const secondCard = activePlayerHand[1];
@@ -518,13 +619,14 @@ export default function Demo() {
   const activeGalleryCard =
     galleryIndex !== null ? galleryCards[galleryIndex] : null;
 
-  const activeResultType = splitMode && splitResults.length > 0
-    ? splitResults.some((r) => r.outcome === "win")
-      ? "win"
-      : splitResults.some((r) => r.outcome === "lose")
-      ? "lose"
-      : "draw"
-    : resultType(message);
+  const activeResultType =
+    splitMode && splitResults.length > 0
+      ? splitResults.some((r) => r.outcome === "win")
+        ? "win"
+        : splitResults.some((r) => r.outcome === "lose")
+        ? "lose"
+        : "draw"
+      : resultType(message);
 
   return (
     <div
@@ -640,6 +742,16 @@ export default function Demo() {
           >
             Split
           </button>
+
+          <button
+            className="stats-button"
+            onClick={() => {
+              playClick();
+              setShowStatsOverlay(true);
+            }}
+          >
+            Stats
+          </button>
         </div>
 
         <div className="status-box">
@@ -690,9 +802,7 @@ export default function Demo() {
                 <div
                   key={handIndex}
                   className={`split-hand ${
-                    handIndex === activeHandIndex && gameStarted
-                      ? "active"
-                      : ""
+                    handIndex === activeHandIndex && gameStarted ? "active" : ""
                   }`}
                 >
                   <div className="split-label">
@@ -762,7 +872,8 @@ export default function Demo() {
                   <div>Dealer: {handTotal(dealerHand)}</div>
                   {splitResults.map((result) => (
                     <div key={result.handIndex}>
-                      Hand {result.handIndex + 1}: {outcomeLabel(result.outcome)} — Bet {result.bet}
+                      Hand {result.handIndex + 1}: {outcomeLabel(result.outcome)} — Bet{" "}
+                      {result.bet}
                     </div>
                   ))}
                   <div>Balance: {balance}</div>
@@ -772,6 +883,76 @@ export default function Demo() {
 
             <button className="result-button" onClick={newGame}>
               Deal Again
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showStatsOverlay && (
+        <div className="stats-overlay">
+          <div className="stats-box">
+            <button
+              className="stats-close"
+              onClick={() => {
+                playClick();
+                setShowStatsOverlay(false);
+              }}
+            >
+              ×
+            </button>
+
+            <div className="stats-label">PLAYER PROFILE</div>
+            <div className="stats-title">Memory Deck Stats</div>
+
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span>Hands Played</span>
+                <strong>{stats.gamesPlayed}</strong>
+              </div>
+
+              <div className="stat-card">
+                <span>Win Rate</span>
+                <strong>{winRate}%</strong>
+              </div>
+
+              <div className="stat-card win">
+                <span>Wins</span>
+                <strong>{stats.wins}</strong>
+              </div>
+
+              <div className="stat-card lose">
+                <span>Losses</span>
+                <strong>{stats.losses}</strong>
+              </div>
+
+              <div className="stat-card">
+                <span>Pushes</span>
+                <strong>{stats.pushes}</strong>
+              </div>
+
+              <div className="stat-card">
+                <span>Blackjacks</span>
+                <strong>{stats.blackjacks}</strong>
+              </div>
+
+              <div className="stat-card">
+                <span>Splits</span>
+                <strong>{stats.splits}</strong>
+              </div>
+
+              <div className="stat-card">
+                <span>Double Downs</span>
+                <strong>{stats.doubleDowns}</strong>
+              </div>
+
+              <div className="stat-card highlight">
+                <span>Highest Balance</span>
+                <strong>{stats.highestBalance}</strong>
+              </div>
+            </div>
+
+            <button className="stats-reset" onClick={resetStats}>
+              Reset Statistics
             </button>
           </div>
         </div>
