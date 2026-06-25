@@ -766,3 +766,240 @@ body {
     grid-column: span 2;
   }
 }
+/* =========================
+   PLATFORM DASHBOARD
+========================= */
+
+.platform-page {
+  min-height: 100vh;
+  padding: 42px;
+  background:
+    radial-gradient(circle at top, rgba(255,231,163,0.12), transparent 30%),
+    linear-gradient(135deg, #05070f, #111827);
+  color: #fff4cf;
+}
+
+.platform-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  align-items: center;
+  padding: 42px;
+  border-radius: 32px;
+  background: rgba(0,0,0,0.42);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(8px);
+}
+
+.platform-kicker {
+  margin: 0 0 12px;
+  color: #ffe7a3;
+  font-weight: bold;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+}
+
+.platform-hero h1 {
+  margin: 0;
+  font-size: 4rem;
+  line-height: 1;
+}
+
+.platform-hero p {
+  max-width: 760px;
+  font-size: 1.35rem;
+  line-height: 1.5;
+}
+
+.platform-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 260px;
+}
+
+.platform-primary,
+.platform-secondary,
+.deck-play-button,
+.deck-disabled-button {
+  display: inline-block;
+  text-align: center;
+  border: none;
+  border-radius: 18px;
+  padding: 18px 24px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.platform-primary {
+  background: #e51e1e;
+  color: white;
+}
+
+.platform-secondary {
+  background: rgba(255,255,255,0.12);
+  color: #ffe7a3;
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+.platform-section {
+  margin-top: 42px;
+}
+
+.platform-section h2 {
+  font-size: 2.6rem;
+  margin-bottom: 24px;
+}
+
+.deck-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 26px;
+}
+
+.deck-card {
+  overflow: hidden;
+  border-radius: 28px;
+  background: rgba(0,0,0,0.42);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 0 30px rgba(0,0,0,0.35);
+}
+
+.deck-cover {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle, rgba(255,231,163,0.26), transparent 55%),
+    linear-gradient(135deg, #291000, #04152a);
+}
+
+.deck-cover span {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.12);
+  color: #ffe7a3;
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+.deck-info {
+  padding: 24px;
+}
+
+.deck-info h3 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+}
+
+.deck-info p {
+  margin: 0 0 18px;
+  color: rgba(255,255,255,0.75);
+}
+
+.deck-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  color: #ffe7a3;
+  font-weight: bold;
+}
+
+.deck-games {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.deck-games span {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  font-size: 0.9rem;
+}
+
+.deck-play-button {
+  width: 100%;
+  background: #e51e1e;
+  color: white;
+}
+
+.deck-disabled-button {
+  width: 100%;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.55);
+  cursor: not-allowed;
+}
+
+.platform-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+.platform-feature-grid div {
+  padding: 26px;
+  border-radius: 24px;
+  background: rgba(0,0,0,0.36);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
+.platform-feature-grid h3 {
+  margin-top: 0;
+  color: #ffe7a3;
+}
+
+.landing-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.secondary-launch {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.22);
+}
+
+.landing-powered {
+  margin-top: 28px;
+  color: #ffe7a3;
+  font-size: 1rem;
+}
+
+@media (max-width: 900px) {
+  .platform-page {
+    padding: 20px;
+  }
+
+  .platform-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 28px;
+  }
+
+  .platform-hero h1 {
+    font-size: 3rem;
+  }
+
+  .platform-actions {
+    width: 100%;
+  }
+
+  .deck-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .platform-feature-grid {
+    grid-template-columns: 1fr;
+  }
+}
