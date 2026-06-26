@@ -7,9 +7,30 @@ const SETS = {
     backImage: "/stella/public-set-01/back-cover.jpg",
     backPreview: "/stella/public-set-01/back-cover.jpg",
     phases: [
-      { rounds: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], rewardImages: [1,2,3,4,5,6,7,8,9] },
-      { rounds: [[10, 11, 12], [13, 14, 15], [16, 17, 18]], rewardImages: [10,11,12,13,14,15,16,17,18] },
-      { rounds: [[19, 20, 21], [22, 23, 24], [25, 26, 1]], rewardImages: [19,20,21,22,23,24,25,26,1] },
+      {
+        rounds: [
+          [1, 2, 3],
+          [4, 5, 6],
+          [7, 8, 9],
+        ],
+        rewardImages: [1, 2, 3, 4, 5, 6, 7, 8, 9],
+      },
+      {
+        rounds: [
+          [10, 11, 12],
+          [13, 14, 15],
+          [16, 17, 18],
+        ],
+        rewardImages: [10, 11, 12, 13, 14, 15, 16, 17, 18],
+      },
+      {
+        rounds: [
+          [19, 20, 21],
+          [22, 23, 24],
+          [25, 26, 1],
+        ],
+        rewardImages: [19, 20, 21, 22, 23, 24, 25, 26, 1],
+      },
     ],
     finalUnlockImages: Array.from({ length: 26 }, (_, i) => i + 1),
   },
@@ -19,9 +40,30 @@ const SETS = {
     backImage: "/stella/public-set-02/back-cover.jpg",
     backPreview: "/stella/public-set-02/back-cover.jpg",
     phases: [
-      { rounds: [[27, 28, 29], [30, 31, 32], [33, 34, 35]], rewardImages: [27,28,29,30,31,32,33,34,35] },
-      { rounds: [[36, 37, 38], [39, 40, 41], [42, 43, 44]], rewardImages: [36,37,38,39,40,41,42,43,44] },
-      { rounds: [[45, 46, 47], [48, 49, 50], [51, 52, 27]], rewardImages: [45,46,47,48,49,50,51,52,27] },
+      {
+        rounds: [
+          [27, 28, 29],
+          [30, 31, 32],
+          [33, 34, 35],
+        ],
+        rewardImages: [27, 28, 29, 30, 31, 32, 33, 34, 35],
+      },
+      {
+        rounds: [
+          [36, 37, 38],
+          [39, 40, 41],
+          [42, 43, 44],
+        ],
+        rewardImages: [36, 37, 38, 39, 40, 41, 42, 43, 44],
+      },
+      {
+        rounds: [
+          [45, 46, 47],
+          [48, 49, 50],
+          [51, 52, 27],
+        ],
+        rewardImages: [45, 46, 47, 48, 49, 50, 51, 52, 27],
+      },
     ],
     finalUnlockImages: Array.from({ length: 26 }, (_, i) => i + 27),
   },
@@ -29,10 +71,12 @@ const SETS = {
 
 function shuffleArray(items) {
   const copy = [...items];
+
   for (let i = copy.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
     [copy[i], copy[j]] = [copy[j], copy[i]];
   }
+
   return copy;
 }
 
@@ -76,6 +120,7 @@ function buildRewardImages(setName, phaseIndex) {
 
   return phase.rewardImages.flatMap((num) => {
     const padded = padNumber(num);
+
     return [
       `${set.folder}/img-${padded}-a.jpg`,
       `${set.folder}/img-${padded}-b.jpg`,
@@ -88,6 +133,7 @@ function buildFinalUnlockImages(setName) {
 
   return set.finalUnlockImages.flatMap((num) => {
     const padded = padNumber(num);
+
     return [
       `${set.folder}/img-${padded}-a.jpg`,
       `${set.folder}/img-${padded}-b.jpg`,
@@ -99,14 +145,18 @@ export default function MatchGame() {
   const [selectedSet, setSelectedSet] = useState("Bedroom");
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [roundIndex, setRoundIndex] = useState(0);
+
   const [cards, setCards] = useState([]);
   const [selectedCards, setSelectedCards] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
+
   const [previewImage, setPreviewImage] = useState(SETS.Bedroom.backPreview);
   const [showReward, setShowReward] = useState(false);
   const [showFinalUnlock, setShowFinalUnlock] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300);
+
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [galleryIndex, setGalleryIndex] = useState(null);
 
   const totalPairsThisRound = 3;
 
@@ -114,6 +164,7 @@ export default function MatchGame() {
     const unique = new Set(
       cards.filter((card) => card.matched).map((card) => card.pairId)
     );
+
     return unique.size;
   }, [cards]);
 
@@ -126,6 +177,9 @@ export default function MatchGame() {
     () => buildFinalUnlockImages(selectedSet),
     [selectedSet]
   );
+
+  const activeGalleryImage =
+    galleryIndex !== null ? galleryImages[galleryIndex] : null;
 
   useEffect(() => {
     setPreviewImage(SETS[selectedSet].backPreview);
@@ -148,6 +202,28 @@ export default function MatchGame() {
     return () => window.clearTimeout(timer);
   }, [showFinalUnlock, timeLeft, selectedSet]);
 
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (!activeGalleryImage) return;
+
+      if (event.key === "Escape") {
+        closeGallery();
+      }
+
+      if (event.key === "ArrowLeft") {
+        previousGalleryImage();
+      }
+
+      if (event.key === "ArrowRight") {
+        nextGalleryImage();
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeGalleryImage, galleryImages]);
+
   function loadRound(setName, nextPhaseIndex, nextRoundIndex) {
     setCards(buildRoundDeck(setName, nextPhaseIndex, nextRoundIndex));
     setSelectedCards([]);
@@ -161,10 +237,10 @@ export default function MatchGame() {
     setShowReward(false);
     setShowFinalUnlock(false);
     setTimeLeft(300);
-    setSelectedImage(null);
     setCards(buildRoundDeck(setName, 0, 0));
     setSelectedCards([]);
     setIsLocked(false);
+    closeGallery();
   }
 
   function handleCardClick(card) {
@@ -221,6 +297,7 @@ export default function MatchGame() {
                 : c
             )
           );
+
           setSelectedCards([]);
           setIsLocked(false);
         }, 900);
@@ -231,6 +308,7 @@ export default function MatchGame() {
   function handleContinue() {
     if (phaseIndex < 2) {
       const nextPhase = phaseIndex + 1;
+
       setPhaseIndex(nextPhase);
       setRoundIndex(0);
       loadRound(selectedSet, nextPhase, 0);
@@ -244,7 +322,30 @@ export default function MatchGame() {
   function formatTime(seconds) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
+
     return `${mins}:${String(secs).padStart(2, "0")}`;
+  }
+
+  function openGallery(images, index) {
+    setGalleryImages(images);
+    setGalleryIndex(index);
+  }
+
+  function closeGallery() {
+    setGalleryImages([]);
+    setGalleryIndex(null);
+  }
+
+  function previousGalleryImage() {
+    setGalleryIndex((current) =>
+      current === 0 ? galleryImages.length - 1 : current - 1
+    );
+  }
+
+  function nextGalleryImage() {
+    setGalleryIndex((current) =>
+      current === galleryImages.length - 1 ? 0 : current + 1
+    );
   }
 
   return (
@@ -286,6 +387,7 @@ export default function MatchGame() {
 
             <div className="match-side-card">
               <h3>{SETS[selectedSet].label}</h3>
+
               <p>
                 Stage {phaseIndex + 1} of 3
                 <br />
@@ -336,6 +438,7 @@ export default function MatchGame() {
                 <div className="overlay-inline">
                   <div className="overlay-card">
                     <h2 className="overlay-title">Reward Unlocked</h2>
+
                     <p className="overlay-text">
                       You completed Stage {phaseIndex + 1}. These are the 18
                       preview images unlocked for this stage.
@@ -358,7 +461,7 @@ export default function MatchGame() {
                       key={`${image}-${index}`}
                       type="button"
                       className="gallery-card"
-                      onClick={() => setSelectedImage(image)}
+                      onClick={() => openGallery(rewardImages, index)}
                     >
                       <img src={image} alt="Reward" className="gallery-image" />
                     </button>
@@ -372,6 +475,7 @@ export default function MatchGame() {
                 <div className="overlay-inline">
                   <div className="overlay-card">
                     <h2 className="overlay-title">Full Preview Unlocked</h2>
+
                     <p className="overlay-text">
                       All 26 pairs are unlocked for {formatTime(timeLeft)}.
                     </p>
@@ -391,7 +495,7 @@ export default function MatchGame() {
                       key={`${image}-${index}`}
                       type="button"
                       className="gallery-card"
-                      onClick={() => setSelectedImage(image)}
+                      onClick={() => openGallery(finalUnlockImages, index)}
                     >
                       <img
                         src={image}
@@ -407,9 +511,37 @@ export default function MatchGame() {
         </div>
       </div>
 
-      {selectedImage && (
-        <div className="image-overlay" onClick={() => setSelectedImage(null)}>
-          <img src={selectedImage} alt="Expanded card" className="image-full" />
+      {activeGalleryImage && (
+        <div className="image-overlay slideshow-overlay">
+          <button className="slideshow-close" onClick={closeGallery}>
+            ×
+          </button>
+
+          <button
+            className="slideshow-nav slideshow-prev"
+            onClick={previousGalleryImage}
+          >
+            ‹
+          </button>
+
+          <div className="slideshow-content">
+            <div className="slideshow-counter">
+              {galleryIndex + 1} / {galleryImages.length}
+            </div>
+
+            <img
+              src={activeGalleryImage}
+              alt="Expanded card"
+              className="image-full"
+            />
+          </div>
+
+          <button
+            className="slideshow-nav slideshow-next"
+            onClick={nextGalleryImage}
+          >
+            ›
+          </button>
         </div>
       )}
     </div>
