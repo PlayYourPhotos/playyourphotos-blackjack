@@ -34,6 +34,7 @@ const SETS = {
     ],
     finalUnlockImages: Array.from({ length: 26 }, (_, i) => i + 1),
   },
+
   Lounge: {
     label: "Stella in the Lounge",
     folder: "/stella/public-set-02",
@@ -157,6 +158,7 @@ export default function MatchGame() {
 
   const [galleryImages, setGalleryImages] = useState([]);
   const [galleryIndex, setGalleryIndex] = useState(null);
+  const [galleryFadeKey, setGalleryFadeKey] = useState(0);
 
   const totalPairsThisRound = 3;
 
@@ -206,17 +208,9 @@ export default function MatchGame() {
     function handleKeyDown(event) {
       if (!activeGalleryImage) return;
 
-      if (event.key === "Escape") {
-        closeGallery();
-      }
-
-      if (event.key === "ArrowLeft") {
-        previousGalleryImage();
-      }
-
-      if (event.key === "ArrowRight") {
-        nextGalleryImage();
-      }
+      if (event.key === "Escape") closeGallery();
+      if (event.key === "ArrowLeft") previousGalleryImage();
+      if (event.key === "ArrowRight") nextGalleryImage();
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -329,6 +323,7 @@ export default function MatchGame() {
   function openGallery(images, index) {
     setGalleryImages(images);
     setGalleryIndex(index);
+    setGalleryFadeKey((prev) => prev + 1);
   }
 
   function closeGallery() {
@@ -340,60 +335,72 @@ export default function MatchGame() {
     setGalleryIndex((current) =>
       current === 0 ? galleryImages.length - 1 : current - 1
     );
+    setGalleryFadeKey((prev) => prev + 1);
   }
 
   function nextGalleryImage() {
     setGalleryIndex((current) =>
       current === galleryImages.length - 1 ? 0 : current + 1
     );
+    setGalleryFadeKey((prev) => prev + 1);
+  }
+
+  function stopOverlayClick(event) {
+    event.stopPropagation();
   }
 
   return (
     <div className="match-page">
       <div className="match-shell">
-        <header className="match-header">
+        <header className="match-header compact-match-header">
           <div>
             <h1 className="match-title">Stella - Match Me</h1>
             <p className="match-subtitle">
-              Preview edition • Match 3 pairs to unlock each stage.
+              {selectedSet} Collection • Preview Edition
             </p>
+          </div>
+
+          <div className="match-header-progress">
+            <strong>
+              Stage {phaseIndex + 1} of 3 • Round {roundIndex + 1} of 3
+            </strong>
+            <span>
+              {matchedPairs}/{totalPairsThisRound} pairs
+            </span>
+            <button
+              className="match-button primary compact-reset"
+              onClick={() => resetWholeGame()}
+            >
+              Reset
+            </button>
           </div>
         </header>
 
         <div className="match-game-layout">
           <aside className="match-side-panel">
-            <div className="match-side-card">
+            <div className="match-side-card combined-match-card">
               <h3>Choose Set</h3>
 
-              <div className="match-controls">
-                <select
-                  className="match-select"
-                  value={selectedSet}
-                  onChange={(e) => setSelectedSet(e.target.value)}
-                  disabled={showReward || showFinalUnlock}
-                >
-                  <option value="Bedroom">Bedroom</option>
-                  <option value="Lounge">Lounge</option>
-                </select>
+              <select
+                className="match-select"
+                value={selectedSet}
+                onChange={(e) => setSelectedSet(e.target.value)}
+                disabled={showReward || showFinalUnlock}
+              >
+                <option value="Bedroom">Bedroom</option>
+                <option value="Lounge">Lounge</option>
+              </select>
 
-                <button
-                  className="match-button primary"
-                  onClick={() => resetWholeGame()}
-                >
-                  Reset
-                </button>
-              </div>
-            </div>
+              <div className="match-side-divider" />
 
-            <div className="match-side-card">
               <h3>{SETS[selectedSet].label}</h3>
 
               <p>
-                Stage {phaseIndex + 1} of 3
+                Stage {phaseIndex + 1} / 3
                 <br />
-                Round {roundIndex + 1} of 3
+                Round {roundIndex + 1} / 3
                 <br />
-                {matchedPairs}/{totalPairsThisRound} pairs
+                {matchedPairs} of {totalPairsThisRound} pairs
               </p>
             </div>
 
@@ -403,13 +410,6 @@ export default function MatchGame() {
           </aside>
 
           <main className="match-main-area">
-            {!showReward && !showFinalUnlock && (
-              <div className="match-status">
-                Stage {phaseIndex + 1} of 3 • Round {roundIndex + 1} of 3 •{" "}
-                {matchedPairs}/{totalPairsThisRound} pairs
-              </div>
-            )}
-
             {!showReward && !showFinalUnlock && (
               <div className="match-grid">
                 {cards.map((card) => {
@@ -436,7 +436,8 @@ export default function MatchGame() {
             {showReward && !showFinalUnlock && (
               <>
                 <div className="overlay-inline">
-                  <div className="overlay-card">
+                  <div className="overlay-card stage-complete-card">
+                    <div className="stage-kicker">★ Stage Complete ★</div>
                     <h2 className="overlay-title">Reward Unlocked</h2>
 
                     <p className="overlay-text">
@@ -473,8 +474,9 @@ export default function MatchGame() {
             {showFinalUnlock && (
               <>
                 <div className="overlay-inline">
-                  <div className="overlay-card">
-                    <h2 className="overlay-title">Full Preview Unlocked</h2>
+                  <div className="overlay-card stage-complete-card">
+                    <div className="stage-kicker">★ Full Preview ★</div>
+                    <h2 className="overlay-title">All Images Unlocked</h2>
 
                     <p className="overlay-text">
                       All 26 pairs are unlocked for {formatTime(timeLeft)}.
@@ -512,33 +514,40 @@ export default function MatchGame() {
       </div>
 
       {activeGalleryImage && (
-        <div className="image-overlay slideshow-overlay">
+        <div className="image-overlay slideshow-overlay" onClick={closeGallery}>
           <button className="slideshow-close" onClick={closeGallery}>
             ×
           </button>
 
           <button
             className="slideshow-nav slideshow-prev"
-            onClick={previousGalleryImage}
+            onClick={(event) => {
+              event.stopPropagation();
+              previousGalleryImage();
+            }}
           >
             ‹
           </button>
 
-          <div className="slideshow-content">
+          <div className="slideshow-content" onClick={stopOverlayClick}>
             <div className="slideshow-counter">
-              {galleryIndex + 1} / {galleryImages.length}
+              Image {galleryIndex + 1} of {galleryImages.length}
             </div>
 
             <img
+              key={galleryFadeKey}
               src={activeGalleryImage}
               alt="Expanded card"
-              className="image-full"
+              className="image-full slideshow-image"
             />
           </div>
 
           <button
             className="slideshow-nav slideshow-next"
-            onClick={nextGalleryImage}
+            onClick={(event) => {
+              event.stopPropagation();
+              nextGalleryImage();
+            }}
           >
             ›
           </button>
