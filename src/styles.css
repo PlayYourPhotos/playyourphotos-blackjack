@@ -1002,4 +1002,14 @@ body {
   .platform-feature-grid {
     grid-template-columns: 1fr;
   }
+}.deck-button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.secondary-deck-button {
+  background: rgba(255,255,255,0.12);
+  color: #ffe7a3;
+  border: 1px solid rgba(255,255,255,0.18);
 }
