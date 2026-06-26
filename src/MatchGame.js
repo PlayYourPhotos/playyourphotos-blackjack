@@ -7,30 +7,9 @@ const SETS = {
     backImage: "/stella/public-set-01/back-cover.jpg",
     backPreview: "/stella/public-set-01/back-cover.jpg",
     phases: [
-      {
-        rounds: [
-          [1, 2, 3],
-          [4, 5, 6],
-          [7, 8, 9],
-        ],
-        rewardImages: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      },
-      {
-        rounds: [
-          [10, 11, 12],
-          [13, 14, 15],
-          [16, 17, 18],
-        ],
-        rewardImages: [10, 11, 12, 13, 14, 15, 16, 17, 18],
-      },
-      {
-        rounds: [
-          [19, 20, 21],
-          [22, 23, 24],
-          [25, 26, 1],
-        ],
-        rewardImages: [19, 20, 21, 22, 23, 24, 25, 26, 1],
-      },
+      { rounds: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], rewardImages: [1,2,3,4,5,6,7,8,9] },
+      { rounds: [[10, 11, 12], [13, 14, 15], [16, 17, 18]], rewardImages: [10,11,12,13,14,15,16,17,18] },
+      { rounds: [[19, 20, 21], [22, 23, 24], [25, 26, 1]], rewardImages: [19,20,21,22,23,24,25,26,1] },
     ],
     finalUnlockImages: Array.from({ length: 26 }, (_, i) => i + 1),
   },
@@ -40,30 +19,9 @@ const SETS = {
     backImage: "/stella/public-set-02/back-cover.jpg",
     backPreview: "/stella/public-set-02/back-cover.jpg",
     phases: [
-      {
-        rounds: [
-          [27, 28, 29],
-          [30, 31, 32],
-          [33, 34, 35],
-        ],
-        rewardImages: [27, 28, 29, 30, 31, 32, 33, 34, 35],
-      },
-      {
-        rounds: [
-          [36, 37, 38],
-          [39, 40, 41],
-          [42, 43, 44],
-        ],
-        rewardImages: [36, 37, 38, 39, 40, 41, 42, 43, 44],
-      },
-      {
-        rounds: [
-          [45, 46, 47],
-          [48, 49, 50],
-          [51, 52, 27],
-        ],
-        rewardImages: [45, 46, 47, 48, 49, 50, 51, 52, 27],
-      },
+      { rounds: [[27, 28, 29], [30, 31, 32], [33, 34, 35]], rewardImages: [27,28,29,30,31,32,33,34,35] },
+      { rounds: [[36, 37, 38], [39, 40, 41], [42, 43, 44]], rewardImages: [36,37,38,39,40,41,42,43,44] },
+      { rounds: [[45, 46, 47], [48, 49, 50], [51, 52, 27]], rewardImages: [45,46,47,48,49,50,51,52,27] },
     ],
     finalUnlockImages: Array.from({ length: 26 }, (_, i) => i + 27),
   },
@@ -141,13 +99,11 @@ export default function MatchGame() {
   const [selectedSet, setSelectedSet] = useState("Bedroom");
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [roundIndex, setRoundIndex] = useState(0);
-
   const [cards, setCards] = useState([]);
   const [selectedCards, setSelectedCards] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [previewImage, setPreviewImage] = useState(SETS.Bedroom.backPreview);
-
   const [showReward, setShowReward] = useState(false);
   const [showFinalUnlock, setShowFinalUnlock] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300);
@@ -295,134 +251,160 @@ export default function MatchGame() {
     <div className="match-page">
       <div className="match-shell">
         <header className="match-header">
-          <h1 className="match-title">Stella - Match Me</h1>
-          <p className="match-subtitle">
-            Preview edition • Match 3 pairs to unlock each stage.
-          </p>
+          <div>
+            <h1 className="match-title">Stella - Match Me</h1>
+            <p className="match-subtitle">
+              Preview edition • Match 3 pairs to unlock each stage.
+            </p>
+          </div>
         </header>
 
-        <div className="match-controls">
-          <select
-            className="match-select"
-            value={selectedSet}
-            onChange={(e) => setSelectedSet(e.target.value)}
-            disabled={showReward || showFinalUnlock}
-          >
-            <option value="Bedroom">Bedroom</option>
-            <option value="Lounge">Lounge</option>
-          </select>
+        <div className="match-game-layout">
+          <aside className="match-side-panel">
+            <div className="match-side-card">
+              <h3>Choose Set</h3>
 
-          <button
-            className="match-button primary"
-            onClick={() => resetWholeGame()}
-          >
-            Reset
-          </button>
-        </div>
-
-        <div className="set-preview-wrap">
-          <div className="set-label">{SETS[selectedSet].label}</div>
-          <div className="set-preview">
-            <img src={previewImage} alt={`${selectedSet} card back preview`} />
-          </div>
-        </div>
-
-        {!showReward && !showFinalUnlock && (
-          <div className="match-status">
-            Stage {phaseIndex + 1} of 3 • Round {roundIndex + 1} of 3 •{" "}
-            {matchedPairs}/{totalPairsThisRound} pairs
-          </div>
-        )}
-
-        {!showReward && !showFinalUnlock && (
-          <div className="match-grid">
-            {cards.map((card) => {
-              const isVisible = card.flipped || card.matched;
-
-              return (
-                <button
-                  key={card.id}
-                  type="button"
-                  className={`memory-card ${card.matched ? "matched" : ""}`}
-                  onClick={() => handleCardClick(card)}
+              <div className="match-controls">
+                <select
+                  className="match-select"
+                  value={selectedSet}
+                  onChange={(e) => setSelectedSet(e.target.value)}
+                  disabled={showReward || showFinalUnlock}
                 >
-                  <img
-                    src={isVisible ? card.image : card.backImage}
-                    alt={isVisible ? `Pair ${card.pairId}` : "card back"}
-                    className="memory-image"
-                  />
-                </button>
-              );
-            })}
-          </div>
-        )}
+                  <option value="Bedroom">Bedroom</option>
+                  <option value="Lounge">Lounge</option>
+                </select>
 
-        {showReward && !showFinalUnlock && (
-          <>
-            <div className="overlay-inline">
-              <div className="overlay-card">
-                <h2 className="overlay-title">Reward Unlocked</h2>
-                <p className="overlay-text">
-                  You completed Stage {phaseIndex + 1}. These are the 18 preview
-                  images unlocked for this stage.
-                </p>
-                <button
-                  className="match-button primary"
-                  onClick={handleContinue}
-                >
-                  {phaseIndex < 2
-                    ? "Continue"
-                    : "Unlock All 26 Pairs for 5 Minutes"}
-                </button>
-              </div>
-            </div>
-
-            <div className="gallery-grid">
-              {rewardImages.map((image, index) => (
-                <button
-                  key={`${image}-${index}`}
-                  type="button"
-                  className="gallery-card"
-                  onClick={() => setSelectedImage(image)}
-                >
-                  <img src={image} alt="Reward" className="gallery-image" />
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {showFinalUnlock && (
-          <>
-            <div className="overlay-inline">
-              <div className="overlay-card">
-                <h2 className="overlay-title">Full Preview Unlocked</h2>
-                <p className="overlay-text">
-                  All 26 pairs are unlocked for {formatTime(timeLeft)}.
-                </p>
                 <button
                   className="match-button primary"
                   onClick={() => resetWholeGame()}
                 >
-                  Restart
+                  Reset
                 </button>
               </div>
             </div>
 
-            <div className="gallery-grid">
-              {finalUnlockImages.map((image, index) => (
-                <button
-                  key={`${image}-${index}`}
-                  type="button"
-                  className="gallery-card"
-                  onClick={() => setSelectedImage(image)}
-                >
-                  <img src={image} alt="Unlocked" className="gallery-image" />
-                </button>
-              ))}
+            <div className="match-side-card">
+              <h3>{SETS[selectedSet].label}</h3>
+              <p>
+                Stage {phaseIndex + 1} of 3
+                <br />
+                Round {roundIndex + 1} of 3
+                <br />
+                {matchedPairs}/{totalPairsThisRound} pairs
+              </p>
             </div>
-          </>
-        )}
+
+            <div className="match-side-preview">
+              <img src={previewImage} alt={`${selectedSet} card back preview`} />
+            </div>
+          </aside>
+
+          <main className="match-main-area">
+            {!showReward && !showFinalUnlock && (
+              <div className="match-status">
+                Stage {phaseIndex + 1} of 3 • Round {roundIndex + 1} of 3 •{" "}
+                {matchedPairs}/{totalPairsThisRound} pairs
+              </div>
+            )}
+
+            {!showReward && !showFinalUnlock && (
+              <div className="match-grid">
+                {cards.map((card) => {
+                  const isVisible = card.flipped || card.matched;
+
+                  return (
+                    <button
+                      key={card.id}
+                      type="button"
+                      className={`memory-card ${card.matched ? "matched" : ""}`}
+                      onClick={() => handleCardClick(card)}
+                    >
+                      <img
+                        src={isVisible ? card.image : card.backImage}
+                        alt={isVisible ? `Pair ${card.pairId}` : "card back"}
+                        className="memory-image"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {showReward && !showFinalUnlock && (
+              <>
+                <div className="overlay-inline">
+                  <div className="overlay-card">
+                    <h2 className="overlay-title">Reward Unlocked</h2>
+                    <p className="overlay-text">
+                      You completed Stage {phaseIndex + 1}. These are the 18
+                      preview images unlocked for this stage.
+                    </p>
+
+                    <button
+                      className="match-button primary"
+                      onClick={handleContinue}
+                    >
+                      {phaseIndex < 2
+                        ? "Continue"
+                        : "Unlock All 26 Pairs for 5 Minutes"}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="gallery-grid">
+                  {rewardImages.map((image, index) => (
+                    <button
+                      key={`${image}-${index}`}
+                      type="button"
+                      className="gallery-card"
+                      onClick={() => setSelectedImage(image)}
+                    >
+                      <img src={image} alt="Reward" className="gallery-image" />
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {showFinalUnlock && (
+              <>
+                <div className="overlay-inline">
+                  <div className="overlay-card">
+                    <h2 className="overlay-title">Full Preview Unlocked</h2>
+                    <p className="overlay-text">
+                      All 26 pairs are unlocked for {formatTime(timeLeft)}.
+                    </p>
+
+                    <button
+                      className="match-button primary"
+                      onClick={() => resetWholeGame()}
+                    >
+                      Restart
+                    </button>
+                  </div>
+                </div>
+
+                <div className="gallery-grid">
+                  {finalUnlockImages.map((image, index) => (
+                    <button
+                      key={`${image}-${index}`}
+                      type="button"
+                      className="gallery-card"
+                      onClick={() => setSelectedImage(image)}
+                    >
+                      <img
+                        src={image}
+                        alt="Unlocked"
+                        className="gallery-image"
+                      />
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </main>
+        </div>
       </div>
 
       {selectedImage && (
