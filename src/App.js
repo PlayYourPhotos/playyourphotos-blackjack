@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
 import Demo from "./pages/Demo.js";
 import Platform from "./pages/Platform.js";
+import MatchGame from "./MatchGame.js";
 
 function Home() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/platform" element={<Platform />} />
         <Route path="/demo" element={<Demo />} />
+        <Route path="/match" element={<MatchGame />} />
       </Routes>
     </Router>
   );
