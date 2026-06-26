@@ -7,7 +7,7 @@ const starterDecks = [
     cards: 54,
     category: "Fantasy Warrior Art",
     status: "Demo Deck",
-    games: ["Blackjack"],
+    games: ["Blackjack", "Memory Match"],
   },
   {
     name: "Family Photos",
@@ -40,8 +40,13 @@ export default function Platform() {
 
         <div className="platform-actions">
           <button className="platform-primary">Create Memory Deck</button>
+
           <Link to="/demo" className="platform-secondary">
             Play Valkyra Blackjack
+          </Link>
+
+          <Link to="/match" className="platform-secondary">
+            Play Valkyra Match
           </Link>
         </div>
       </header>
@@ -72,9 +77,15 @@ export default function Platform() {
                 </div>
 
                 {deck.name === "Valkyra" ? (
-                  <Link to="/demo" className="deck-play-button">
-                    Play Deck
-                  </Link>
+                  <div className="deck-button-stack">
+                    <Link to="/demo" className="deck-play-button">
+                      Play Blackjack
+                    </Link>
+
+                    <Link to="/match" className="deck-play-button secondary-deck-button">
+                      Play Memory Match
+                    </Link>
+                  </div>
                 ) : (
                   <button className="deck-disabled-button" disabled>
                     Build Soon
