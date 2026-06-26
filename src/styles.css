@@ -1732,3 +1732,8 @@ a {
     height: 50px;
   }
 }
+.slideshow-image {
+  max-height: 86vh;
+  max-width: 70vw;
+  object-fit: contain;
+}
