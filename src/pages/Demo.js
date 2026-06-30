@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import fullDeck from "../data/fullDeck.js";
 import Card from "../components/Card";
 
@@ -83,15 +84,11 @@ function resultType(message) {
   const lower = message.toLowerCase();
 
   if (lower.includes("push") || lower.includes("draw")) return "draw";
-
   if (lower.includes("dealer bust")) return "win";
-
   if (lower.includes("dealer blackjack wins")) return "lose";
   if (lower.includes("dealer wins")) return "lose";
-
   if (lower.includes("you win")) return "win";
   if (lower.includes("blackjack")) return "win";
-
   if (lower.includes("bust")) return "lose";
 
   return "";
@@ -195,10 +192,7 @@ export default function Demo() {
   function updateStats(updater) {
     setStats((current) => {
       const nextStats = updater(current);
-      localStorage.setItem(
-        "memoryDeckBlackjackStats",
-        JSON.stringify(nextStats)
-      );
+      localStorage.setItem("memoryDeckBlackjackStats", JSON.stringify(nextStats));
       return nextStats;
     });
   }
@@ -232,8 +226,7 @@ export default function Demo() {
     updateStats((current) => ({
       ...current,
       gamesPlayed: current.gamesPlayed + results.length,
-      wins:
-        current.wins + results.filter((r) => r.outcome === "win").length,
+      wins: current.wins + results.filter((r) => r.outcome === "win").length,
       losses:
         current.losses + results.filter((r) => r.outcome === "lose").length,
       pushes:
@@ -454,11 +447,7 @@ export default function Demo() {
     return updatedHands;
   }
 
-  function moveToNextSplitHand(
-    updatedHands,
-    updatedDeck,
-    updatedCompletedHands
-  ) {
+  function moveToNextSplitHand(updatedHands, updatedDeck, updatedCompletedHands) {
     const nextIndex = updatedCompletedHands.findIndex((done) => !done);
 
     if (nextIndex === -1) {
@@ -622,7 +611,7 @@ export default function Demo() {
     playClick();
 
     setGalleryIndex((current) =>
-      current === galleryCards.length - 1 ? 0 : current + 1
+      current === galleryCards.length - 1 ? current : current + 1
     );
   }
 
@@ -646,6 +635,14 @@ export default function Demo() {
       }}
     >
       <aside className="game-panel">
+        <Link
+          to="/platform"
+          className="game-back-button"
+          onClick={() => playClick()}
+        >
+          ← Back to My Memory Decks
+        </Link>
+
         <h1 className="game-title">Valkyra Blackjack</h1>
 
         <div className="theme-box">
@@ -833,7 +830,9 @@ export default function Demo() {
                   </div>
 
                   {splitResults[handIndex] && (
-                    <div className={`split-result ${splitResults[handIndex].outcome}`}>
+                    <div
+                      className={`split-result ${splitResults[handIndex].outcome}`}
+                    >
                       {outcomeLabel(splitResults[handIndex].outcome)}
                     </div>
                   )}
@@ -882,8 +881,8 @@ export default function Demo() {
                   <div>Dealer: {handTotal(dealerHand)}</div>
                   {splitResults.map((result) => (
                     <div key={result.handIndex}>
-                      Hand {result.handIndex + 1}: {outcomeLabel(result.outcome)} — Bet{" "}
-                      {result.bet}
+                      Hand {result.handIndex + 1}:{" "}
+                      {outcomeLabel(result.outcome)} — Bet {result.bet}
                     </div>
                   ))}
                   <div>Balance: {balance}</div>
