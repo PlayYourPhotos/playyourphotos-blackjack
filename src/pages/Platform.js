@@ -82,8 +82,11 @@ export default function Platform() {
                       Play Blackjack
                     </Link>
 
-                    <Link to="/match" className="deck-play-button secondary-deck-button">
-                      Play Memory Match
+                    <Link
+                      to="/match"
+                      className="deck-play-button secondary-deck-button"
+                    >
+                      Play Match
                     </Link>
                   </div>
                 ) : (
