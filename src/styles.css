@@ -1737,3 +1737,31 @@ a {
   max-width: 70vw;
   object-fit: contain;
 }
+
+/* =========================
+   GAME BACK BUTTON
+========================= */
+
+.game-back-bar {
+  width: min(1500px, 100%);
+  margin: 0 auto 18px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.game-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #ffe7a3;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.game-back-button:hover {
+  background: rgba(255,255,255,0.20);
+}
