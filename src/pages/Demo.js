@@ -143,6 +143,9 @@ export default function Demo() {
   const [handBets, setHandBets] = useState([0]);
   const [completedHands, setCompletedHands] = useState([]);
   const [splitResults, setSplitResults] = useState([]);
+  const [showLauncher, setShowLauncher] = useState(false);
+const [launcherText, setLauncherText] = useState("Loading Memory Deck...");
+const [launcherStep, setLauncherStep] = useState(0);
 
   const [stats, setStats] = useState(loadStats);
 
@@ -443,67 +446,89 @@ export default function Demo() {
     }, 450);
   }
 
-  function newGame() {
-    if (gameStarted || dealerAnimating) return;
+  async function newGame() {
+  if (gameStarted || dealerAnimating) return;
 
-    playClick();
+  playClick();
 
-    if (balance < bet) {
-      setMessage("Not enough balance");
-      playLose();
-      return;
-    }
-
-    playDeal();
-
-    const freshDeck = shuffleDeck(fullDeck);
-
-    const player = [freshDeck[0], freshDeck[2]];
-    const dealer = [freshDeck[1], freshDeck[3]];
-
-    const playerHasBlackjack = isBlackjack(player);
-    const dealerHasBlackjack = isBlackjack(dealer);
-
-    setBalance((prev) => prev - bet);
-    setRoundBet(bet);
-
-    setDeck(freshDeck.slice(4));
-    setPlayerHands([player]);
-    setDealerHand(dealer);
-    setDealerRevealed(false);
-    setDealerAnimating(false);
-    setGameStarted(true);
-    setShowResultOverlay(false);
-    setHasDoubled(false);
-    setActiveHandIndex(0);
-    setSplitMode(false);
-    setHandBets([bet]);
-    setCompletedHands([false]);
-    setSplitResults([]);
-    setPendingPlayerBlackjack(playerHasBlackjack);
-    setPendingDealerBlackjack(dealerHasBlackjack);
-
-    if (dealer[0]?.rank === "A") {
-      setShowInsuranceOverlay(true);
-      setMessage("Dealer shows Ace — insurance?");
-      return;
-    }
-
-    setMessage("Your move");
-
-    if (playerHasBlackjack || dealerHasBlackjack) {
-      setTimeout(() => {
-        if (playerHasBlackjack && dealerHasBlackjack) {
-          endGame("Blackjack push — draw", bet, false);
-        } else if (playerHasBlackjack) {
-          endGame("Blackjack! You win 3:2", bet, true);
-        } else {
-          endGame("Dealer Blackjack wins", bet, false);
-        }
-      }, 450);
-    }
+  if (balance < bet) {
+    setMessage("Not enough balance");
+    playLose();
+    return;
   }
 
+  setShowLauncher(true);
+  setLauncherStep(1);
+  setLauncherText("Loading Memory Deck...");
+  setDealerAnimating(true);
+
+  await sleep(500);
+
+  setLauncherStep(2);
+  setLauncherText("Loading Valkyra Artwork...");
+
+  await sleep(500);
+
+  setLauncherStep(3);
+  setLauncherText("Shuffling Deck...");
+  playDeal();
+
+  await sleep(500);
+
+  setLauncherStep(4);
+  setLauncherText("Entering Blackjack Table...");
+
+  await sleep(500);
+
+  const freshDeck = shuffleDeck(fullDeck);
+
+  const player = [freshDeck[0], freshDeck[2]];
+  const dealer = [freshDeck[1], freshDeck[3]];
+
+  const playerHasBlackjack = isBlackjack(player);
+  const dealerHasBlackjack = isBlackjack(dealer);
+
+  setBalance((prev) => prev - bet);
+  setRoundBet(bet);
+
+  setDeck(freshDeck.slice(4));
+  setPlayerHands([player]);
+  setDealerHand(dealer);
+  setDealerRevealed(false);
+  setDealerAnimating(false);
+  setGameStarted(true);
+  setShowResultOverlay(false);
+  setHasDoubled(false);
+  setActiveHandIndex(0);
+  setSplitMode(false);
+  setHandBets([bet]);
+  setCompletedHands([false]);
+  setSplitResults([]);
+  setPendingPlayerBlackjack(playerHasBlackjack);
+  setPendingDealerBlackjack(dealerHasBlackjack);
+
+  setShowLauncher(false);
+
+  if (dealer[0]?.rank === "A") {
+    setShowInsuranceOverlay(true);
+    setMessage("Dealer shows Ace — insurance?");
+    return;
+  }
+
+  setMessage("Your move");
+
+  if (playerHasBlackjack || dealerHasBlackjack) {
+    setTimeout(() => {
+      if (playerHasBlackjack && dealerHasBlackjack) {
+        endGame("Blackjack push — draw", bet, false);
+      } else if (playerHasBlackjack) {
+        endGame("Blackjack! You win 3:2", bet, true);
+      } else {
+        endGame("Dealer Blackjack wins", bet, false);
+      }
+    }, 450);
+  }
+}
   function finishInsuranceChoice(tookInsurance) {
     playClick();
 
