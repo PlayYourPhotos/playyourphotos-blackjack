@@ -143,9 +143,10 @@ export default function Demo() {
   const [handBets, setHandBets] = useState([0]);
   const [completedHands, setCompletedHands] = useState([]);
   const [splitResults, setSplitResults] = useState([]);
+
   const [showLauncher, setShowLauncher] = useState(false);
-const [launcherText, setLauncherText] = useState("Loading Memory Deck...");
-const [launcherStep, setLauncherStep] = useState(0);
+  const [launcherText, setLauncherText] = useState("Loading Memory Deck...");
+  const [launcherStep, setLauncherStep] = useState(0);
 
   const [stats, setStats] = useState(loadStats);
 
@@ -447,78 +448,100 @@ const [launcherStep, setLauncherStep] = useState(0);
   }
 
   async function newGame() {
-  if (gameStarted || dealerAnimating) return;
+    if (gameStarted || dealerAnimating) return;
 
-  playClick();
+    playClick();
 
-  if (balance < bet) {
-    setMessage("Not enough balance");
-    playLose();
-    return;
-  }
+    if (balance < bet) {
+      setMessage("Not enough balance");
+      playLose();
+      return;
+    }
 
-  setShowLauncher(true);
-  setLauncherStep(1);
-  setLauncherText("Loading Memory Deck...");
-  setDealerAnimating(true);
+    setShowLauncher(true);
+    setLauncherStep(1);
+    setLauncherText("Loading Memory Deck...");
+    setDealerAnimating(true);
 
-  await sleep(500);
+    await sleep(500);
 
-  setLauncherStep(2);
-  setLauncherText("Loading Valkyra Artwork...");
+    setLauncherStep(2);
+    setLauncherText("Loading Valkyra Artwork...");
 
-  await sleep(500);
+    await sleep(500);
 
-  setLauncherStep(3);
-  setLauncherText("Shuffling Deck...");
-  playDeal();
+    setLauncherStep(3);
+    setLauncherText("Shuffling Deck...");
+    playDeal();
 
-  await sleep(500);
+    await sleep(500);
 
-  setLauncherStep(4);
-  setLauncherText("Entering Blackjack Table...");
+    setLauncherStep(4);
+    setLauncherText("Entering Blackjack Table...");
 
-  await sleep(500);
+    await sleep(500);
 
-  const freshDeck = shuffleDeck(fullDeck);
+    const freshDeck = shuffleDeck(fullDeck);
 
-  const player = [freshDeck[0], freshDeck[2]];
-  const dealer = [freshDeck[1], freshDeck[3]];
+    const player = [freshDeck[0], freshDeck[2]];
+    const dealer = [freshDeck[1], freshDeck[3]];
 
-  const playerHasBlackjack = isBlackjack(player);
-  const dealerHasBlackjack = isBlackjack(dealer);
+    const playerHasBlackjack = isBlackjack(player);
+    const dealerHasBlackjack = isBlackjack(dealer);
 
-  setBalance((prev) => prev - bet);
-  setRoundBet(bet);
+    setBalance((prev) => prev - bet);
+    setRoundBet(bet);
+    setDeck(freshDeck.slice(4));
 
-  setDeck(freshDeck.slice(4));
-  setPlayerHands([player]);
-  setDealerHand(dealer);
-  setDealerRevealed(false);
-  setDealerAnimating(false);
-  setGameStarted(true);
-  setShowResultOverlay(false);
-  setHasDoubled(false);
-  setActiveHandIndex(0);
-  setSplitMode(false);
-  setHandBets([bet]);
-  setCompletedHands([false]);
-  setSplitResults([]);
-  setPendingPlayerBlackjack(playerHasBlackjack);
-  setPendingDealerBlackjack(dealerHasBlackjack);
+    setPlayerHands([[]]);
+    setDealerHand([]);
+    setDealerRevealed(false);
+    setGameStarted(true);
+    setShowResultOverlay(false);
+    setHasDoubled(false);
+    setActiveHandIndex(0);
+    setSplitMode(false);
+    setHandBets([bet]);
+    setCompletedHands([false]);
+    setSplitResults([]);
+    setPendingPlayerBlackjack(playerHasBlackjack);
+    setPendingDealerBlackjack(dealerHasBlackjack);
 
-  setShowLauncher(false);
+    setShowLauncher(false);
 
-  if (dealer[0]?.rank === "A") {
-    setShowInsuranceOverlay(true);
-    setMessage("Dealer shows Ace — insurance?");
-    return;
-  }
+    setMessage("Dealing dealer card...");
+    setDealerHand([dealer[0]]);
+    playDeal();
+    await sleep(360);
 
-  setMessage("Your move");
+    setMessage("Dealing player card...");
+    setPlayerHands([[player[0]]]);
+    playDeal();
+    await sleep(360);
 
-  if (playerHasBlackjack || dealerHasBlackjack) {
-    setTimeout(() => {
+    setMessage("Dealing dealer hole card...");
+    setDealerHand([dealer[0], dealer[1]]);
+    playDeal();
+    await sleep(360);
+
+    setMessage("Dealing player card...");
+    setPlayerHands([[player[0], player[1]]]);
+    playDeal();
+    await sleep(360);
+
+    setDealerAnimating(false);
+
+    if (dealer[0]?.rank === "A") {
+      setShowInsuranceOverlay(true);
+      setMessage("Dealer shows Ace — insurance?");
+      return;
+    }
+
+    setMessage("Your move");
+
+    if (playerHasBlackjack || dealerHasBlackjack) {
+      await sleep(450);
+
       if (playerHasBlackjack && dealerHasBlackjack) {
         endGame("Blackjack push — draw", bet, false);
       } else if (playerHasBlackjack) {
@@ -526,9 +549,9 @@ const [launcherStep, setLauncherStep] = useState(0);
       } else {
         endGame("Dealer Blackjack wins", bet, false);
       }
-    }, 450);
+    }
   }
-}
+
   function finishInsuranceChoice(tookInsurance) {
     playClick();
 
@@ -851,7 +874,10 @@ const [launcherStep, setLauncherStep] = useState(0);
             className="game-button"
             onClick={hit}
             disabled={
-              !gameStarted || dealerRevealed || dealerAnimating || showInsuranceOverlay
+              !gameStarted ||
+              dealerRevealed ||
+              dealerAnimating ||
+              showInsuranceOverlay
             }
           >
             Hit
@@ -861,7 +887,10 @@ const [launcherStep, setLauncherStep] = useState(0);
             className="game-button"
             onClick={stand}
             disabled={
-              !gameStarted || dealerRevealed || dealerAnimating || showInsuranceOverlay
+              !gameStarted ||
+              dealerRevealed ||
+              dealerAnimating ||
+              showInsuranceOverlay
             }
           >
             Stand
@@ -1151,26 +1180,27 @@ const [launcherStep, setLauncherStep] = useState(0);
           </button>
         </div>
       )}
-        {showLauncher && (
-  <div className="launcher-overlay">
-    <div className="launcher-box">
-      <div className="launcher-kicker">MEMORY DECK</div>
 
-      <h2>Valkyra Blackjack</h2>
+      {showLauncher && (
+        <div className="launcher-overlay">
+          <div className="launcher-box">
+            <div className="launcher-kicker">MEMORY DECK</div>
 
-      <p>{launcherText}</p>
+            <h2>Valkyra Blackjack</h2>
 
-      <div className="launcher-progress">
-        <div
-          className="launcher-progress-fill"
-          style={{ width: `${launcherStep * 25}%` }}
-        />
-      </div>
+            <p>{launcherText}</p>
 
-      <div className="launcher-symbols">♠ ♥ ♦ ♣</div>
-    </div>
-  </div>
-)}
+            <div className="launcher-progress">
+              <div
+                className="launcher-progress-fill"
+                style={{ width: `${launcherStep * 25}%` }}
+              />
+            </div>
+
+            <div className="launcher-symbols">♠ ♥ ♦ ♣</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
