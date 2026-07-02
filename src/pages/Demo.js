@@ -123,6 +123,10 @@ export default function Demo() {
   const [showResultOverlay, setShowResultOverlay] = useState(false);
   const [showStatsOverlay, setShowStatsOverlay] = useState(false);
 
+  const [showInsuranceOverlay, setShowInsuranceOverlay] = useState(false);
+  const [pendingPlayerBlackjack, setPendingPlayerBlackjack] = useState(false);
+  const [pendingDealerBlackjack, setPendingDealerBlackjack] = useState(false);
+
   const [balance, setBalance] = useState(1000);
   const [bet, setBet] = useState(50);
   const [roundBet, setRoundBet] = useState(0);
@@ -152,10 +156,13 @@ export default function Demo() {
       ? Math.round((stats.wins / stats.gamesPlayed) * 100)
       : 0;
 
+  const insuranceAmount = Math.floor(roundBet / 2);
+
   const canDoubleDown =
     gameStarted &&
     !splitMode &&
     !dealerRevealed &&
+    !showInsuranceOverlay &&
     activePlayerHand.length === 2 &&
     balance >= roundBet &&
     !hasDoubled;
@@ -164,6 +171,7 @@ export default function Demo() {
     gameStarted &&
     !splitMode &&
     !dealerRevealed &&
+    !showInsuranceOverlay &&
     activePlayerHand.length === 2 &&
     activePlayerHand[0]?.rank === activePlayerHand[1]?.rank &&
     balance >= roundBet;
@@ -257,6 +265,9 @@ export default function Demo() {
     setHandBets([0]);
     setCompletedHands([]);
     setSplitResults([]);
+    setShowInsuranceOverlay(false);
+    setPendingPlayerBlackjack(false);
+    setPendingDealerBlackjack(false);
     setMessage("Bank reset to 1000");
   }
 
@@ -308,6 +319,7 @@ export default function Demo() {
     finalRoundBet = roundBet,
     blackjackPayout = false
   ) {
+    setShowInsuranceOverlay(false);
     setDealerRevealed(true);
     playDeal();
 
@@ -422,6 +434,15 @@ export default function Demo() {
     setHandBets([bet]);
     setCompletedHands([false]);
     setSplitResults([]);
+    setPendingPlayerBlackjack(playerHasBlackjack);
+    setPendingDealerBlackjack(dealerHasBlackjack);
+
+    if (dealer[0]?.rank === "A") {
+      setShowInsuranceOverlay(true);
+      setMessage("Dealer shows Ace — insurance?");
+      return;
+    }
+
     setMessage("Your move");
 
     if (playerHasBlackjack || dealerHasBlackjack) {
@@ -434,6 +455,53 @@ export default function Demo() {
           endGame("Dealer Blackjack wins", bet, false);
         }
       }, 450);
+    }
+  }
+
+  function finishInsuranceChoice(tookInsurance) {
+    playClick();
+
+    if (tookInsurance) {
+      if (balance < insuranceAmount) {
+        setMessage("Not enough balance for insurance");
+        playLose();
+        return;
+      }
+
+      setBalance((prev) => prev - insuranceAmount);
+    }
+
+    setShowInsuranceOverlay(false);
+
+    if (pendingDealerBlackjack && tookInsurance) {
+      const insurancePayout = insuranceAmount * 3;
+
+      setBalance((prev) => {
+        const nextBalance = prev + insurancePayout;
+        updateHighestBalance(nextBalance);
+        return nextBalance;
+      });
+    }
+
+    if (pendingPlayerBlackjack && pendingDealerBlackjack) {
+      endGame("Blackjack push — draw", roundBet, false);
+      return;
+    }
+
+    if (pendingDealerBlackjack) {
+      endGame("Dealer Blackjack wins", roundBet, false);
+      return;
+    }
+
+    if (pendingPlayerBlackjack) {
+      endGame("Blackjack! You win 3:2", roundBet, true);
+      return;
+    }
+
+    if (tookInsurance) {
+      setMessage("Insurance lost — your move");
+    } else {
+      setMessage("Your move");
     }
   }
 
@@ -461,7 +529,9 @@ export default function Demo() {
   }
 
   function hit() {
-    if (!gameStarted || dealerRevealed || deck.length === 0) return;
+    if (!gameStarted || dealerRevealed || showInsuranceOverlay || deck.length === 0) {
+      return;
+    }
 
     playClick();
     playDeal();
@@ -512,7 +582,7 @@ export default function Demo() {
   }
 
   function stand() {
-    if (!gameStarted || dealerRevealed) return;
+    if (!gameStarted || dealerRevealed || showInsuranceOverlay) return;
 
     playClick();
 
@@ -611,7 +681,7 @@ export default function Demo() {
     playClick();
 
     setGalleryIndex((current) =>
-      current === galleryCards.length - 1 ? current : current + 1
+      current === galleryCards.length - 1 ? 0 : current + 1
     );
   }
 
@@ -665,6 +735,7 @@ export default function Demo() {
           <div>Balance: {balance}</div>
           <div>Bet: {gameStarted ? handBets[activeHandIndex] || roundBet : bet}</div>
           {splitMode && <div>Active Hand: {activeHandIndex + 1}</div>}
+          {showInsuranceOverlay && <div>Insurance: {insuranceAmount}</div>}
         </div>
 
         <div className="chip-row">
@@ -721,7 +792,7 @@ export default function Demo() {
           <button
             className="game-button"
             onClick={hit}
-            disabled={!gameStarted || dealerRevealed}
+            disabled={!gameStarted || dealerRevealed || showInsuranceOverlay}
           >
             Hit
           </button>
@@ -729,7 +800,7 @@ export default function Demo() {
           <button
             className="game-button"
             onClick={stand}
-            disabled={!gameStarted || dealerRevealed}
+            disabled={!gameStarted || dealerRevealed || showInsuranceOverlay}
           >
             Stand
           </button>
@@ -842,6 +913,38 @@ export default function Demo() {
           )}
         </section>
       </main>
+
+      {showInsuranceOverlay && (
+        <div className="insurance-overlay">
+          <div className="insurance-box">
+            <div className="insurance-label">INSURANCE OFFER</div>
+
+            <h2>Dealer shows an Ace</h2>
+
+            <p>
+              Take insurance for {insuranceAmount} credits?
+              <br />
+              Insurance pays 2:1 if the dealer has Blackjack.
+            </p>
+
+            <div className="insurance-actions">
+              <button
+                className="insurance-yes"
+                onClick={() => finishInsuranceChoice(true)}
+              >
+                Take Insurance
+              </button>
+
+              <button
+                className="insurance-no"
+                onClick={() => finishInsuranceChoice(false)}
+              >
+                No Insurance
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showResultOverlay && (
         <div className={`result-overlay ${activeResultType}`}>
