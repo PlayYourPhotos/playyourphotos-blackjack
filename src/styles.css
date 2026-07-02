@@ -1765,3 +1765,74 @@ a {
 .game-back-button:hover {
   background: rgba(255,255,255,0.20);
 }
+/* =========================
+   BLACKJACK INSURANCE
+========================= */
+
+.insurance-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.72);
+}
+
+.insurance-box {
+  width: min(520px, 92vw);
+  border-radius: 28px;
+  padding: 38px;
+  text-align: center;
+  background:
+    radial-gradient(circle at top, rgba(255,231,163,0.14), transparent 38%),
+    rgba(8,12,34,0.96);
+  border: 1px solid rgba(255,255,255,0.18);
+  box-shadow: 0 0 44px rgba(0,0,0,0.68);
+}
+
+.insurance-label {
+  color: #ffe7a3;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+
+.insurance-box h2 {
+  margin: 0 0 16px;
+  font-size: 2.5rem;
+  color: #fff4cf;
+}
+
+.insurance-box p {
+  margin: 0 0 28px;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+.insurance-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.insurance-yes,
+.insurance-no {
+  border: none;
+  border-radius: 16px;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.insurance-yes {
+  background: linear-gradient(135deg, #d4a937, #7a4b00);
+  color: white;
+}
+
+.insurance-no {
+  background: rgba(255,255,255,0.14);
+  color: #ffe7a3;
+  border: 1px solid rgba(255,255,255,0.18);
+}
