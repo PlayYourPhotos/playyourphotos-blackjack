@@ -1151,6 +1151,26 @@ const [launcherStep, setLauncherStep] = useState(0);
           </button>
         </div>
       )}
+        {showLauncher && (
+  <div className="launcher-overlay">
+    <div className="launcher-box">
+      <div className="launcher-kicker">MEMORY DECK</div>
+
+      <h2>Valkyra Blackjack</h2>
+
+      <p>{launcherText}</p>
+
+      <div className="launcher-progress">
+        <div
+          className="launcher-progress-fill"
+          style={{ width: `${launcherStep * 25}%` }}
+        />
+      </div>
+
+      <div className="launcher-symbols">♠ ♥ ♦ ♣</div>
+    </div>
+  </div>
+)}
     </div>
   );
 }
