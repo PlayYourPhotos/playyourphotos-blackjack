@@ -1965,3 +1965,33 @@ a {
     transform: translateY(0) scale(1);
   }
 }
+/* =========================
+   DEALER HOLE CARD FLIP
+========================= */
+
+.card {
+  perspective: 1000px;
+}
+
+.card-inner {
+  transform-style: preserve-3d;
+  transition: transform 0.7s ease;
+}
+
+.card.face-down .card-inner {
+  transform: rotateY(180deg);
+}
+
+.card.face-up .card-inner {
+  transform: rotateY(0deg);
+}
+
+.card-front,
+.card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+}
