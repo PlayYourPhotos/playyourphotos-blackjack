@@ -21,11 +21,7 @@ export default function Card({
     >
       <div className="card-inner">
         <div className="card-front">
-          <img
-            src={image}
-            className="card-img"
-            alt={`${rank} of ${suit}`}
-          />
+          <img src={image} className="card-img" alt={`${rank} of ${suit}`} />
 
           <div className="corner top-left">
             <div className="corner-rank">{rank}</div>
