@@ -32,6 +32,10 @@ const defaultStats = {
   highestBalance: 1000,
 };
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function loadStats() {
   try {
     const saved = localStorage.getItem("memoryDeckBlackjackStats");
@@ -116,6 +120,7 @@ export default function Demo() {
   const [dealerHand, setDealerHand] = useState([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [dealerRevealed, setDealerRevealed] = useState(false);
+  const [dealerAnimating, setDealerAnimating] = useState(false);
   const [message, setMessage] = useState("Click New Game to start");
 
   const [galleryCards, setGalleryCards] = useState([]);
@@ -160,6 +165,7 @@ export default function Demo() {
 
   const canDoubleDown =
     gameStarted &&
+    !dealerAnimating &&
     !splitMode &&
     !dealerRevealed &&
     !showInsuranceOverlay &&
@@ -169,6 +175,7 @@ export default function Demo() {
 
   const canSplit =
     gameStarted &&
+    !dealerAnimating &&
     !splitMode &&
     !dealerRevealed &&
     !showInsuranceOverlay &&
@@ -243,14 +250,14 @@ export default function Demo() {
   }
 
   function placeBet(amount) {
-    if (gameStarted) return;
+    if (gameStarted || dealerAnimating) return;
 
     playClick();
     setBet(amount);
   }
 
   function resetBank() {
-    if (gameStarted) return;
+    if (gameStarted || dealerAnimating) return;
 
     playClick();
 
@@ -314,16 +321,14 @@ export default function Demo() {
     }
   }
 
-  function endGame(
+  function finishSingleGame(
     finalMessage,
     finalRoundBet = roundBet,
     blackjackPayout = false
   ) {
     setShowInsuranceOverlay(false);
-    setDealerRevealed(true);
-    playDeal();
-
     setGameStarted(false);
+    setDealerAnimating(false);
     setMessage(finalMessage);
 
     settleSingleBet(finalMessage, finalRoundBet, blackjackPayout);
@@ -344,17 +349,57 @@ export default function Demo() {
     }, 450);
   }
 
-  function finishSplitGame(finalHands, remainingDeck, finalCompletedHands) {
-    let newDeck = [...remainingDeck];
-    let newDealerHand = [...dealerHand];
+  function endGame(
+    finalMessage,
+    finalRoundBet = roundBet,
+    blackjackPayout = false
+  ) {
+    setShowInsuranceOverlay(false);
+    setDealerRevealed(true);
+    playDeal();
+    finishSingleGame(finalMessage, finalRoundBet, blackjackPayout);
+  }
 
-    while (handTotal(newDealerHand) < 17 && newDeck.length > 0) {
+  async function animateDealerDraw(startDealerHand, startDeck) {
+    let animatedDealerHand = [...startDealerHand];
+    let animatedDeck = [...startDeck];
+
+    setDealerAnimating(true);
+    setDealerRevealed(true);
+    setMessage("Dealer reveals card");
+    playDeal();
+
+    await sleep(650);
+
+    while (handTotal(animatedDealerHand) < 17 && animatedDeck.length > 0) {
+      const nextCard = animatedDeck[0];
+
+      animatedDeck = animatedDeck.slice(1);
+      animatedDealerHand = [...animatedDealerHand, nextCard];
+
+      setMessage("Dealer draws...");
+      setDealerHand(animatedDealerHand);
+      setDeck(animatedDeck);
       playDeal();
-      newDealerHand.push(newDeck[0]);
-      newDeck = newDeck.slice(1);
+
+      await sleep(700);
     }
 
-    const finalDealerTotal = handTotal(newDealerHand);
+    return {
+      finalDealerHand: animatedDealerHand,
+      finalDeck: animatedDeck,
+    };
+  }
+
+  async function finishSplitGame(finalHands, remainingDeck, finalCompletedHands) {
+    setGameStarted(false);
+
+    const { finalDealerHand, finalDeck } = await animateDealerDraw(
+      dealerHand,
+      remainingDeck
+    );
+
+    const finalDealerTotal = handTotal(finalDealerHand);
 
     const results = finalHands.map((hand, index) => {
       const total = handTotal(hand);
@@ -369,12 +414,12 @@ export default function Demo() {
       };
     });
 
-    setDealerHand(newDealerHand);
-    setDeck(newDeck);
+    setDealerHand(finalDealerHand);
+    setDeck(finalDeck);
     setCompletedHands(finalCompletedHands);
     setSplitResults(results);
     setDealerRevealed(true);
-    setGameStarted(false);
+    setDealerAnimating(false);
 
     settleSplitBets(results);
     recordSplitResults(results);
@@ -399,7 +444,7 @@ export default function Demo() {
   }
 
   function newGame() {
-    if (gameStarted) return;
+    if (gameStarted || dealerAnimating) return;
 
     playClick();
 
@@ -426,6 +471,7 @@ export default function Demo() {
     setPlayerHands([player]);
     setDealerHand(dealer);
     setDealerRevealed(false);
+    setDealerAnimating(false);
     setGameStarted(true);
     setShowResultOverlay(false);
     setHasDoubled(false);
@@ -529,7 +575,13 @@ export default function Demo() {
   }
 
   function hit() {
-    if (!gameStarted || dealerRevealed || showInsuranceOverlay || deck.length === 0) {
+    if (
+      !gameStarted ||
+      dealerRevealed ||
+      dealerAnimating ||
+      showInsuranceOverlay ||
+      deck.length === 0
+    ) {
       return;
     }
 
@@ -554,35 +606,35 @@ export default function Demo() {
     }
   }
 
-  function playDealerAndFinish(finalPlayerHand, remainingDeck, finalRoundBet) {
-    let newDeck = [...remainingDeck];
-    let newDealerHand = [...dealerHand];
+  async function playDealerAndFinish(finalPlayerHand, remainingDeck, finalRoundBet) {
+    setGameStarted(false);
 
-    while (handTotal(newDealerHand) < 17 && newDeck.length > 0) {
-      playDeal();
-      newDealerHand.push(newDeck[0]);
-      newDeck = newDeck.slice(1);
-    }
+    const { finalDealerHand, finalDeck } = await animateDealerDraw(
+      dealerHand,
+      remainingDeck
+    );
 
     const finalPlayer = handTotal(finalPlayerHand);
-    const finalDealer = handTotal(newDealerHand);
+    const finalDealer = handTotal(finalDealerHand);
 
-    setDealerHand(newDealerHand);
-    setDeck(newDeck);
+    setDealerHand(finalDealerHand);
+    setDeck(finalDeck);
 
     if (finalDealer > 21) {
-      endGame("Dealer busts — you win!", finalRoundBet);
+      finishSingleGame("Dealer busts — you win!", finalRoundBet);
     } else if (finalPlayer > finalDealer) {
-      endGame("You win!", finalRoundBet);
+      finishSingleGame("You win!", finalRoundBet);
     } else if (finalPlayer < finalDealer) {
-      endGame("Dealer wins", finalRoundBet);
+      finishSingleGame("Dealer wins", finalRoundBet);
     } else {
-      endGame("Push — draw", finalRoundBet);
+      finishSingleGame("Push — draw", finalRoundBet);
     }
   }
 
   function stand() {
-    if (!gameStarted || dealerRevealed || showInsuranceOverlay) return;
+    if (!gameStarted || dealerRevealed || dealerAnimating || showInsuranceOverlay) {
+      return;
+    }
 
     playClick();
 
@@ -733,50 +785,31 @@ export default function Demo() {
 
         <div className="bank-box">
           <div>Balance: {balance}</div>
-          <div>Bet: {gameStarted ? handBets[activeHandIndex] || roundBet : bet}</div>
+          <div>
+            Bet: {gameStarted ? handBets[activeHandIndex] || roundBet : bet}
+          </div>
           {splitMode && <div>Active Hand: {activeHandIndex + 1}</div>}
           {showInsuranceOverlay && <div>Insurance: {insuranceAmount}</div>}
         </div>
 
         <div className="chip-row">
-          <button
-            className="chip-button"
-            onClick={() => placeBet(25)}
-            disabled={gameStarted}
-          >
-            25
-          </button>
-
-          <button
-            className="chip-button"
-            onClick={() => placeBet(50)}
-            disabled={gameStarted}
-          >
-            50
-          </button>
-
-          <button
-            className="chip-button"
-            onClick={() => placeBet(100)}
-            disabled={gameStarted}
-          >
-            100
-          </button>
-
-          <button
-            className="chip-button"
-            onClick={() => placeBet(250)}
-            disabled={gameStarted}
-          >
-            250
-          </button>
+          {[25, 50, 100, 250].map((amount) => (
+            <button
+              key={amount}
+              className="chip-button"
+              onClick={() => placeBet(amount)}
+              disabled={gameStarted || dealerAnimating}
+            >
+              {amount}
+            </button>
+          ))}
         </div>
 
         <div className="button-grid">
           <button
             className="primary-button"
             onClick={newGame}
-            disabled={gameStarted}
+            disabled={gameStarted || dealerAnimating}
           >
             New Game
           </button>
@@ -784,7 +817,7 @@ export default function Demo() {
           <button
             className="reset-button"
             onClick={resetBank}
-            disabled={gameStarted}
+            disabled={gameStarted || dealerAnimating}
           >
             Reset Bank
           </button>
@@ -792,7 +825,9 @@ export default function Demo() {
           <button
             className="game-button"
             onClick={hit}
-            disabled={!gameStarted || dealerRevealed || showInsuranceOverlay}
+            disabled={
+              !gameStarted || dealerRevealed || dealerAnimating || showInsuranceOverlay
+            }
           >
             Hit
           </button>
@@ -800,7 +835,9 @@ export default function Demo() {
           <button
             className="game-button"
             onClick={stand}
-            disabled={!gameStarted || dealerRevealed || showInsuranceOverlay}
+            disabled={
+              !gameStarted || dealerRevealed || dealerAnimating || showInsuranceOverlay
+            }
           >
             Stand
           </button>
@@ -813,11 +850,7 @@ export default function Demo() {
             Double
           </button>
 
-          <button
-            className="split-button"
-            onClick={splitPair}
-            disabled={!canSplit}
-          >
+          <button className="split-button" onClick={splitPair} disabled={!canSplit}>
             Split
           </button>
 
