@@ -7,19 +7,19 @@ export default function GameButtons({
   showInsuranceOverlay,
   canDoubleDown,
   canSplit,
-  newGame,
-  resetBank,
-  hit,
-  stand,
-  doubleDown,
-  splitPair,
-  showStats,
+  onNewGame,
+  onResetBank,
+  onHit,
+  onStand,
+  onDoubleDown,
+  onSplitPair,
+  onShowStats,
 }) {
   return (
     <div className="button-grid">
       <button
         className="primary-button"
-        onClick={newGame}
+        onClick={onNewGame}
         disabled={gameStarted || dealerAnimating}
       >
         New Game
@@ -27,7 +27,7 @@ export default function GameButtons({
 
       <button
         className="reset-button"
-        onClick={resetBank}
+        onClick={onResetBank}
         disabled={gameStarted || dealerAnimating}
       >
         Reset Bank
@@ -35,7 +35,7 @@ export default function GameButtons({
 
       <button
         className="game-button"
-        onClick={hit}
+        onClick={onHit}
         disabled={
           !gameStarted ||
           dealerRevealed ||
@@ -48,7 +48,7 @@ export default function GameButtons({
 
       <button
         className="game-button"
-        onClick={stand}
+        onClick={onStand}
         disabled={
           !gameStarted ||
           dealerRevealed ||
@@ -61,7 +61,7 @@ export default function GameButtons({
 
       <button
         className="double-button"
-        onClick={doubleDown}
+        onClick={onDoubleDown}
         disabled={!canDoubleDown}
       >
         Double
@@ -69,16 +69,13 @@ export default function GameButtons({
 
       <button
         className="split-button"
-        onClick={splitPair}
+        onClick={onSplitPair}
         disabled={!canSplit}
       >
         Split
       </button>
 
-      <button
-        className="stats-button"
-        onClick={showStats}
-      >
+      <button className="stats-button" onClick={onShowStats}>
         Stats
       </button>
     </div>
