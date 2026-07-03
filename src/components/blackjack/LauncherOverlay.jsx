@@ -4,6 +4,7 @@ export default function LauncherOverlay({
   showLauncher,
   launcherText,
   launcherStep,
+  title = "Valkyra Blackjack",
 }) {
   if (!showLauncher) return null;
 
@@ -12,7 +13,7 @@ export default function LauncherOverlay({
       <div className="launcher-box">
         <div className="launcher-kicker">MEMORY DECK</div>
 
-        <h2>Valkyra Blackjack</h2>
+        <h2>{title}</h2>
 
         <p>{launcherText}</p>
 
