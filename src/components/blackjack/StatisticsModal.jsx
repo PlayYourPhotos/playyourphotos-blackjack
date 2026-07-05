@@ -1,88 +1,74 @@
 import React from "react";
 
 export default function StatisticsModal({
-  showStats,
+  showStatsOverlay,
   stats,
+  winRate,
   onClose,
+  onReset,
 }) {
-  if (!showStats) return null;
-
-  const totalGames =
-    (stats.wins || 0) +
-    (stats.losses || 0) +
-    (stats.pushes || 0);
-
-  const winRate =
-    totalGames > 0
-      ? (((stats.wins || 0) / totalGames) * 100).toFixed(1)
-      : "0.0";
+  if (!showStatsOverlay) return null;
 
   return (
     <div className="stats-overlay">
       <div className="stats-box">
-
-        <button
-          className="stats-close"
-          onClick={onClose}
-        >
+        <button className="stats-close" onClick={onClose}>
           ×
         </button>
 
-        <div className="stats-title">
-          Blackjack Statistics
-        </div>
+        <div className="stats-label">PLAYER PROFILE</div>
+        <div className="stats-title">Memory Deck Stats</div>
 
         <div className="stats-grid">
-
-          <div className="stats-row">
-            <span>Games Played</span>
-            <strong>{totalGames}</strong>
+          <div className="stat-card">
+            <span>Hands Played</span>
+            <strong>{stats.gamesPlayed}</strong>
           </div>
 
-          <div className="stats-row">
-            <span>Wins</span>
-            <strong>{stats.wins || 0}</strong>
-          </div>
-
-          <div className="stats-row">
-            <span>Losses</span>
-            <strong>{stats.losses || 0}</strong>
-          </div>
-
-          <div className="stats-row">
-            <span>Pushes</span>
-            <strong>{stats.pushes || 0}</strong>
-          </div>
-
-          <div className="stats-row">
-            <span>Blackjacks</span>
-            <strong>{stats.blackjacks || 0}</strong>
-          </div>
-
-          <div className="stats-row">
+          <div className="stat-card">
             <span>Win Rate</span>
             <strong>{winRate}%</strong>
           </div>
 
-          <div className="stats-row">
+          <div className="stat-card win">
+            <span>Wins</span>
+            <strong>{stats.wins}</strong>
+          </div>
+
+          <div className="stat-card lose">
+            <span>Losses</span>
+            <strong>{stats.losses}</strong>
+          </div>
+
+          <div className="stat-card">
+            <span>Pushes</span>
+            <strong>{stats.pushes}</strong>
+          </div>
+
+          <div className="stat-card">
+            <span>Blackjacks</span>
+            <strong>{stats.blackjacks}</strong>
+          </div>
+
+          <div className="stat-card">
+            <span>Splits</span>
+            <strong>{stats.splits}</strong>
+          </div>
+
+          <div className="stat-card">
+            <span>Double Downs</span>
+            <strong>{stats.doubleDowns}</strong>
+          </div>
+
+          <div className="stat-card highlight">
             <span>Highest Balance</span>
-            <strong>{stats.highestBalance || 0}</strong>
+            <strong>{stats.highestBalance}</strong>
           </div>
-
-          <div className="stats-row">
-            <span>Current Streak</span>
-            <strong>{stats.streak || 0}</strong>
-          </div>
-
         </div>
 
-        <button
-          className="stats-button"
-          onClick={onClose}
-        >
-          Close
+        <button className="stats-reset" onClick={onReset}>
+          Reset Statistics
         </button>
-
       </div>
     </div>
   );
