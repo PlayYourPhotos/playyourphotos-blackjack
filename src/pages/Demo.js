@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import fullDeck from "../data/fullDeck.js";
 import Card from "../components/Card";
-
+import LauncherOverlay from "../components/blackjack/LauncherOverlay";
 const tableThemes = {
   ruby: {
     name: "Ruby Table",
@@ -1180,27 +1180,10 @@ export default function Demo() {
           </button>
         </div>
       )}
-
-      {showLauncher && (
-        <div className="launcher-overlay">
-          <div className="launcher-box">
-            <div className="launcher-kicker">MEMORY DECK</div>
-
-            <h2>Valkyra Blackjack</h2>
-
-            <p>{launcherText}</p>
-
-            <div className="launcher-progress">
-              <div
-                className="launcher-progress-fill"
-                style={{ width: `${launcherStep * 25}%` }}
-              />
-            </div>
-
-            <div className="launcher-symbols">♠ ♥ ♦ ♣</div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+<LauncherOverlay
+  showLauncher={showLauncher}
+  launcherText={launcherText}
+  launcherStep={launcherStep}
+  title="Valkyra Blackjack"
+/>
+ 
