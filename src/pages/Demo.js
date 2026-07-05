@@ -6,6 +6,7 @@ import LauncherOverlay from "../components/blackjack/LauncherOverlay";
 import InsuranceOverlay from "../components/blackjack/InsuranceOverlay";
 import ResultPopup from "../components/blackjack/ResultPopup";
 import StatisticsModal from "../components/blackjack/StatisticsModal";
+import DealerHand from "../components/blackjack/DealerHand";
 
 const tableThemes = {
   ruby: {
