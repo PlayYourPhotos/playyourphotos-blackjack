@@ -949,22 +949,11 @@ export default function Demo() {
           </div>
         </section>
 
-        <section className="hand-section">
-          <h2>Player</h2>
-
-          {!splitMode && (
-            <div className="hand-row">
-              {activePlayerHand.map((card, index) => (
-                <Card
-                  key={index}
-                  rank={card.rank}
-                  suit={card.suit}
-                  image={card.image}
-                  onClick={() => openGallery(activePlayerHand, index)}
-                />
-              ))}
-            </div>
-          )}
+        <DealerHand
+  dealerHand={dealerHand}
+  dealerRevealed={dealerRevealed}
+  onOpenGallery={openGallery}
+/>
 
           {splitMode && (
             <div className="split-hands">
