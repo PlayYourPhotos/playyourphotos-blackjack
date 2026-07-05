@@ -4,6 +4,7 @@ import fullDeck from "../data/fullDeck.js";
 import Card from "../components/Card";
 import LauncherOverlay from "../components/blackjack/LauncherOverlay";
 import InsuranceOverlay from "../components/blackjack/InsuranceOverlay";
+import ResultPopup from "../components/blackjack/ResultPopup";
 
 const tableThemes = {
   ruby: {
@@ -1009,61 +1010,23 @@ export default function Demo() {
         onTakeInsurance={() => finishInsuranceChoice(true)}
         onNoInsurance={() => finishInsuranceChoice(false)}
       />
-
-      {showResultOverlay && (
-        <div className={`result-overlay ${activeResultType}`}>
-          <div className="result-box">
-            <button
-              className="result-close"
-              onClick={() => {
-                playClick();
-                setShowResultOverlay(false);
-              }}
-            >
-              ×
-            </button>
-
-            <div className="result-label">
-              {activeResultType === "win"
-                ? "VICTORY"
-                : activeResultType === "lose"
-                ? "DEFEAT"
-                : "DRAW"}
-            </div>
-
-            <div className="result-message">{message}</div>
-
-            <div className="result-scores">
-              {!splitMode && (
-                <>
-                  <div>Player: {playerTotal}</div>
-                  <div>Dealer: {handTotal(dealerHand)}</div>
-                  <div>Bet: {roundBet}</div>
-                  <div>Balance: {balance}</div>
-                </>
-              )}
-
-              {splitMode && splitResults.length > 0 && (
-                <>
-                  <div>Dealer: {handTotal(dealerHand)}</div>
-                  {splitResults.map((result) => (
-                    <div key={result.handIndex}>
-                      Hand {result.handIndex + 1}:{" "}
-                      {outcomeLabel(result.outcome)} — Bet {result.bet}
-                    </div>
-                  ))}
-                  <div>Balance: {balance}</div>
-                </>
-              )}
-            </div>
-
-            <button className="result-button" onClick={newGame}>
-              Deal Again
-            </button>
-          </div>
-        </div>
-      )}
-
+<ResultPopup
+  showResultOverlay={showResultOverlay}
+  activeResultType={activeResultType}
+  message={message}
+  splitMode={splitMode}
+  splitResults={splitResults}
+  playerTotal={playerTotal}
+  dealerTotal={handTotal(dealerHand)}
+  roundBet={roundBet}
+  balance={balance}
+  onClose={() => {
+    playClick();
+    setShowResultOverlay(false);
+  }}
+  onDealAgain={newGame}
+/>
+      
       {showStatsOverlay && (
         <div className="stats-overlay">
           <div className="stats-box">
