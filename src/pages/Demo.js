@@ -6,7 +6,6 @@ import LauncherOverlay from "../components/blackjack/LauncherOverlay";
 import InsuranceOverlay from "../components/blackjack/InsuranceOverlay";
 import ResultPopup from "../components/blackjack/ResultPopup";
 import StatisticsModal from "../components/blackjack/StatisticsModal";
-import DealerHand from "../components/blackjack/DealerHand";
 
 const tableThemes = {
   ruby: {
@@ -949,11 +948,22 @@ export default function Demo() {
           </div>
         </section>
 
-        <DealerHand
-  dealerHand={dealerHand}
-  dealerRevealed={dealerRevealed}
-  onOpenGallery={openGallery}
-/>
+        <section className="hand-section">
+          <h2>Player</h2>
+
+          {!splitMode && (
+            <div className="hand-row">
+              {activePlayerHand.map((card, index) => (
+                <Card
+                  key={index}
+                  rank={card.rank}
+                  suit={card.suit}
+                  image={card.image}
+                  onClick={() => openGallery(activePlayerHand, index)}
+                />
+              ))}
+            </div>
+          )}
 
           {splitMode && (
             <div className="split-hands">
@@ -1001,33 +1011,34 @@ export default function Demo() {
         onTakeInsurance={() => finishInsuranceChoice(true)}
         onNoInsurance={() => finishInsuranceChoice(false)}
       />
-<ResultPopup
-  showResultOverlay={showResultOverlay}
-  activeResultType={activeResultType}
-  message={message}
-  splitMode={splitMode}
-  splitResults={splitResults}
-  playerTotal={playerTotal}
-  dealerTotal={handTotal(dealerHand)}
-  roundBet={roundBet}
-  balance={balance}
-  onClose={() => {
-    playClick();
-    setShowResultOverlay(false);
-  }}
-  onDealAgain={newGame}
-/>
-      
-<StatisticsModal
-  showStatsOverlay={showStatsOverlay}
-  stats={stats}
-  winRate={winRate}
-  onClose={() => {
-    playClick();
-    setShowStatsOverlay(false);
-  }}
-  onReset={resetStats}
-/>
+
+      <ResultPopup
+        showResultOverlay={showResultOverlay}
+        activeResultType={activeResultType}
+        message={message}
+        splitMode={splitMode}
+        splitResults={splitResults}
+        playerTotal={playerTotal}
+        dealerTotal={handTotal(dealerHand)}
+        roundBet={roundBet}
+        balance={balance}
+        onClose={() => {
+          playClick();
+          setShowResultOverlay(false);
+        }}
+        onDealAgain={newGame}
+      />
+
+      <StatisticsModal
+        showStatsOverlay={showStatsOverlay}
+        stats={stats}
+        winRate={winRate}
+        onClose={() => {
+          playClick();
+          setShowStatsOverlay(false);
+        }}
+        onReset={resetStats}
+      />
 
       {activeGalleryCard && (
         <div className="gallery-overlay">
