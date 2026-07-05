@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import fullDeck from "../data/fullDeck.js";
 import Card from "../components/Card";
 import LauncherOverlay from "../components/blackjack/LauncherOverlay";
+import InsuranceOverlay from "../components/blackjack/InsuranceOverlay";
+
 const tableThemes = {
   ruby: {
     name: "Ruby Table",
@@ -1001,37 +1003,12 @@ export default function Demo() {
         </section>
       </main>
 
-      {showInsuranceOverlay && (
-        <div className="insurance-overlay">
-          <div className="insurance-box">
-            <div className="insurance-label">INSURANCE OFFER</div>
-
-            <h2>Dealer shows an Ace</h2>
-
-            <p>
-              Take insurance for {insuranceAmount} credits?
-              <br />
-              Insurance pays 2:1 if the dealer has Blackjack.
-            </p>
-
-            <div className="insurance-actions">
-              <button
-                className="insurance-yes"
-                onClick={() => finishInsuranceChoice(true)}
-              >
-                Take Insurance
-              </button>
-
-              <button
-                className="insurance-no"
-                onClick={() => finishInsuranceChoice(false)}
-              >
-                No Insurance
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+<InsuranceOverlay
+  showInsuranceOverlay={showInsuranceOverlay}
+  insuranceAmount={insuranceAmount}
+  onTakeInsurance={() => finishInsuranceChoice(true)}
+  onNoInsurance={() => finishInsuranceChoice(false)}
+/>
 
       {showResultOverlay && (
         <div className={`result-overlay ${activeResultType}`}>
