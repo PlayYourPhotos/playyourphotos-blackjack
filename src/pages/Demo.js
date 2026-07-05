@@ -1002,7 +1002,6 @@ export default function Demo() {
           )}
         </section>
       </main>
-      </main>
 
       <InsuranceOverlay
         showInsuranceOverlay={showInsuranceOverlay}
