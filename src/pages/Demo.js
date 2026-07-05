@@ -1002,13 +1002,25 @@ export default function Demo() {
           )}
         </section>
       </main>
-<InsuranceOverlay
-  showInsuranceOverlay={showInsuranceOverlay}
-  insuranceAmount={insuranceAmount}
-  onTakeInsurance={() => finishInsuranceChoice(true)}
-  onNoInsurance={() => finishInsuranceChoice(false)}
-/>
-              >
+      </main>
+
+      <InsuranceOverlay
+        showInsuranceOverlay={showInsuranceOverlay}
+        insuranceAmount={insuranceAmount}
+        onTakeInsurance={() => finishInsuranceChoice(true)}
+        onNoInsurance={() => finishInsuranceChoice(false)}
+      />
+
+      {showResultOverlay && (
+        <div className={`result-overlay ${activeResultType}`}>
+          <div className="result-box">
+            <button
+              className="result-close"
+              onClick={() => {
+                playClick();
+                setShowResultOverlay(false);
+              }}
+            >
               ×
             </button>
 
@@ -1146,10 +1158,13 @@ export default function Demo() {
           </button>
         </div>
       )}
-<LauncherOverlay
-  showLauncher={showLauncher}
-  launcherText={launcherText}
-  launcherStep={launcherStep}
-  title="Valkyra Blackjack"
-/>
- 
+
+      <LauncherOverlay
+        showLauncher={showLauncher}
+        launcherText={launcherText}
+        launcherStep={launcherStep}
+        title="Valkyra Blackjack"
+      />
+    </div>
+  );
+}
