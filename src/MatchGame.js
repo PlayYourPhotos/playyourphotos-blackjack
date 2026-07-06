@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 
+const FAMILY_DECK_STORAGE_KEY = "playYourPhotosFamilyDeck";
+const FAMILY_SET = "Family";
+
 const SETS = {
   Bedroom: {
     label: "Stella in the Bedroom",
@@ -7,30 +10,9 @@ const SETS = {
     backImage: "/stella/public-set-01/back-cover.jpg",
     backPreview: "/stella/public-set-01/back-cover.jpg",
     phases: [
-      {
-        rounds: [
-          [1, 2, 3],
-          [4, 5, 6],
-          [7, 8, 9],
-        ],
-        rewardImages: [1, 2, 3, 4, 5, 6, 7, 8, 9],
-      },
-      {
-        rounds: [
-          [10, 11, 12],
-          [13, 14, 15],
-          [16, 17, 18],
-        ],
-        rewardImages: [10, 11, 12, 13, 14, 15, 16, 17, 18],
-      },
-      {
-        rounds: [
-          [19, 20, 21],
-          [22, 23, 24],
-          [25, 26, 1],
-        ],
-        rewardImages: [19, 20, 21, 22, 23, 24, 25, 26, 1],
-      },
+      { rounds: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], rewardImages: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
+      { rounds: [[10, 11, 12], [13, 14, 15], [16, 17, 18]], rewardImages: [10, 11, 12, 13, 14, 15, 16, 17, 18] },
+      { rounds: [[19, 20, 21], [22, 23, 24], [25, 26, 1]], rewardImages: [19, 20, 21, 22, 23, 24, 25, 26, 1] },
     ],
     finalUnlockImages: Array.from({ length: 26 }, (_, i) => i + 1),
   },
@@ -41,34 +23,33 @@ const SETS = {
     backImage: "/stella/public-set-02/back-cover.jpg",
     backPreview: "/stella/public-set-02/back-cover.jpg",
     phases: [
-      {
-        rounds: [
-          [27, 28, 29],
-          [30, 31, 32],
-          [33, 34, 35],
-        ],
-        rewardImages: [27, 28, 29, 30, 31, 32, 33, 34, 35],
-      },
-      {
-        rounds: [
-          [36, 37, 38],
-          [39, 40, 41],
-          [42, 43, 44],
-        ],
-        rewardImages: [36, 37, 38, 39, 40, 41, 42, 43, 44],
-      },
-      {
-        rounds: [
-          [45, 46, 47],
-          [48, 49, 50],
-          [51, 52, 27],
-        ],
-        rewardImages: [45, 46, 47, 48, 49, 50, 51, 52, 27],
-      },
+      { rounds: [[27, 28, 29], [30, 31, 32], [33, 34, 35]], rewardImages: [27, 28, 29, 30, 31, 32, 33, 34, 35] },
+      { rounds: [[36, 37, 38], [39, 40, 41], [42, 43, 44]], rewardImages: [36, 37, 38, 39, 40, 41, 42, 43, 44] },
+      { rounds: [[45, 46, 47], [48, 49, 50], [51, 52, 27]], rewardImages: [45, 46, 47, 48, 49, 50, 51, 52, 27] },
     ],
     finalUnlockImages: Array.from({ length: 26 }, (_, i) => i + 27),
   },
 };
+
+function loadFamilyDeck() {
+  try {
+    const saved = localStorage.getItem(FAMILY_DECK_STORAGE_KEY);
+    if (!saved) return { cards: [], cardBack: null };
+
+    const parsed = JSON.parse(saved);
+
+    if (Array.isArray(parsed)) {
+      return { cards: parsed, cardBack: null };
+    }
+
+    return {
+      cards: parsed.cards || [],
+      cardBack: parsed.cardBack || null,
+    };
+  } catch {
+    return { cards: [], cardBack: null };
+  }
+}
 
 function shuffleArray(items) {
   const copy = [...items];
@@ -85,7 +66,62 @@ function padNumber(value) {
   return String(value).padStart(2, "0");
 }
 
-function buildRoundDeck(setName, phaseIndex, roundIndex) {
+function getInitialSet(familyDeck) {
+  const params = new URLSearchParams(window.location.search);
+  const wantsFamily = params.get("family") === "1";
+
+  if (wantsFamily && familyDeck.cards.length > 0) {
+    return FAMILY_SET;
+  }
+
+  return "Bedroom";
+}
+
+function getFamilyRoundCards(familyDeck, phaseIndex, roundIndex) {
+  const startIndex = phaseIndex * 9 + roundIndex * 3;
+  const selected = [];
+
+  for (let i = 0; i < 3; i += 1) {
+    const card = familyDeck.cards[(startIndex + i) % familyDeck.cards.length];
+    if (card) selected.push(card);
+  }
+
+  return selected;
+}
+
+function buildRoundDeck(setName, phaseIndex, roundIndex, familyDeck) {
+  if (setName === FAMILY_SET) {
+    const roundCards = getFamilyRoundCards(familyDeck, phaseIndex, roundIndex);
+    const backImage =
+      familyDeck.cardBack?.image || "/stella/public-set-01/back-cover.jpg";
+
+    const cards = [];
+
+    roundCards.forEach((photo, index) => {
+      const pairId = `family-${phaseIndex}-${roundIndex}-${index}`;
+
+      cards.push({
+        id: `${pairId}-a`,
+        pairId,
+        image: photo.image,
+        backImage,
+        flipped: false,
+        matched: false,
+      });
+
+      cards.push({
+        id: `${pairId}-b`,
+        pairId,
+        image: photo.image,
+        backImage,
+        flipped: false,
+        matched: false,
+      });
+    });
+
+    return shuffleArray(cards);
+  }
+
   const set = SETS[setName];
   const roundPairs = set.phases[phaseIndex].rounds[roundIndex];
   const cards = [];
@@ -115,7 +151,14 @@ function buildRoundDeck(setName, phaseIndex, roundIndex) {
   return shuffleArray(cards);
 }
 
-function buildRewardImages(setName, phaseIndex) {
+function buildRewardImages(setName, phaseIndex, familyDeck) {
+  if (setName === FAMILY_SET) {
+    const startIndex = phaseIndex * 9;
+    return familyDeck.cards
+      .slice(startIndex, startIndex + 9)
+      .map((card) => card.image);
+  }
+
   const set = SETS[setName];
   const phase = set.phases[phaseIndex];
 
@@ -129,7 +172,11 @@ function buildRewardImages(setName, phaseIndex) {
   });
 }
 
-function buildFinalUnlockImages(setName) {
+function buildFinalUnlockImages(setName, familyDeck) {
+  if (setName === FAMILY_SET) {
+    return familyDeck.cards.map((card) => card.image);
+  }
+
   const set = SETS[setName];
 
   return set.finalUnlockImages.flatMap((num) => {
@@ -143,7 +190,11 @@ function buildFinalUnlockImages(setName) {
 }
 
 export default function MatchGame() {
-  const [selectedSet, setSelectedSet] = useState("Bedroom");
+  const [familyDeck] = useState(loadFamilyDeck);
+  const [selectedSet, setSelectedSet] = useState(() =>
+    getInitialSet(loadFamilyDeck())
+  );
+
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [roundIndex, setRoundIndex] = useState(0);
 
@@ -151,7 +202,10 @@ export default function MatchGame() {
   const [selectedCards, setSelectedCards] = useState([]);
   const [isLocked, setIsLocked] = useState(false);
 
-  const [previewImage, setPreviewImage] = useState(SETS.Bedroom.backPreview);
+  const [previewImage, setPreviewImage] = useState(
+    familyDeck.cardBack?.image || SETS.Bedroom.backPreview
+  );
+
   const [showReward, setShowReward] = useState(false);
   const [showFinalUnlock, setShowFinalUnlock] = useState(false);
   const [timeLeft, setTimeLeft] = useState(300);
@@ -171,20 +225,38 @@ export default function MatchGame() {
   }, [cards]);
 
   const rewardImages = useMemo(
-    () => buildRewardImages(selectedSet, phaseIndex),
-    [selectedSet, phaseIndex]
+    () => buildRewardImages(selectedSet, phaseIndex, familyDeck),
+    [selectedSet, phaseIndex, familyDeck]
   );
 
   const finalUnlockImages = useMemo(
-    () => buildFinalUnlockImages(selectedSet),
-    [selectedSet]
+    () => buildFinalUnlockImages(selectedSet, familyDeck),
+    [selectedSet, familyDeck]
   );
 
   const activeGalleryImage =
     galleryIndex !== null ? galleryImages[galleryIndex] : null;
 
+  const activeLabel =
+    selectedSet === FAMILY_SET ? "Family Photos" : SETS[selectedSet].label;
+
+  const activeTitle =
+    selectedSet === FAMILY_SET ? "Family Photos - Match" : "Stella - Match Me";
+
+  const activeSubtitle =
+    selectedSet === FAMILY_SET
+      ? "Personal Collection • Test Edition"
+      : `${selectedSet} Collection • Preview Edition`;
+
   useEffect(() => {
-    setPreviewImage(SETS[selectedSet].backPreview);
+    if (selectedSet === FAMILY_SET) {
+      setPreviewImage(
+        familyDeck.cardBack?.image || "/stella/public-set-01/back-cover.jpg"
+      );
+    } else {
+      setPreviewImage(SETS[selectedSet].backPreview);
+    }
+
     resetWholeGame(selectedSet);
   }, [selectedSet]);
 
@@ -219,7 +291,7 @@ export default function MatchGame() {
   }, [activeGalleryImage, galleryImages]);
 
   function loadRound(setName, nextPhaseIndex, nextRoundIndex) {
-    setCards(buildRoundDeck(setName, nextPhaseIndex, nextRoundIndex));
+    setCards(buildRoundDeck(setName, nextPhaseIndex, nextRoundIndex, familyDeck));
     setSelectedCards([]);
     setIsLocked(false);
     setShowReward(false);
@@ -231,7 +303,7 @@ export default function MatchGame() {
     setShowReward(false);
     setShowFinalUnlock(false);
     setTimeLeft(300);
-    setCards(buildRoundDeck(setName, 0, 0));
+    setCards(buildRoundDeck(setName, 0, 0, familyDeck));
     setSelectedCards([]);
     setIsLocked(false);
     closeGallery();
@@ -354,10 +426,8 @@ export default function MatchGame() {
       <div className="match-shell">
         <header className="match-header compact-match-header">
           <div>
-            <h1 className="match-title">Stella - Match Me</h1>
-            <p className="match-subtitle">
-              {selectedSet} Collection • Preview Edition
-            </p>
+            <h1 className="match-title">{activeTitle}</h1>
+            <p className="match-subtitle">{activeSubtitle}</p>
           </div>
 
           <div className="match-header-progress">
@@ -389,11 +459,14 @@ export default function MatchGame() {
               >
                 <option value="Bedroom">Bedroom</option>
                 <option value="Lounge">Lounge</option>
+                {familyDeck.cards.length > 0 && (
+                  <option value={FAMILY_SET}>Family Photos</option>
+                )}
               </select>
 
               <div className="match-side-divider" />
 
-              <h3>{SETS[selectedSet].label}</h3>
+              <h3>{activeLabel}</h3>
 
               <p>
                 Stage {phaseIndex + 1} / 3
@@ -441,8 +514,8 @@ export default function MatchGame() {
                     <h2 className="overlay-title">Reward Unlocked</h2>
 
                     <p className="overlay-text">
-                      You completed Stage {phaseIndex + 1}. These are the 18
-                      preview images unlocked for this stage.
+                      You completed Stage {phaseIndex + 1}. These images are now
+                      unlocked for this stage.
                     </p>
 
                     <button
@@ -451,7 +524,7 @@ export default function MatchGame() {
                     >
                       {phaseIndex < 2
                         ? "Continue"
-                        : "Unlock All 26 Pairs for 5 Minutes"}
+                        : "Unlock Full Deck for 5 Minutes"}
                     </button>
                   </div>
                 </div>
@@ -479,7 +552,7 @@ export default function MatchGame() {
                     <h2 className="overlay-title">All Images Unlocked</h2>
 
                     <p className="overlay-text">
-                      All 26 pairs are unlocked for {formatTime(timeLeft)}.
+                      All images are unlocked for {formatTime(timeLeft)}.
                     </p>
 
                     <button
