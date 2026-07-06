@@ -11,6 +11,16 @@ import StatisticsModal from "../components/blackjack/StatisticsModal";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import GameButtons from "../components/blackjack/GameButtons";
 import ChipStack from "../components/blackjack/ChipStack";
+import {
+  sleep,
+  shuffleDeck,
+  cardValue,
+  handTotal,
+  isBlackjack,
+  resultType,
+  handOutcome,
+} from "../utils/blackjack/GameLogic";
+
 
 const tableThemes = {
   ruby: {
@@ -41,8 +51,6 @@ const defaultStats = {
   highestBalance: 1000,
 };
 
-}
-
 function loadStats() {
   try {
     const saved = localStorage.getItem("memoryDeckBlackjackStats");
@@ -56,19 +64,6 @@ function playSound(path) {
   const sound = new Audio(path);
   sound.volume = 0.55;
   sound.play().catch(() => {});
-}
-
-  return copy;
-}
-  if (lower.includes("push") || lower.includes("draw")) return "draw";
-  if (lower.includes("dealer bust")) return "win";
-  if (lower.includes("dealer blackjack wins")) return "lose";
-  if (lower.includes("dealer wins")) return "lose";
-  if (lower.includes("you win")) return "win";
-  if (lower.includes("blackjack")) return "win";
-  if (lower.includes("bust")) return "lose";
-
-  return "";
 }
 
 export default function Demo() {
