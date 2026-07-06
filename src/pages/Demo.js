@@ -8,6 +8,7 @@ import LauncherOverlay from "../components/blackjack/LauncherOverlay";
 import InsuranceOverlay from "../components/blackjack/InsuranceOverlay";
 import ResultPopup from "../components/blackjack/ResultPopup";
 import StatisticsModal from "../components/blackjack/StatisticsModal";
+import BettingPanel from "../components/blackjack/BettingPanel";
 
 const tableThemes = {
   ruby: {
@@ -831,27 +832,19 @@ export default function Demo() {
           </select>
         </div>
 
-        <div className="bank-box">
-          <div>Balance: {balance}</div>
-          <div>
-            Bet: {gameStarted ? handBets[activeHandIndex] || roundBet : bet}
-          </div>
-          {splitMode && <div>Active Hand: {activeHandIndex + 1}</div>}
-          {showInsuranceOverlay && <div>Insurance: {insuranceAmount}</div>}
-        </div>
-
-        <div className="chip-row">
-          {[25, 50, 100, 250].map((amount) => (
-            <button
-              key={amount}
-              className="chip-button"
-              onClick={() => placeBet(amount)}
-              disabled={gameStarted || dealerAnimating}
-            >
-              {amount}
-            </button>
-          ))}
-        </div>
+        <BettingPanel
+  balance={balance}
+  bet={bet}
+  roundBet={roundBet}
+  gameStarted={gameStarted}
+  handBets={handBets}
+  activeHandIndex={activeHandIndex}
+  splitMode={splitMode}
+  insuranceAmount={insuranceAmount}
+  showInsuranceOverlay={showInsuranceOverlay}
+  dealerAnimating={dealerAnimating}
+  onPlaceBet={placeBet}
+/>
 
         <div className="button-grid">
           <button
