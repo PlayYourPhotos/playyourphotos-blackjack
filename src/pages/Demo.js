@@ -9,6 +9,7 @@ import InsuranceOverlay from "../components/blackjack/InsuranceOverlay";
 import ResultPopup from "../components/blackjack/ResultPopup";
 import StatisticsModal from "../components/blackjack/StatisticsModal";
 import BettingPanel from "../components/blackjack/BettingPanel";
+import GameButtons from "../components/blackjack/GameButtons";
 
 const tableThemes = {
   ruby: {
@@ -845,72 +846,24 @@ export default function Demo() {
   dealerAnimating={dealerAnimating}
   onPlaceBet={placeBet}
 />
-
-        <div className="button-grid">
-          <button
-            className="primary-button"
-            onClick={newGame}
-            disabled={gameStarted || dealerAnimating}
-          >
-            New Game
-          </button>
-
-          <button
-            className="reset-button"
-            onClick={resetBank}
-            disabled={gameStarted || dealerAnimating}
-          >
-            Reset Bank
-          </button>
-
-          <button
-            className="game-button"
-            onClick={hit}
-            disabled={
-              !gameStarted ||
-              dealerRevealed ||
-              dealerAnimating ||
-              showInsuranceOverlay
-            }
-          >
-            Hit
-          </button>
-
-          <button
-            className="game-button"
-            onClick={stand}
-            disabled={
-              !gameStarted ||
-              dealerRevealed ||
-              dealerAnimating ||
-              showInsuranceOverlay
-            }
-          >
-            Stand
-          </button>
-
-          <button
-            className="double-button"
-            onClick={doubleDown}
-            disabled={!canDoubleDown}
-          >
-            Double
-          </button>
-
-          <button className="split-button" onClick={splitPair} disabled={!canSplit}>
-            Split
-          </button>
-
-          <button
-            className="stats-button"
-            onClick={() => {
-              playClick();
-              setShowStatsOverlay(true);
-            }}
-          >
-            Stats
-          </button>
-        </div>
+<GameButtons
+  gameStarted={gameStarted}
+  dealerAnimating={dealerAnimating}
+  dealerRevealed={dealerRevealed}
+  showInsuranceOverlay={showInsuranceOverlay}
+  canDoubleDown={canDoubleDown}
+  canSplit={canSplit}
+  onNewGame={newGame}
+  onResetBank={resetBank}
+  onHit={hit}
+  onStand={stand}
+  onDoubleDown={doubleDown}
+  onSplitPair={splitPair}
+  onShowStats={() => {
+    playClick();
+    setShowStatsOverlay(true);
+  }}
+/>
 
         <div className="status-box">
           <strong>{message}</strong>
