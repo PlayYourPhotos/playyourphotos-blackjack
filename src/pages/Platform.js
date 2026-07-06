@@ -27,20 +27,43 @@ const starterDecks = [
   },
 ];
 
-function loadFamilyPhotos() {
+function loadFamilyDeck() {
   try {
     const saved = localStorage.getItem(FAMILY_DECK_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : [];
+
+    if (!saved) {
+      return {
+        cards: [],
+        cardBack: null,
+      };
+    }
+
+    const parsed = JSON.parse(saved);
+
+    if (Array.isArray(parsed)) {
+      return {
+        cards: parsed,
+        cardBack: null,
+      };
+    }
+
+    return {
+      cards: parsed.cards || [],
+      cardBack: parsed.cardBack || null,
+    };
   } catch {
-    return [];
+    return {
+      cards: [],
+      cardBack: null,
+    };
   }
 }
 
-function saveFamilyPhotos(cards) {
-  localStorage.setItem(FAMILY_DECK_STORAGE_KEY, JSON.stringify(cards));
+function saveFamilyDeck(deck) {
+  localStorage.setItem(FAMILY_DECK_STORAGE_KEY, JSON.stringify(deck));
 }
 
-function fileToCard(file) {
+function fileToImage(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
@@ -58,37 +81,81 @@ function fileToCard(file) {
 }
 
 export default function Platform() {
-  const [familyPhotos, setFamilyPhotos] = useState([]);
+  const [familyDeck, setFamilyDeck] = useState({
+    cards: [],
+    cardBack: null,
+  });
 
   useEffect(() => {
-    setFamilyPhotos(loadFamilyPhotos());
+    setFamilyDeck(loadFamilyDeck());
   }, []);
 
   async function handleFamilyPhotoUpload(event) {
     const files = Array.from(event.target.files || []);
-
     if (files.length === 0) return;
 
     const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-    const newCards = await Promise.all(imageFiles.map(fileToCard));
+    const newCards = await Promise.all(imageFiles.map(fileToImage));
 
-    setFamilyPhotos((current) => {
-      const nextCards = [...current, ...newCards];
-      saveFamilyPhotos(nextCards);
-      return nextCards;
+    setFamilyDeck((current) => {
+      const nextDeck = {
+        ...current,
+        cards: [...current.cards, ...newCards],
+      };
+
+      saveFamilyDeck(nextDeck);
+      return nextDeck;
+    });
+
+    event.target.value = "";
+  }
+
+  async function handleCardBackUpload(event) {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    const uploadedBack = await fileToImage(file);
+
+    setFamilyDeck((current) => {
+      const nextDeck = {
+        ...current,
+        cardBack: uploadedBack,
+      };
+
+      saveFamilyDeck(nextDeck);
+      return nextDeck;
     });
 
     event.target.value = "";
   }
 
   function clearFamilyPhotos() {
-    setFamilyPhotos([]);
-    saveFamilyPhotos([]);
+    setFamilyDeck((current) => {
+      const nextDeck = {
+        ...current,
+        cards: [],
+      };
+
+      saveFamilyDeck(nextDeck);
+      return nextDeck;
+    });
+  }
+
+  function clearCardBack() {
+    setFamilyDeck((current) => {
+      const nextDeck = {
+        ...current,
+        cardBack: null,
+      };
+
+      saveFamilyDeck(nextDeck);
+      return nextDeck;
+    });
   }
 
   function getDeckCardCount(deck) {
     if (deck.name === "Family Photos") {
-      return familyPhotos.length;
+      return familyDeck.cards.length;
     }
 
     return deck.cards;
@@ -96,7 +163,7 @@ export default function Platform() {
 
   function getDeckStatus(deck) {
     if (deck.name === "Family Photos") {
-      return familyPhotos.length > 0 ? "Ready to Test" : "Upload Photos";
+      return familyDeck.cards.length > 0 ? "Ready to Test" : "Upload Photos";
     }
 
     return deck.status;
@@ -147,9 +214,9 @@ export default function Platform() {
             return (
               <div className="deck-card" key={deck.name}>
                 <div className="deck-cover">
-                  {deck.name === "Family Photos" && familyPhotos[0] ? (
+                  {deck.name === "Family Photos" && familyDeck.cards[0] ? (
                     <img
-                      src={familyPhotos[0].image}
+                      src={familyDeck.cards[0].image}
                       alt="Family Photos cover"
                       className="deck-cover-image"
                     />
@@ -201,22 +268,42 @@ export default function Platform() {
                         />
                       </label>
 
+                      <label className="deck-play-button secondary-deck-button">
+                        Upload Card Back
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCardBackUpload}
+                          hidden
+                        />
+                      </label>
+
                       <Link
                         to="/match"
                         className={`deck-play-button secondary-deck-button ${
-                          familyPhotos.length === 0 ? "disabled-link" : ""
+                          familyDeck.cards.length === 0 ? "disabled-link" : ""
                         }`}
                       >
                         Test in Match
                       </Link>
 
-                      {familyPhotos.length > 0 && (
+                      {familyDeck.cards.length > 0 && (
                         <button
                           type="button"
                           className="deck-disabled-button"
                           onClick={clearFamilyPhotos}
                         >
                           Clear Photos
+                        </button>
+                      )}
+
+                      {familyDeck.cardBack && (
+                        <button
+                          type="button"
+                          className="deck-disabled-button"
+                          onClick={clearCardBack}
+                        >
+                          Clear Card Back
                         </button>
                       )}
                     </div>
@@ -228,18 +315,30 @@ export default function Platform() {
                     </button>
                   )}
 
-                  {deck.name === "Family Photos" && familyPhotos.length > 0 && (
-                    <div className="family-photo-preview-row">
-                      {familyPhotos.slice(0, 6).map((card) => (
-                        <img
-                          key={card.id}
-                          src={card.image}
-                          alt={card.name}
-                          className="family-photo-thumb"
-                        />
-                      ))}
+                  {deck.name === "Family Photos" && familyDeck.cardBack && (
+                    <div className="family-card-back-preview">
+                      <p>Card Back</p>
+                      <img
+                        src={familyDeck.cardBack.image}
+                        alt="Family Photos card back"
+                        className="family-photo-thumb"
+                      />
                     </div>
                   )}
+
+                  {deck.name === "Family Photos" &&
+                    familyDeck.cards.length > 0 && (
+                      <div className="family-photo-preview-row">
+                        {familyDeck.cards.slice(0, 6).map((card) => (
+                          <img
+                            key={card.id}
+                            src={card.image}
+                            alt={card.name}
+                            className="family-photo-thumb"
+                          />
+                        ))}
+                      </div>
+                    )}
                 </div>
               </div>
             );
