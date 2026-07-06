@@ -10,6 +10,7 @@ import ResultPopup from "../components/blackjack/ResultPopup";
 import StatisticsModal from "../components/blackjack/StatisticsModal";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import GameButtons from "../components/blackjack/GameButtons";
+import ChipStack from "../components/blackjack/ChipStack";
 
 const tableThemes = {
   ruby: {
@@ -864,7 +865,11 @@ export default function Demo() {
     setShowStatsOverlay(true);
   }}
 />
-
+<ChipStack
+  bet={bet}
+  roundBet={roundBet}
+  gameStarted={gameStarted}
+/>
         <div className="status-box">
           <strong>{message}</strong>
           <div>Player: {playerTotal}</div>
