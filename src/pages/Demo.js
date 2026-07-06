@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import fullDeck from "../data/fullDeck.js";
 import Card from "../components/Card";
+import DealerHand from "../components/blackjack/DealerHand";
+import PlayerHand from "../components/blackjack/PlayerHand";
 import LauncherOverlay from "../components/blackjack/LauncherOverlay";
 import InsuranceOverlay from "../components/blackjack/InsuranceOverlay";
 import ResultPopup from "../components/blackjack/ResultPopup";
@@ -108,12 +110,6 @@ function handOutcome(playerTotal, dealerTotal) {
   if (playerTotal > dealerTotal) return "win";
   if (playerTotal < dealerTotal) return "lose";
   return "draw";
-}
-
-function outcomeLabel(outcome) {
-  if (outcome === "win") return "WIN";
-  if (outcome === "lose") return "LOSE";
-  return "PUSH";
 }
 
 export default function Demo() {
@@ -931,78 +927,22 @@ export default function Demo() {
       </aside>
 
       <main className="table-area">
-        <section className="hand-section">
-          <h2>Dealer</h2>
+        <DealerHand
+          dealerHand={dealerHand}
+          dealerRevealed={dealerRevealed}
+          onOpenGallery={openGallery}
+        />
 
-          <div className="hand-row">
-            {dealerHand.map((card, index) => (
-              <Card
-                key={index}
-                rank={card.rank}
-                suit={card.suit}
-                image={card.image}
-                faceDown={index === 1 && !dealerRevealed}
-                onClick={() => openGallery(dealerHand, index)}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="hand-section">
-          <h2>Player</h2>
-
-          {!splitMode && (
-            <div className="hand-row">
-              {activePlayerHand.map((card, index) => (
-                <Card
-                  key={index}
-                  rank={card.rank}
-                  suit={card.suit}
-                  image={card.image}
-                  onClick={() => openGallery(activePlayerHand, index)}
-                />
-              ))}
-            </div>
-          )}
-
-          {splitMode && (
-            <div className="split-hands">
-              {playerHands.map((hand, handIndex) => (
-                <div
-                  key={handIndex}
-                  className={`split-hand ${
-                    handIndex === activeHandIndex && gameStarted ? "active" : ""
-                  }`}
-                >
-                  <div className="split-label">
-                    Hand {handIndex + 1} — {handTotal(hand)}
-                    {completedHands[handIndex] && " ✓"}
-                  </div>
-
-                  <div className="hand-row split-row">
-                    {hand.map((card, cardIndex) => (
-                      <Card
-                        key={cardIndex}
-                        rank={card.rank}
-                        suit={card.suit}
-                        image={card.image}
-                        onClick={() => openGallery(hand, cardIndex)}
-                      />
-                    ))}
-                  </div>
-
-                  {splitResults[handIndex] && (
-                    <div
-                      className={`split-result ${splitResults[handIndex].outcome}`}
-                    >
-                      {outcomeLabel(splitResults[handIndex].outcome)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+        <PlayerHand
+          splitMode={splitMode}
+          playerHands={playerHands}
+          activePlayerHand={activePlayerHand}
+          activeHandIndex={activeHandIndex}
+          completedHands={completedHands}
+          splitResults={splitResults}
+          gameStarted={gameStarted}
+          onOpenGallery={openGallery}
+        />
       </main>
 
       <InsuranceOverlay
