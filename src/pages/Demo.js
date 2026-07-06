@@ -41,8 +41,6 @@ const defaultStats = {
   highestBalance: 1000,
 };
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function loadStats() {
@@ -60,42 +58,8 @@ function playSound(path) {
   sound.play().catch(() => {});
 }
 
-function shuffleDeck(deck) {
-  const copy = [...deck];
-
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-
   return copy;
 }
-
-function cardValue(rank) {
-  if (["J", "Q", "K"].includes(rank)) return 10;
-  if (rank === "A") return 11;
-  return Number(rank);
-}
-
-function handTotal(hand) {
-  let total = hand.reduce((sum, card) => sum + cardValue(card.rank), 0);
-  let aces = hand.filter((card) => card.rank === "A").length;
-
-  while (total > 21 && aces > 0) {
-    total -= 10;
-    aces -= 1;
-  }
-
-  return total;
-}
-
-function isBlackjack(hand) {
-  return hand.length === 2 && handTotal(hand) === 21;
-}
-
-function resultType(message) {
-  const lower = message.toLowerCase();
-
   if (lower.includes("push") || lower.includes("draw")) return "draw";
   if (lower.includes("dealer bust")) return "win";
   if (lower.includes("dealer blackjack wins")) return "lose";
@@ -105,14 +69,6 @@ function resultType(message) {
   if (lower.includes("bust")) return "lose";
 
   return "";
-}
-
-function handOutcome(playerTotal, dealerTotal) {
-  if (playerTotal > 21) return "lose";
-  if (dealerTotal > 21) return "win";
-  if (playerTotal > dealerTotal) return "win";
-  if (playerTotal < dealerTotal) return "lose";
-  return "draw";
 }
 
 export default function Demo() {
