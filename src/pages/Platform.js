@@ -197,7 +197,7 @@ export default function Platform() {
             Play Valkyra Blackjack
           </Link>
 
-          <Link to="/match" className="platform-secondary">
+          <Link to="/match?family=1" className="platform-secondary">
             Play Valkyra Match
           </Link>
         </div>
