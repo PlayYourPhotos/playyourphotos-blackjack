@@ -197,9 +197,14 @@ export default function Platform() {
             Play Valkyra Blackjack
           </Link>
 
-          <Link to="/match?family=1" className="platform-secondary">
-            Play Valkyra Match
-          </Link>
+          <Link
+  to="/match?family=1"
+  className={`deck-play-button secondary-deck-button ${
+    familyDeck.cards.length === 0 ? "disabled-link" : ""
+  }`}
+>
+  Test in Match
+</Link>
         </div>
       </header>
 
