@@ -2143,3 +2143,43 @@ a {
     transform: translateY(0) scale(1);
   }
 }
+.deck-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.family-card-back-preview {
+  margin-top: 16px;
+  max-height: 220px;
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.family-card-back-preview p {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.family-card-back-preview img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 14px;
+  display: block;
+}
+
+.family-photo-preview-row {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.family-photo-thumb {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+}
