@@ -252,7 +252,7 @@ export default function Platform() {
                       </Link>
 
                       <Link
-                        to="/match"
+                        to="/match?family=1"
                         className="deck-play-button secondary-deck-button"
                       >
                         Play Match
@@ -284,12 +284,12 @@ export default function Platform() {
                       </label>
 
                       <Link
-                        to="/match"
+                        to="/match?family=1"
                         className={`deck-play-button secondary-deck-button ${
                           familyDeck.cards.length === 0 ? "disabled-link" : ""
                         }`}
                       >
-                        Test in Match
+                        Play Valkyra Match
                       </Link>
 
                       {familyDeck.cards.length > 0 && (
