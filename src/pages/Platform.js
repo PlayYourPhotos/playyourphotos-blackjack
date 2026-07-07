@@ -31,20 +31,12 @@ function loadFamilyDeck() {
   try {
     const saved = localStorage.getItem(FAMILY_DECK_STORAGE_KEY);
 
-    if (!saved) {
-      return {
-        cards: [],
-        cardBack: null,
-      };
-    }
+    if (!saved) return { cards: [], cardBack: null };
 
     const parsed = JSON.parse(saved);
 
     if (Array.isArray(parsed)) {
-      return {
-        cards: parsed,
-        cardBack: null,
-      };
+      return { cards: parsed, cardBack: null };
     }
 
     return {
@@ -52,10 +44,7 @@ function loadFamilyDeck() {
       cardBack: parsed.cardBack || null,
     };
   } catch {
-    return {
-      cards: [],
-      cardBack: null,
-    };
+    return { cards: [], cardBack: null };
   }
 }
 
@@ -197,14 +186,9 @@ export default function Platform() {
             Play Valkyra Blackjack
           </Link>
 
-          <Link
-  to="/match?family=1"
-  className={`deck-play-button secondary-deck-button ${
-    familyDeck.cards.length === 0 ? "disabled-link" : ""
-  }`}
->
-  Test in Match
-</Link>
+          <Link to="/match" className="platform-secondary">
+            Play Valkyra Match
+          </Link>
         </div>
       </header>
 
@@ -252,7 +236,7 @@ export default function Platform() {
                       </Link>
 
                       <Link
-                        to="/match?family=1"
+                        to="/match"
                         className="deck-play-button secondary-deck-button"
                       >
                         Play Match
@@ -289,7 +273,7 @@ export default function Platform() {
                           familyDeck.cards.length === 0 ? "disabled-link" : ""
                         }`}
                       >
-                        Play Valkyra Match
+                        Test in Match
                       </Link>
 
                       {familyDeck.cards.length > 0 && (
