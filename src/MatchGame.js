@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-
 import { useEffect, useMemo, useState } from "react";
 
 const FAMILY_DECK_STORAGE_KEY = "playYourPhotosFamilyDeck";
@@ -432,31 +431,26 @@ export default function MatchGame() {
             <p className="match-subtitle">{activeSubtitle}</p>
           </div>
 
-         <div className="match-header-progress">
+          <div className="match-header-progress">
+            <Link to="/platform" className="game-back-button">
+              ← Back to My Memory Decks
+            </Link>
 
-  <Link
-    to="/"
-    className="match-button secondary"
-  >
-    ← Platform
-  </Link>
+            <strong>
+              Stage {phaseIndex + 1} of 3 • Round {roundIndex + 1} of 3
+            </strong>
 
-  <strong>
-    Stage {phaseIndex + 1} of 3 • Round {roundIndex + 1} of 3
-  </strong>
+            <span>
+              {matchedPairs}/{totalPairsThisRound} pairs
+            </span>
 
-  <span>
-    {matchedPairs}/{totalPairsThisRound} pairs
-  </span>
-
-  <button
-    className="match-button primary compact-reset"
-    onClick={() => resetWholeGame()}
-  >
-    Reset
-  </button>
-
-</div>
+            <button
+              className="match-button primary compact-reset"
+              onClick={() => resetWholeGame()}
+            >
+              Reset
+            </button>
+          </div>
         </header>
 
         <div className="match-game-layout">
