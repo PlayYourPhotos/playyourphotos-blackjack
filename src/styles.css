@@ -2188,158 +2188,150 @@ a {
    COMPACT DESKTOP PLATFORM
 ========================= */
 
-/* =========================
-   EXTRA-COMPACT PLATFORM
-   1920 x 1080 DESKTOP
-========================= */
-
-@media (min-width: 1500px) and (min-height: 850px) {
+@media (min-width: 1101px) and (min-height: 700px) {
   .platform-page {
-    padding: 10px 24px 12px;
+    min-height: 100vh;
+    padding: 18px 32px;
   }
 
   .platform-hero {
-    padding: 14px 28px;
-    gap: 22px;
-    border-radius: 20px;
+    min-height: 0;
+    padding: 24px 36px;
+    gap: 28px;
+    border-radius: 24px;
   }
 
   .platform-kicker {
-    margin: 0 0 4px;
-    font-size: 0.78rem;
-    letter-spacing: 2.5px;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    letter-spacing: 3px;
   }
 
   .platform-hero h1 {
-    font-size: 2.45rem;
+    font-size: 3rem;
   }
 
   .platform-hero p {
-    margin: 8px 0 0;
-    max-width: 820px;
-    font-size: 0.94rem;
-    line-height: 1.28;
+    max-width: 850px;
+    margin: 12px 0 0;
+    font-size: 1.05rem;
+    line-height: 1.4;
   }
 
   .platform-actions {
-    min-width: 235px;
-    gap: 7px;
+    min-width: 245px;
+    gap: 10px;
   }
 
   .platform-primary,
   .platform-secondary {
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 0.9rem;
+    padding: 13px 18px;
+    border-radius: 14px;
+    font-size: 1rem;
   }
 
   .platform-section {
-    margin-top: 12px;
+    margin-top: 20px;
   }
 
   .platform-section h2 {
-    margin: 0 0 8px;
-    font-size: 1.65rem;
+    margin: 0 0 14px;
+    font-size: 2rem;
   }
 
   .deck-grid {
-    gap: 14px;
+    gap: 20px;
   }
 
   .deck-card {
-    border-radius: 18px;
+    border-radius: 22px;
   }
 
   .deck-cover {
-    height: 78px;
+    height: 105px;
   }
 
   .deck-cover span {
-    width: 52px;
-    height: 52px;
-    font-size: 1.8rem;
+    width: 68px;
+    height: 68px;
+    font-size: 2.25rem;
   }
 
   .deck-info {
-    padding: 11px 16px 13px;
+    padding: 16px 20px;
   }
 
   .deck-info h3 {
-    margin: 0 0 2px;
-    font-size: 1.22rem;
+    margin-bottom: 4px;
+    font-size: 1.45rem;
   }
 
   .deck-info p {
-    margin: 0 0 8px;
-    font-size: 0.78rem;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
   }
 
   .deck-meta {
-    margin-bottom: 8px;
-    font-size: 0.8rem;
+    margin-bottom: 12px;
+    font-size: 0.92rem;
   }
 
   .deck-games {
-    margin-bottom: 9px;
-    gap: 5px;
+    margin-bottom: 14px;
+    gap: 6px;
   }
 
   .deck-games span {
-    padding: 4px 8px;
-    font-size: 0.68rem;
+    padding: 6px 10px;
+    font-size: 0.78rem;
   }
 
   .deck-button-stack {
-    gap: 6px;
+    gap: 8px;
   }
 
   .deck-play-button,
   .deck-disabled-button {
-    padding: 9px 12px;
-    border-radius: 11px;
-    font-size: 0.84rem;
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-size: 0.95rem;
   }
 
   .platform-feature-grid {
-    gap: 12px;
+    gap: 16px;
   }
 
   .platform-feature-grid div {
-    padding: 11px 14px;
-    border-radius: 15px;
+    padding: 16px 20px;
+    border-radius: 18px;
   }
 
   .platform-feature-grid h3 {
-    margin: 0 0 5px;
-    font-size: 0.92rem;
+    margin: 0 0 8px;
+    font-size: 1.05rem;
   }
 
   .platform-feature-grid p {
     margin: 0;
-    font-size: 0.76rem;
-    line-height: 1.2;
+    font-size: 0.88rem;
+    line-height: 1.3;
   }
 
   .family-card-back-preview {
-    margin-top: 7px;
-    max-height: 105px;
-  }
-
-  .family-card-back-preview p {
-    margin-bottom: 5px;
-    font-size: 0.8rem;
+    margin-top: 10px;
+    max-height: 150px;
   }
 
   .family-card-back-preview img {
-    height: 82px;
+    height: 115px;
   }
 
   .family-photo-preview-row {
-    margin-top: 7px;
-    gap: 4px;
+    margin-top: 10px;
+    gap: 6px;
   }
 
   .family-photo-thumb {
-    height: 48px;
+    height: 62px;
   }
 }
