@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-const FAMILY_DECK_STORAGE_KEY = "playYourPhotosFamilyDeck";
+const CURRENT_DECK_STORAGE_KEY = "playYourPhotosCurrentDeck";
+const LEGACY_DECK_STORAGE_KEY = "playYourPhotosFamilyDeck";
+
+const CURRENT_DECK_NAME = "Current Deck";
 
 const starterDecks = [
   {
@@ -12,44 +15,87 @@ const starterDecks = [
     games: ["Blackjack", "Memory Match"],
   },
   {
-    name: "Family Photos",
+    name: CURRENT_DECK_NAME,
     cards: 0,
-    category: "Personal",
-    status: "Upload Photos",
-    games: ["Blackjack", "Memory Match"],
+    category: "Card Ledgends Studio",
+    status: "Upload Cards",
+    games: ["Memory Match"],
   },
   {
-    name: "Creator Deck",
+    name: "Published Decks",
     cards: 0,
-    category: "Marketplace",
+    category: "Card Ledgends Catalogue",
     status: "Coming Soon",
-    games: ["Blackjack", "Solitaire", "Match"],
+    games: ["Blackjack", "Solitaire", "Memory Match"],
   },
 ];
 
-function loadFamilyDeck() {
+function createEmptyDeck() {
+  return {
+    cards: [],
+    cardBack: null,
+  };
+}
+
+function normaliseDeck(parsedDeck) {
+  if (Array.isArray(parsedDeck)) {
+    return {
+      cards: parsedDeck,
+      cardBack: null,
+    };
+  }
+
+  return {
+    cards: Array.isArray(parsedDeck?.cards) ? parsedDeck.cards : [],
+    cardBack: parsedDeck?.cardBack || null,
+  };
+}
+
+function loadCurrentDeck() {
   try {
-    const saved = localStorage.getItem(FAMILY_DECK_STORAGE_KEY);
+    const currentSavedDeck = localStorage.getItem(CURRENT_DECK_STORAGE_KEY);
 
-    if (!saved) return { cards: [], cardBack: null };
-
-    const parsed = JSON.parse(saved);
-
-    if (Array.isArray(parsed)) {
-      return { cards: parsed, cardBack: null };
+    if (currentSavedDeck) {
+      return normaliseDeck(JSON.parse(currentSavedDeck));
     }
 
-    return {
-      cards: parsed.cards || [],
-      cardBack: parsed.cardBack || null,
-    };
-  } catch {
-    return { cards: [], cardBack: null };
+    const legacySavedDeck = localStorage.getItem(LEGACY_DECK_STORAGE_KEY);
+
+    if (legacySavedDeck) {
+      const migratedDeck = normaliseDeck(JSON.parse(legacySavedDeck));
+
+      localStorage.setItem(
+        CURRENT_DECK_STORAGE_KEY,
+        JSON.stringify(migratedDeck)
+      );
+
+      return migratedDeck;
+    }
+
+    return createEmptyDeck();
+  } catch (error) {
+    console.error("Unable to load the current deck:", error);
+    return createEmptyDeck();
   }
 }
 
-function saveFamilyDeck(deck) {
-  localStorage.setItem(FAMILY_DECK_STORAGE_KEY, JSON.stringify(deck));
+function saveCurrentDeck(deck) {
+  try {
+    const savedDeck = JSON.stringify(deck);
+
+    localStorage.setItem(CURRENT_DECK_STORAGE_KEY, savedDeck);
+
+    /*
+     * Temporary compatibility copy.
+     *
+     * The current Match game still reads the original Family Photos key.
+     * This can be removed after Match.js is converted to the shared deck
+     * loader.
+     */
+    localStorage.setItem(LEGACY_DECK_STORAGE_KEY, savedDeck);
+  } catch (error) {
+    console.error("Unable to save the current deck:", error);
+  }
 }
 
 function fileToImage(file) {
@@ -58,126 +104,167 @@ function fileToImage(file) {
 
     reader.onload = () => {
       resolve({
-        id: `${Date.now()}-${file.name}`,
+        id: `${Date.now()}-${crypto.randomUUID?.() || file.name}`,
         name: file.name,
         image: reader.result,
       });
     };
 
-    reader.onerror = reject;
+    reader.onerror = () => {
+      reject(new Error(`Unable to read image file: ${file.name}`));
+    };
+
     reader.readAsDataURL(file);
   });
 }
 
 export default function Platform() {
-  const [familyDeck, setFamilyDeck] = useState({
-    cards: [],
-    cardBack: null,
-  });
+  const [currentDeck, setCurrentDeck] = useState(createEmptyDeck);
 
   useEffect(() => {
-    setFamilyDeck(loadFamilyDeck());
+    setCurrentDeck(loadCurrentDeck());
   }, []);
 
-  async function handleFamilyPhotoUpload(event) {
+  async function handleCardUpload(event) {
     const files = Array.from(event.target.files || []);
-    if (files.length === 0) return;
 
-    const imageFiles = files.filter((file) => file.type.startsWith("image/"));
-    const newCards = await Promise.all(imageFiles.map(fileToImage));
+    if (files.length === 0) {
+      return;
+    }
 
-    setFamilyDeck((current) => {
-      const nextDeck = {
-        ...current,
-        cards: [...current.cards, ...newCards],
-      };
+    const imageFiles = files.filter((file) =>
+      file.type.startsWith("image/")
+    );
 
-      saveFamilyDeck(nextDeck);
-      return nextDeck;
-    });
+    if (imageFiles.length === 0) {
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const newCards = await Promise.all(imageFiles.map(fileToImage));
+
+      setCurrentDeck((existingDeck) => {
+        const nextDeck = {
+          ...existingDeck,
+          cards: [...existingDeck.cards, ...newCards],
+        };
+
+        saveCurrentDeck(nextDeck);
+        return nextDeck;
+      });
+    } catch (error) {
+      console.error("Unable to upload cards:", error);
+    }
 
     event.target.value = "";
   }
 
   async function handleCardBackUpload(event) {
     const file = event.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
 
-    const uploadedBack = await fileToImage(file);
+    if (!file || !file.type.startsWith("image/")) {
+      event.target.value = "";
+      return;
+    }
 
-    setFamilyDeck((current) => {
-      const nextDeck = {
-        ...current,
-        cardBack: uploadedBack,
-      };
+    try {
+      const uploadedCardBack = await fileToImage(file);
 
-      saveFamilyDeck(nextDeck);
-      return nextDeck;
-    });
+      setCurrentDeck((existingDeck) => {
+        const nextDeck = {
+          ...existingDeck,
+          cardBack: uploadedCardBack,
+        };
+
+        saveCurrentDeck(nextDeck);
+        return nextDeck;
+      });
+    } catch (error) {
+      console.error("Unable to upload the card back:", error);
+    }
 
     event.target.value = "";
   }
 
-  function clearFamilyPhotos() {
-    setFamilyDeck((current) => {
+  function clearCards() {
+    setCurrentDeck((existingDeck) => {
       const nextDeck = {
-        ...current,
+        ...existingDeck,
         cards: [],
       };
 
-      saveFamilyDeck(nextDeck);
+      saveCurrentDeck(nextDeck);
       return nextDeck;
     });
   }
 
   function clearCardBack() {
-    setFamilyDeck((current) => {
+    setCurrentDeck((existingDeck) => {
       const nextDeck = {
-        ...current,
+        ...existingDeck,
         cardBack: null,
       };
 
-      saveFamilyDeck(nextDeck);
+      saveCurrentDeck(nextDeck);
       return nextDeck;
     });
   }
 
   function getDeckCardCount(deck) {
-    if (deck.name === "Family Photos") {
-      return familyDeck.cards.length;
+    if (deck.name === CURRENT_DECK_NAME) {
+      return currentDeck.cards.length;
     }
 
     return deck.cards;
   }
 
   function getDeckStatus(deck) {
-    if (deck.name === "Family Photos") {
-      return familyDeck.cards.length > 0 ? "Ready to Test" : "Upload Photos";
+    if (deck.name !== CURRENT_DECK_NAME) {
+      return deck.status;
     }
 
-    return deck.status;
+    if (currentDeck.cards.length === 0) {
+      return "Upload Cards";
+    }
+
+    if (!currentDeck.cardBack) {
+      return "Card Back Required";
+    }
+
+    return "Ready to Test";
   }
+
+  function getCurrentDeckCover() {
+    return currentDeck.cards[0]?.image || null;
+  }
+
+  const currentDeckCanTest =
+    currentDeck.cards.length > 0 && Boolean(currentDeck.cardBack);
 
   return (
     <div className="platform-page">
       <header className="platform-hero">
         <div>
-          <p className="platform-kicker">PlayYourPhotos.com</p>
-          <h1>Memory Deck Platform</h1>
+          <p className="platform-kicker">Card Ledgends</p>
+
+          <h1>Deck Publishing Studio</h1>
+
           <p>
-            Create one deck of memories, artwork, or photos — then play it
-            across multiple card games.
+            Create a complete illustrated card deck, upload its card back,
+            preview the artwork and test the same deck across multiple card
+            games.
           </p>
         </div>
 
         <div className="platform-actions">
           <label className="platform-primary">
-            Create Memory Deck
+            Upload Cards
             <input
               type="file"
               accept="image/*"
               multiple
-              onChange={handleFamilyPhotoUpload}
+              onChange={handleCardUpload}
               hidden
             />
           </label>
@@ -193,20 +280,22 @@ export default function Platform() {
       </header>
 
       <section className="platform-section">
-        <h2>My Memory Decks</h2>
+        <h2>My Card Decks</h2>
 
         <div className="deck-grid">
           {starterDecks.map((deck) => {
             const cardCount = getDeckCardCount(deck);
             const deckStatus = getDeckStatus(deck);
+            const isCurrentDeck = deck.name === CURRENT_DECK_NAME;
+            const currentDeckCover = getCurrentDeckCover();
 
             return (
-              <div className="deck-card" key={deck.name}>
+              <article className="deck-card" key={deck.name}>
                 <div className="deck-cover">
-                  {deck.name === "Family Photos" && familyDeck.cards[0] ? (
+                  {isCurrentDeck && currentDeckCover ? (
                     <img
-                      src={familyDeck.cards[0].image}
-                      alt="Family Photos cover"
+                      src={currentDeckCover}
+                      alt="Current deck cover"
                       className="deck-cover-image"
                     />
                   ) : (
@@ -244,119 +333,142 @@ export default function Platform() {
                     </div>
                   )}
 
-                  {deck.name === "Family Photos" && (
-                    <div className="deck-button-stack">
-                      <label className="deck-play-button">
-                        Upload Photos
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={handleFamilyPhotoUpload}
-                          hidden
-                        />
-                      </label>
+                  {isCurrentDeck && (
+                    <>
+                      <div className="deck-button-stack">
+                        <label className="deck-play-button">
+                          Upload Cards
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={handleCardUpload}
+                            hidden
+                          />
+                        </label>
 
-                      <label className="deck-play-button secondary-deck-button">
-                        Upload Card Back
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleCardBackUpload}
-                          hidden
-                        />
-                      </label>
+                        <label className="deck-play-button secondary-deck-button">
+                          Upload Card Back
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleCardBackUpload}
+                            hidden
+                          />
+                        </label>
 
-                      <Link
-                        to="/match?family=1"
-                        className={`deck-play-button secondary-deck-button ${
-                          familyDeck.cards.length === 0 ? "disabled-link" : ""
-                        }`}
-                      >
-                        Test in Match
-                      </Link>
+                        {currentDeckCanTest ? (
+                          <Link
+                            to="/match?family=1"
+                            className="deck-play-button secondary-deck-button"
+                          >
+                            Test in Match
+                          </Link>
+                        ) : (
+                          <button
+                            type="button"
+                            className="deck-disabled-button"
+                            disabled
+                          >
+                            Add Cards and Card Back to Test
+                          </button>
+                        )}
 
-                      {familyDeck.cards.length > 0 && (
-                        <button
-                          type="button"
-                          className="deck-disabled-button"
-                          onClick={clearFamilyPhotos}
-                        >
-                          Clear Photos
-                        </button>
-                      )}
+                        {currentDeck.cards.length > 0 && (
+                          <button
+                            type="button"
+                            className="deck-disabled-button"
+                            onClick={clearCards}
+                          >
+                            Clear Cards
+                          </button>
+                        )}
 
-                      {familyDeck.cardBack && (
-                        <button
-                          type="button"
-                          className="deck-disabled-button"
-                          onClick={clearCardBack}
-                        >
-                          Clear Card Back
-                        </button>
-                      )}
-                    </div>
-                  )}
+                        {currentDeck.cardBack && (
+                          <button
+                            type="button"
+                            className="deck-disabled-button"
+                            onClick={clearCardBack}
+                          >
+                            Clear Card Back
+                          </button>
+                        )}
+                      </div>
 
-                  {deck.name === "Creator Deck" && (
-                    <button className="deck-disabled-button" disabled>
-                      Build Soon
-                    </button>
-                  )}
+                      {currentDeck.cardBack && (
+                        <div className="family-card-back-preview">
+                          <p>Card Back</p>
 
-                  {deck.name === "Family Photos" && familyDeck.cardBack && (
-                    <div className="family-card-back-preview">
-                      <p>Card Back</p>
-                      <img
-                        src={familyDeck.cardBack.image}
-                        alt="Family Photos card back"
-                        className="family-photo-thumb"
-                      />
-                    </div>
-                  )}
-
-                  {deck.name === "Family Photos" &&
-                    familyDeck.cards.length > 0 && (
-                      <div className="family-photo-preview-row">
-                        {familyDeck.cards.slice(0, 6).map((card) => (
                           <img
-                            key={card.id}
-                            src={card.image}
-                            alt={card.name}
+                            src={currentDeck.cardBack.image}
+                            alt="Current deck card back"
                             className="family-photo-thumb"
                           />
-                        ))}
-                      </div>
-                    )}
+                        </div>
+                      )}
+
+                      {currentDeck.cards.length > 0 && (
+                        <div className="family-photo-preview-row">
+                          {currentDeck.cards.slice(0, 6).map((card) => (
+                            <img
+                              key={card.id}
+                              src={card.image}
+                              alt={card.name}
+                              className="family-photo-thumb"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {deck.name === "Published Decks" && (
+                    <button
+                      type="button"
+                      className="deck-disabled-button"
+                      disabled
+                    >
+                      Multi-Deck Catalogue Coming Next
+                    </button>
+                  )}
                 </div>
-              </div>
+              </article>
             );
           })}
         </div>
       </section>
 
       <section className="platform-section">
-        <h2>Platform Direction</h2>
+        <h2>Publishing Workflow</h2>
 
         <div className="platform-feature-grid">
           <div>
             <h3>1. Create</h3>
-            <p>Upload photos or artwork and turn them into a Memory Deck.</p>
+            <p>
+              Upload your completed artwork and create a new Card Ledgends
+              deck.
+            </p>
           </div>
 
           <div>
-            <h3>2. Play</h3>
-            <p>Use the same deck in Blackjack, Match, Solitaire and more.</p>
+            <h3>2. Preview</h3>
+            <p>
+              Review the deck artwork and confirm that the card back is ready.
+            </p>
           </div>
 
           <div>
-            <h3>3. Share</h3>
-            <p>Share privately, publish publicly, or prepare marketplace decks.</p>
+            <h3>3. Test</h3>
+            <p>
+              Test the deck in Match, Blackjack and future Card Ledgends games.
+            </p>
           </div>
 
           <div>
-            <h3>4. Earn</h3>
-            <p>Creators can eventually sell decks or offer subscriptions.</p>
+            <h3>4. Publish</h3>
+            <p>
+              Add completed decks to the Card Ledgends subscriber catalogue.
+            </p>
           </div>
         </div>
       </section>
