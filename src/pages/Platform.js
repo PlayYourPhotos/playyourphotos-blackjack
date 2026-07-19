@@ -6,12 +6,55 @@ const CURRENT_DECK_STORAGE_KEY = "playYourPhotosCurrentDeck";
 const LEGACY_DECK_STORAGE_KEY = "playYourPhotosFamilyDeck";
 const ACTIVE_DECK_ID_STORAGE_KEY = "playYourPhotosActiveDeckId";
 
+const SUITS = ["hearts", "diamonds", "spades", "clubs"];
+
+const SUIT_LABELS = {
+  hearts: "Hearts",
+  diamonds: "Diamonds",
+  spades: "Spades",
+  clubs: "Clubs",
+};
+
+const SUIT_SYMBOLS = {
+  hearts: "♥",
+  diamonds: "♦",
+  spades: "♠",
+  clubs: "♣",
+};
+
+const VALID_RANKS = [
+  "A",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "10",
+  "J",
+  "Q",
+  "K",
+];
+
 const STATUS_OPTIONS = [
   "Draft",
   "Ready to Test",
   "Published",
   "Archived",
 ];
+
+const fieldStyle = {
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: "10px",
+  border: "1px solid rgba(255,255,255,0.2)",
+  background: "rgba(0,0,0,0.45)",
+  color: "white",
+  fontFamily: "inherit",
+  fontSize: "0.95rem",
+};
 
 function createDeckId() {
   if (
@@ -21,9 +64,16 @@ function createDeckId() {
     return crypto.randomUUID();
   }
 
-  return `deck-${Date.now()}-${Math.random()
-    .toString(36)
-    .slice(2)}`;
+  return `deck-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function createEmptySuitCards() {
+  return {
+    hearts: [],
+    diamonds: [],
+    spades: [],
+    clubs: [],
+  };
 }
 
 function createBlankDeck() {
@@ -35,11 +85,176 @@ function createBlankDeck() {
     category: "Fantasy",
     description: "",
     status: "Draft",
-    cards: [],
+    suitCards: createEmptySuitCards(),
     cardBack: null,
     createdAt: now,
     updatedAt: now,
   };
+}
+
+function getAllCards(deck) {
+  if (!deck?.suitCards) {
+    return [];
+  }
+
+  return SUITS.flatMap((suit) =>
+    Array.isArray(deck.suitCards[suit])
+      ? deck.suitCards[suit]
+      : []
+  );
+}
+
+function extractRankFromFileName(fileName) {
+  const nameWithoutExtension = fileName
+    .replace(/\.[^/.]+$/, "")
+    .trim()
+    .toUpperCase();
+
+  const cleanedName = nameWithoutExtension
+    .replace(/ACE/g, "A")
+    .replace(/JACK/g, "J")
+    .replace(/QUEEN/g, "Q")
+    .replace(/KING/g, "K")
+    .replace(/[^A-Z0-9]/g, "");
+
+  if (VALID_RANKS.includes(cleanedName)) {
+    return cleanedName;
+  }
+
+  const rankMatch = cleanedName.match(
+    /(?:^|[^0-9A-Z])(10|[2-9]|A|J|Q|K)(?:$|[^0-9A-Z])/
+  );
+
+  if (rankMatch?.[1] && VALID_RANKS.includes(rankMatch[1])) {
+    return rankMatch[1];
+  }
+
+  for (const rank of VALID_RANKS) {
+    if (
+      cleanedName === rank ||
+      cleanedName.startsWith(rank) ||
+      cleanedName.endsWith(rank)
+    ) {
+      return rank;
+    }
+  }
+
+  return null;
+}
+
+function createImageId(fileName) {
+  const uniquePart =
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  return `${uniquePart}-${fileName}`;
+}
+
+function fileToCard(file, suit) {
+  return new Promise((resolve, reject) => {
+    const rank = extractRankFromFileName(file.name);
+
+    if (!rank) {
+      reject(
+        new Error(
+          `${file.name} does not contain a recognised rank. Use filenames such as A.jpg, 10.jpg, J.jpg, Q.jpg or K.jpg.`
+        )
+      );
+
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      resolve({
+        id: createImageId(file.name),
+        name: file.name,
+        image: reader.result,
+        suit,
+        rank,
+      });
+    };
+
+    reader.onerror = () => {
+      reject(new Error(`Unable to read image file: ${file.name}`));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function fileToImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      resolve({
+        id: createImageId(file.name),
+        name: file.name,
+        image: reader.result,
+      });
+    };
+
+    reader.onerror = () => {
+      reject(new Error(`Unable to read image file: ${file.name}`));
+    };
+
+    reader.readAsDataURL(file);
+  });
+}
+
+function sortCardsByRank(cards) {
+  return [...cards].sort(
+    (firstCard, secondCard) =>
+      VALID_RANKS.indexOf(firstCard.rank) -
+      VALID_RANKS.indexOf(secondCard.rank)
+  );
+}
+
+function migrateFlatCardsToSuitCards(savedDeck) {
+  const migratedSuitCards = createEmptySuitCards();
+
+  const flatCards = Array.isArray(savedDeck?.cards)
+    ? savedDeck.cards
+    : [];
+
+  flatCards.forEach((card, index) => {
+    const suit = SUITS.includes(card?.suit)
+      ? card.suit
+      : SUITS[Math.floor(index / 13)] || "hearts";
+
+    const detectedRank =
+      card?.rank ||
+      extractRankFromFileName(card?.name || "") ||
+      VALID_RANKS[index % 13];
+
+    if (!detectedRank) {
+      return;
+    }
+
+    const duplicateExists = migratedSuitCards[suit].some(
+      (existingCard) => existingCard.rank === detectedRank
+    );
+
+    if (!duplicateExists) {
+      migratedSuitCards[suit].push({
+        ...card,
+        suit,
+        rank: detectedRank,
+      });
+    }
+  });
+
+  SUITS.forEach((suit) => {
+    migratedSuitCards[suit] = sortCardsByRank(
+      migratedSuitCards[suit]
+    );
+  });
+
+  return migratedSuitCards;
 }
 
 function normaliseDeck(savedDeck) {
@@ -48,8 +263,30 @@ function normaliseDeck(savedDeck) {
   if (Array.isArray(savedDeck)) {
     return {
       ...blankDeck,
-      cards: savedDeck,
+      suitCards: migrateFlatCardsToSuitCards({
+        cards: savedDeck,
+      }),
     };
+  }
+
+  let suitCards = createEmptySuitCards();
+
+  if (savedDeck?.suitCards) {
+    SUITS.forEach((suit) => {
+      suitCards[suit] = sortCardsByRank(
+        Array.isArray(savedDeck.suitCards[suit])
+          ? savedDeck.suitCards[suit].map((card) => ({
+              ...card,
+              suit,
+              rank:
+                card.rank ||
+                extractRankFromFileName(card.name || ""),
+            }))
+          : []
+      ).filter((card) => VALID_RANKS.includes(card.rank));
+    });
+  } else if (Array.isArray(savedDeck?.cards)) {
+    suitCards = migrateFlatCardsToSuitCards(savedDeck);
   }
 
   return {
@@ -62,9 +299,7 @@ function normaliseDeck(savedDeck) {
     status: STATUS_OPTIONS.includes(savedDeck?.status)
       ? savedDeck.status
       : "Draft",
-    cards: Array.isArray(savedDeck?.cards)
-      ? savedDeck.cards
-      : [],
+    suitCards,
     cardBack: savedDeck?.cardBack || null,
     createdAt: savedDeck?.createdAt || blankDeck.createdAt,
     updatedAt: savedDeck?.updatedAt || blankDeck.updatedAt,
@@ -91,9 +326,7 @@ function loadStoredJson(storageKey) {
 }
 
 function loadDeckLibrary() {
-  const storedLibrary = loadStoredJson(
-    DECK_LIBRARY_STORAGE_KEY
-  );
+  const storedLibrary = loadStoredJson(DECK_LIBRARY_STORAGE_KEY);
 
   if (!Array.isArray(storedLibrary)) {
     return [];
@@ -118,10 +351,7 @@ function saveDeckLibrary(deckLibrary) {
 
 function saveActiveDeckId(deckId) {
   try {
-    localStorage.setItem(
-      ACTIVE_DECK_ID_STORAGE_KEY,
-      deckId
-    );
+    localStorage.setItem(ACTIVE_DECK_ID_STORAGE_KEY, deckId);
   } catch (error) {
     console.error("Unable to save the active deck ID:", error);
   }
@@ -129,9 +359,7 @@ function saveActiveDeckId(deckId) {
 
 function loadActiveDeckId() {
   try {
-    return localStorage.getItem(
-      ACTIVE_DECK_ID_STORAGE_KEY
-    );
+    return localStorage.getItem(ACTIVE_DECK_ID_STORAGE_KEY);
   } catch (error) {
     console.error("Unable to load the active deck ID:", error);
     return null;
@@ -139,17 +367,13 @@ function loadActiveDeckId() {
 }
 
 function loadPreviousCurrentDeck() {
-  const currentDeck = loadStoredJson(
-    CURRENT_DECK_STORAGE_KEY
-  );
+  const currentDeck = loadStoredJson(CURRENT_DECK_STORAGE_KEY);
 
   if (currentDeck) {
     return normaliseDeck(currentDeck);
   }
 
-  const legacyDeck = loadStoredJson(
-    LEGACY_DECK_STORAGE_KEY
-  );
+  const legacyDeck = loadStoredJson(LEGACY_DECK_STORAGE_KEY);
 
   if (legacyDeck) {
     return normaliseDeck(legacyDeck);
@@ -158,23 +382,26 @@ function loadPreviousCurrentDeck() {
   return null;
 }
 
+function createMatchCompatibleDeck(deck) {
+  const allCards = getAllCards(deck);
+
+  return {
+    ...deck,
+    cards: allCards,
+  };
+}
+
 function saveWorkingDeckForGames(deck) {
   try {
-    const savedDeck = JSON.stringify(deck);
+    const matchCompatibleDeck = createMatchCompatibleDeck(deck);
+    const savedDeck = JSON.stringify(matchCompatibleDeck);
 
-    localStorage.setItem(
-      CURRENT_DECK_STORAGE_KEY,
-      savedDeck
-    );
+    localStorage.setItem(CURRENT_DECK_STORAGE_KEY, savedDeck);
 
     /*
-     * Temporary compatibility:
-     * Match.js currently reads the original Family Photos key.
+     * Temporary compatibility with the current Match game.
      */
-    localStorage.setItem(
-      LEGACY_DECK_STORAGE_KEY,
-      savedDeck
-    );
+    localStorage.setItem(LEGACY_DECK_STORAGE_KEY, savedDeck);
   } catch (error) {
     console.error(
       "Unable to save the working deck for game testing:",
@@ -183,37 +410,10 @@ function saveWorkingDeckForGames(deck) {
   }
 }
 
-function createImageId(fileName) {
-  const uniquePart =
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : `${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2)}`;
-
-  return `${uniquePart}-${fileName}`;
-}
-
-function fileToImage(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      resolve({
-        id: createImageId(file.name),
-        name: file.name,
-        image: reader.result,
-      });
-    };
-
-    reader.onerror = () => {
-      reject(
-        new Error(`Unable to read image file: ${file.name}`)
-      );
-    };
-
-    reader.readAsDataURL(file);
+function createDeckSnapshot(deck) {
+  return JSON.stringify({
+    ...deck,
+    updatedAt: null,
   });
 }
 
@@ -237,22 +437,17 @@ function formatUpdatedDate(updatedAt) {
   });
 }
 
-function createDeckSnapshot(deck) {
-  return JSON.stringify({
-    ...deck,
-    updatedAt: null,
-  });
+function getMissingRanks(cards) {
+  const uploadedRanks = new Set(cards.map((card) => card.rank));
+
+  return VALID_RANKS.filter((rank) => !uploadedRanks.has(rank));
 }
 
 export default function Platform() {
   const [deckLibrary, setDeckLibrary] = useState([]);
-  const [currentDeck, setCurrentDeck] = useState(
-    createBlankDeck
-  );
-  const [selectedDeckId, setSelectedDeckId] =
-    useState("");
-  const [lastSavedSnapshot, setLastSavedSnapshot] =
-    useState("");
+  const [currentDeck, setCurrentDeck] = useState(createBlankDeck);
+  const [selectedDeckId, setSelectedDeckId] = useState("");
+  const [lastSavedSnapshot, setLastSavedSnapshot] = useState("");
   const [notification, setNotification] = useState("");
 
   useEffect(() => {
@@ -269,8 +464,7 @@ export default function Platform() {
     }
 
     if (!initialDeck) {
-      const previousCurrentDeck =
-        loadPreviousCurrentDeck();
+      const previousCurrentDeck = loadPreviousCurrentDeck();
 
       if (previousCurrentDeck) {
         initialDeck = previousCurrentDeck;
@@ -280,11 +474,7 @@ export default function Platform() {
         );
 
         if (!alreadyInLibrary) {
-          initialLibrary = [
-            ...storedLibrary,
-            previousCurrentDeck,
-          ];
-
+          initialLibrary = [...storedLibrary, previousCurrentDeck];
           saveDeckLibrary(initialLibrary);
         }
       }
@@ -298,40 +488,72 @@ export default function Platform() {
       initialDeck = createBlankDeck();
     }
 
-    setDeckLibrary(initialLibrary);
-    setCurrentDeck(initialDeck);
-    setSelectedDeckId(initialDeck.id);
-    setLastSavedSnapshot(
-      createDeckSnapshot(initialDeck)
-    );
+    const normalisedInitialDeck = normaliseDeck(initialDeck);
 
-    saveActiveDeckId(initialDeck.id);
-    saveWorkingDeckForGames(initialDeck);
+    setDeckLibrary(initialLibrary.map(normaliseDeck));
+    setCurrentDeck(normalisedInitialDeck);
+    setSelectedDeckId(normalisedInitialDeck.id);
+    setLastSavedSnapshot(createDeckSnapshot(normalisedInitialDeck));
+
+    saveActiveDeckId(normalisedInitialDeck.id);
+    saveWorkingDeckForGames(normalisedInitialDeck);
   }, []);
 
   useEffect(() => {
     saveWorkingDeckForGames(currentDeck);
   }, [currentDeck]);
 
-  const hasUnsavedChanges = useMemo(() => {
-    return (
-      createDeckSnapshot(currentDeck) !==
-      lastSavedSnapshot
-    );
-  }, [currentDeck, lastSavedSnapshot]);
+  const allCurrentCards = useMemo(
+    () => getAllCards(currentDeck),
+    [currentDeck]
+  );
 
-  const publishedDeckCount = useMemo(() => {
-    return deckLibrary.filter(
-      (deck) => deck.status === "Published"
-    ).length;
-  }, [deckLibrary]);
+  const hasUnsavedChanges = useMemo(
+    () =>
+      createDeckSnapshot(currentDeck) !== lastSavedSnapshot,
+    [currentDeck, lastSavedSnapshot]
+  );
+
+  const publishedDeckCount = useMemo(
+    () =>
+      deckLibrary.filter(
+        (deck) => deck.status === "Published"
+      ).length,
+    [deckLibrary]
+  );
+
+  const suitValidation = useMemo(() => {
+    const result = {};
+
+    SUITS.forEach((suit) => {
+      const cards = currentDeck.suitCards?.[suit] || [];
+
+      result[suit] = {
+        count: cards.length,
+        missingRanks: getMissingRanks(cards),
+        complete:
+          cards.length === 13 &&
+          getMissingRanks(cards).length === 0,
+      };
+    });
+
+    return result;
+  }, [currentDeck]);
+
+  const blackjackReady =
+    SUITS.every((suit) => suitValidation[suit].complete) &&
+    Boolean(currentDeck.cardBack);
+
+  const matchReady =
+    allCurrentCards.length >= 3 &&
+    Boolean(currentDeck.cardBack);
 
   function showNotification(message) {
     setNotification(message);
 
     window.setTimeout(() => {
       setNotification("");
-    }, 3000);
+    }, 4000);
   }
 
   function updateCurrentDeck(changes) {
@@ -349,10 +571,8 @@ export default function Platform() {
     });
   }
 
-  async function handleCardUpload(event) {
-    const files = Array.from(
-      event.target.files || []
-    );
+  async function handleSuitUpload(event, suit) {
+    const files = Array.from(event.target.files || []);
 
     if (files.length === 0) {
       return;
@@ -368,26 +588,62 @@ export default function Platform() {
     }
 
     try {
-      const newCards = await Promise.all(
-        imageFiles.map(fileToImage)
+      const uploadResults = await Promise.allSettled(
+        imageFiles.map((file) => fileToCard(file, suit))
       );
 
-      setCurrentDeck((existingDeck) => ({
-        ...existingDeck,
-        cards: [
-          ...existingDeck.cards,
-          ...newCards,
-        ],
-      }));
+      const uploadedCards = uploadResults
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value);
 
-      showNotification(
-        `${newCards.length} card image${
-          newCards.length === 1 ? "" : "s"
-        } added. Save the deck to keep the changes.`
-      );
+      const failedUploads = uploadResults
+        .filter((result) => result.status === "rejected")
+        .map((result) => result.reason?.message)
+        .filter(Boolean);
+
+      setCurrentDeck((existingDeck) => {
+        const existingSuitCards =
+          existingDeck.suitCards?.[suit] || [];
+
+        const nextSuitCards = [...existingSuitCards];
+
+        uploadedCards.forEach((newCard) => {
+          const existingIndex = nextSuitCards.findIndex(
+            (card) => card.rank === newCard.rank
+          );
+
+          if (existingIndex >= 0) {
+            nextSuitCards[existingIndex] = newCard;
+          } else {
+            nextSuitCards.push(newCard);
+          }
+        });
+
+        return {
+          ...existingDeck,
+          suitCards: {
+            ...existingDeck.suitCards,
+            [suit]: sortCardsByRank(nextSuitCards),
+          },
+        };
+      });
+
+      if (uploadedCards.length > 0) {
+        showNotification(
+          `${uploadedCards.length} ${SUIT_LABELS[suit]} card${
+            uploadedCards.length === 1 ? "" : "s"
+          } added. Existing ranks were replaced where necessary.`
+        );
+      }
+
+      if (failedUploads.length > 0) {
+        window.alert(
+          `Some files were not added:\n\n${failedUploads.join("\n")}`
+        );
+      }
     } catch (error) {
-      console.error("Unable to upload cards:", error);
-      showNotification("The card upload failed.");
+      console.error("Unable to upload suit cards:", error);
+      showNotification("The suit upload failed.");
     }
 
     event.target.value = "";
@@ -402,8 +658,7 @@ export default function Platform() {
     }
 
     try {
-      const uploadedCardBack =
-        await fileToImage(file);
+      const uploadedCardBack = await fileToImage(file);
 
       updateCurrentDeck({
         cardBack: uploadedCardBack,
@@ -413,34 +668,32 @@ export default function Platform() {
         "Card back added. Save the deck to keep the change."
       );
     } catch (error) {
-      console.error(
-        "Unable to upload the card back:",
-        error
-      );
-
-      showNotification(
-        "The card-back upload failed."
-      );
+      console.error("Unable to upload the card back:", error);
+      showNotification("The card-back upload failed.");
     }
 
     event.target.value = "";
   }
 
-  function clearCards() {
+  function handleClearSuit(suit) {
     const confirmed = window.confirm(
-      "Remove all card images from this deck?"
+      `Remove all ${SUIT_LABELS[suit]} cards from this deck?`
     );
 
     if (!confirmed) {
       return;
     }
 
-    updateCurrentDeck({
-      cards: [],
-    });
+    setCurrentDeck((existingDeck) => ({
+      ...existingDeck,
+      suitCards: {
+        ...existingDeck.suitCards,
+        [suit]: [],
+      },
+    }));
 
     showNotification(
-      "Cards removed. Save the deck to confirm the change."
+      `${SUIT_LABELS[suit]} cards removed. Save the deck to confirm the change.`
     );
   }
 
@@ -477,9 +730,7 @@ export default function Platform() {
 
     setCurrentDeck(newDeck);
     setSelectedDeckId(newDeck.id);
-    setLastSavedSnapshot(
-      createDeckSnapshot(newDeck)
-    );
+    setLastSavedSnapshot(createDeckSnapshot(newDeck));
 
     saveActiveDeckId(newDeck.id);
     saveWorkingDeckForGames(newDeck);
@@ -491,10 +742,7 @@ export default function Platform() {
     const trimmedName = currentDeck.name.trim();
 
     if (!trimmedName) {
-      window.alert(
-        "Enter a deck name before saving."
-      );
-
+      window.alert("Enter a deck name before saving.");
       return;
     }
 
@@ -504,38 +752,27 @@ export default function Platform() {
       ...currentDeck,
       name: trimmedName,
       category:
-        currentDeck.category.trim() ||
-        "Uncategorised",
+        currentDeck.category.trim() || "Uncategorised",
       updatedAt: now,
-      createdAt:
-        currentDeck.createdAt || now,
+      createdAt: currentDeck.createdAt || now,
     };
 
     const existingIndex = deckLibrary.findIndex(
       (deck) => deck.id === deckToSave.id
     );
 
-    let nextLibrary;
+    const nextLibrary =
+      existingIndex >= 0
+        ? deckLibrary.map((deck) =>
+            deck.id === deckToSave.id ? deckToSave : deck
+          )
+        : [...deckLibrary, deckToSave];
 
-    if (existingIndex >= 0) {
-      nextLibrary = deckLibrary.map((deck) =>
-        deck.id === deckToSave.id
-          ? deckToSave
-          : deck
-      );
-    } else {
-      nextLibrary = [
-        ...deckLibrary,
-        deckToSave,
-      ];
-    }
-
-    const savedSuccessfully =
-      saveDeckLibrary(nextLibrary);
+    const savedSuccessfully = saveDeckLibrary(nextLibrary);
 
     if (!savedSuccessfully) {
       window.alert(
-        "The browser could not save this deck. The uploaded images may be too large for local storage."
+        "The browser could not save this deck. The uploaded images may be too large for browser storage."
       );
 
       return;
@@ -544,32 +781,17 @@ export default function Platform() {
     setDeckLibrary(nextLibrary);
     setCurrentDeck(deckToSave);
     setSelectedDeckId(deckToSave.id);
-    setLastSavedSnapshot(
-      createDeckSnapshot(deckToSave)
-    );
+    setLastSavedSnapshot(createDeckSnapshot(deckToSave));
 
     saveActiveDeckId(deckToSave.id);
     saveWorkingDeckForGames(deckToSave);
 
-    showNotification(
-      `"${deckToSave.name}" saved successfully.`
-    );
+    showNotification(`"${deckToSave.name}" saved successfully.`);
   }
 
   function handleLoadDeck() {
     if (!selectedDeckId) {
       window.alert("Select a deck to load.");
-      return;
-    }
-
-    if (
-      selectedDeckId === currentDeck.id &&
-      !hasUnsavedChanges
-    ) {
-      showNotification(
-        "That deck is already loaded."
-      );
-
       return;
     }
 
@@ -588,29 +810,20 @@ export default function Platform() {
     );
 
     if (!selectedDeck) {
-      window.alert(
-        "The selected deck could not be found."
-      );
-
+      window.alert("The selected deck could not be found.");
       return;
     }
 
-    const loadedDeck = normaliseDeck(
-      selectedDeck
-    );
+    const loadedDeck = normaliseDeck(selectedDeck);
 
     setCurrentDeck(loadedDeck);
     setSelectedDeckId(loadedDeck.id);
-    setLastSavedSnapshot(
-      createDeckSnapshot(loadedDeck)
-    );
+    setLastSavedSnapshot(createDeckSnapshot(loadedDeck));
 
     saveActiveDeckId(loadedDeck.id);
     saveWorkingDeckForGames(loadedDeck);
 
-    showNotification(
-      `"${loadedDeck.name}" loaded.`
-    );
+    showNotification(`"${loadedDeck.name}" loaded.`);
   }
 
   function handleDeleteDeck() {
@@ -620,14 +833,22 @@ export default function Platform() {
 
     if (!existingDeck) {
       const confirmed = window.confirm(
-        "This unsaved deck has not been added to the library. Clear it and create a new blank deck?"
+        "This deck has not been saved. Clear it and create a new blank deck?"
       );
 
       if (!confirmed) {
         return;
       }
 
-      handleNewDeck();
+      const newDeck = createBlankDeck();
+
+      setCurrentDeck(newDeck);
+      setSelectedDeckId(newDeck.id);
+      setLastSavedSnapshot(createDeckSnapshot(newDeck));
+
+      saveActiveDeckId(newDeck.id);
+      saveWorkingDeckForGames(newDeck);
+
       return;
     }
 
@@ -643,80 +864,70 @@ export default function Platform() {
       (deck) => deck.id !== existingDeck.id
     );
 
-    const savedSuccessfully =
-      saveDeckLibrary(nextLibrary);
-
-    if (!savedSuccessfully) {
-      window.alert(
-        "The deck library could not be updated."
-      );
-
+    if (!saveDeckLibrary(nextLibrary)) {
+      window.alert("The deck library could not be updated.");
       return;
     }
 
     setDeckLibrary(nextLibrary);
 
     const nextDeck =
-      nextLibrary[0] || createBlankDeck();
+      nextLibrary.length > 0
+        ? normaliseDeck(nextLibrary[0])
+        : createBlankDeck();
 
     setCurrentDeck(nextDeck);
     setSelectedDeckId(nextDeck.id);
-    setLastSavedSnapshot(
-      createDeckSnapshot(nextDeck)
-    );
+    setLastSavedSnapshot(createDeckSnapshot(nextDeck));
 
     saveActiveDeckId(nextDeck.id);
     saveWorkingDeckForGames(nextDeck);
 
-    showNotification(
-      `"${existingDeck.name}" deleted.`
-    );
+    showNotification(`"${existingDeck.name}" deleted.`);
   }
 
   function getReadinessMessage() {
-    if (currentDeck.cards.length === 0) {
-      return "Upload Cards";
+    if (allCurrentCards.length === 0) {
+      return "Upload Suit Cards";
+    }
+
+    if (blackjackReady) {
+      return "Blackjack Ready";
+    }
+
+    if (matchReady) {
+      return "Match Ready";
     }
 
     if (!currentDeck.cardBack) {
       return "Card Back Required";
     }
 
-    return "Ready to Test";
+    return `${allCurrentCards.length} / 52 Cards`;
   }
 
   const currentDeckCover =
-    currentDeck.cards[0]?.image || null;
-
-  const currentDeckCanTest =
-    currentDeck.cards.length > 0 &&
-    Boolean(currentDeck.cardBack);
+    allCurrentCards[0]?.image || null;
 
   const currentDeckDisplayName =
-    currentDeck.name.trim() ||
-    "Untitled Deck";
+    currentDeck.name.trim() || "Untitled Deck";
 
   const currentDeckCategory =
-    currentDeck.category.trim() ||
-    "Uncategorised";
+    currentDeck.category.trim() || "Uncategorised";
 
-  const deckReadiness =
-    getReadinessMessage();
+  const deckReadiness = getReadinessMessage();
 
   return (
     <div className="platform-page">
       <header className="platform-hero">
         <div>
-          <p className="platform-kicker">
-            Card Ledgends
-          </p>
+          <p className="platform-kicker">Card Ledgends</p>
 
           <h1>Deck Publishing Studio</h1>
 
           <p>
-            Create, save, load, test and publish
-            illustrated card decks across multiple
-            games.
+            Create, organise, save, test and publish complete
+            illustrated card decks across multiple games.
           </p>
 
           {notification && (
@@ -746,14 +957,10 @@ export default function Platform() {
             className="platform-secondary"
             onClick={handleSaveDeck}
           >
-            Save Deck
-            {hasUnsavedChanges ? " *" : ""}
+            Save Deck{hasUnsavedChanges ? " *" : ""}
           </button>
 
-          <Link
-            to="/demo"
-            className="platform-secondary"
-          >
+          <Link to="/demo" className="platform-secondary">
             Play Valkyra Blackjack
           </Link>
         </div>
@@ -773,7 +980,7 @@ export default function Platform() {
               <p>Fantasy Warrior Art</p>
 
               <div className="deck-meta">
-                <span>54 Cards</span>
+                <span>52 Cards</span>
                 <span>Demo Deck</span>
               </div>
 
@@ -783,10 +990,7 @@ export default function Platform() {
               </div>
 
               <div className="deck-button-stack">
-                <Link
-                  to="/demo"
-                  className="deck-play-button"
-                >
+                <Link to="/demo" className="deck-play-button">
                   Play Blackjack
                 </Link>
 
@@ -810,9 +1014,7 @@ export default function Platform() {
                 />
               ) : (
                 <span>
-                  {currentDeckDisplayName
-                    .charAt(0)
-                    .toUpperCase()}
+                  {currentDeckDisplayName.charAt(0).toUpperCase()}
                 </span>
               )}
             </div>
@@ -822,14 +1024,12 @@ export default function Platform() {
               <p>{currentDeckCategory}</p>
 
               <div className="deck-meta">
-                <span>
-                  {currentDeck.cards.length} Cards
-                </span>
-
+                <span>{allCurrentCards.length} / 52 Cards</span>
                 <span>{deckReadiness}</span>
               </div>
 
               <div className="deck-games">
+                <span>Blackjack</span>
                 <span>Memory Match</span>
 
                 {hasUnsavedChanges && (
@@ -838,17 +1038,6 @@ export default function Platform() {
               </div>
 
               <div className="deck-button-stack">
-                <label className="deck-play-button">
-                  Upload Cards
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleCardUpload}
-                    hidden
-                  />
-                </label>
-
                 <label className="deck-play-button secondary-deck-button">
                   Upload Card Back
                   <input
@@ -859,7 +1048,7 @@ export default function Platform() {
                   />
                 </label>
 
-                {currentDeckCanTest ? (
+                {matchReady ? (
                   <Link
                     to="/match?family=1"
                     className="deck-play-button secondary-deck-button"
@@ -873,6 +1062,25 @@ export default function Platform() {
                     disabled
                   >
                     Add Cards and Card Back to Test
+                  </button>
+                )}
+
+                {blackjackReady ? (
+                  <button
+                    type="button"
+                    className="deck-play-button"
+                    disabled
+                    title="Blackjack connection will be added in the next stage."
+                  >
+                    Blackjack Ready
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="deck-disabled-button"
+                    disabled
+                  >
+                    Blackjack Requires 52 Cards
                   </button>
                 )}
               </div>
@@ -891,14 +1099,10 @@ export default function Platform() {
               <div className="deck-meta">
                 <span>
                   {publishedDeckCount} Deck
-                  {publishedDeckCount === 1
-                    ? ""
-                    : "s"}
+                  {publishedDeckCount === 1 ? "" : "s"}
                 </span>
 
-                <span>
-                  {deckLibrary.length} Saved
-                </span>
+                <span>{deckLibrary.length} Saved</span>
               </div>
 
               <div className="deck-games">
@@ -962,10 +1166,7 @@ export default function Platform() {
               }}
             >
               {STATUS_OPTIONS.map((status) => (
-                <option
-                  key={status}
-                  value={status}
-                >
+                <option key={status} value={status}>
                   {status}
                 </option>
               ))}
@@ -976,22 +1177,108 @@ export default function Platform() {
             <h3>Project Information</h3>
 
             <p>
-              <strong>Status:</strong>{" "}
-              {currentDeck.status}
+              <strong>Status:</strong> {currentDeck.status}
             </p>
 
             <p>
-              <strong>Readiness:</strong>{" "}
-              {deckReadiness}
+              <strong>Readiness:</strong> {deckReadiness}
             </p>
 
             <p>
               <strong>Last saved:</strong>{" "}
-              {formatUpdatedDate(
-                currentDeck.updatedAt
-              )}
+              {formatUpdatedDate(currentDeck.updatedAt)}
             </p>
           </div>
+        </div>
+
+        <div
+          className="platform-feature-grid"
+          style={{ marginTop: "12px" }}
+        >
+          {SUITS.map((suit) => {
+            const cards = currentDeck.suitCards?.[suit] || [];
+            const validation = suitValidation[suit];
+
+            return (
+              <div key={suit}>
+                <h3>
+                  {SUIT_SYMBOLS[suit]} {SUIT_LABELS[suit]}
+                </h3>
+
+                <p>
+                  <strong>{validation.count} / 13 Cards</strong>
+                </p>
+
+                <label className="deck-play-button">
+                  Upload {SUIT_LABELS[suit]}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(event) =>
+                      handleSuitUpload(event, suit)
+                    }
+                    hidden
+                  />
+                </label>
+
+                {validation.missingRanks.length > 0 ? (
+                  <p
+                    style={{
+                      marginTop: "8px",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    Missing:{" "}
+                    {validation.missingRanks.join(", ")}
+                  </p>
+                ) : (
+                  <p
+                    style={{
+                      marginTop: "8px",
+                      color: "#ffe7a3",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Complete
+                  </p>
+                )}
+
+                {cards.length > 0 && (
+                  <button
+                    type="button"
+                    className="deck-disabled-button"
+                    onClick={() => handleClearSuit(suit)}
+                    style={{
+                      cursor: "pointer",
+                      marginTop: "8px",
+                    }}
+                  >
+                    Clear {SUIT_LABELS[suit]}
+                  </button>
+                )}
+
+                {cards.length > 0 && (
+                  <div
+                    className="family-photo-preview-row"
+                    style={{
+                      gridTemplateColumns: "repeat(4, 1fr)",
+                    }}
+                  >
+                    {cards.slice(0, 4).map((card) => (
+                      <img
+                        key={card.id}
+                        src={card.image}
+                        alt={`${card.rank} of ${SUIT_LABELS[suit]}`}
+                        className="family-photo-thumb"
+                        title={`${card.rank} of ${SUIT_LABELS[suit]}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         <div
@@ -1004,24 +1291,17 @@ export default function Platform() {
             <select
               value={selectedDeckId}
               onChange={(event) =>
-                setSelectedDeckId(
-                  event.target.value
-                )
+                setSelectedDeckId(event.target.value)
               }
               style={{
                 ...fieldStyle,
                 background: "rgba(0,0,0,0.72)",
               }}
             >
-              <option value="">
-                Select a saved deck
-              </option>
+              <option value="">Select a saved deck</option>
 
               {deckLibrary.map((deck) => (
-                <option
-                  key={deck.id}
-                  value={deck.id}
-                >
+                <option key={deck.id} value={deck.id}>
                   {deck.name} — {deck.status}
                 </option>
               ))}
@@ -1041,8 +1321,8 @@ export default function Platform() {
             <h3>Save Current Deck</h3>
 
             <p>
-              Save this project to the local Card
-              Ledgends deck library.
+              Save all four suits and deck information to the local
+              Card Ledgends library.
             </p>
 
             <button
@@ -1055,28 +1335,45 @@ export default function Platform() {
           </div>
 
           <div>
-            <h3>Create New Deck</h3>
+            <h3>Card Back</h3>
 
             <p>
-              Start a new blank project without
-              changing saved decks.
+              {currentDeck.cardBack
+                ? "Card back uploaded."
+                : "No card back uploaded."}
             </p>
 
-            <button
-              type="button"
-              className="deck-play-button secondary-deck-button"
-              onClick={handleNewDeck}
-            >
-              + New Deck
-            </button>
+            <label className="deck-play-button secondary-deck-button">
+              Upload Card Back
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleCardBackUpload}
+                hidden
+              />
+            </label>
+
+            {currentDeck.cardBack && (
+              <button
+                type="button"
+                className="deck-disabled-button"
+                onClick={clearCardBack}
+                style={{
+                  cursor: "pointer",
+                  marginTop: "8px",
+                }}
+              >
+                Clear Card Back
+              </button>
+            )}
           </div>
 
           <div>
             <h3>Delete Deck</h3>
 
             <p>
-              Permanently remove the loaded project
-              from this browser.
+              Permanently remove the loaded project from this
+              browser.
             </p>
 
             <button
@@ -1111,103 +1408,7 @@ export default function Platform() {
             />
           </div>
         </div>
-
-        {(currentDeck.cards.length > 0 ||
-          currentDeck.cardBack) && (
-          <div
-            className="platform-feature-grid"
-            style={{ marginTop: "12px" }}
-          >
-            <div>
-              <h3>Deck Artwork</h3>
-
-              <p>
-                {currentDeck.cards.length} card image
-                {currentDeck.cards.length === 1
-                  ? ""
-                  : "s"}{" "}
-                uploaded.
-              </p>
-
-              {currentDeck.cards.length > 0 && (
-                <button
-                  type="button"
-                  className="deck-disabled-button"
-                  onClick={clearCards}
-                  style={{ cursor: "pointer" }}
-                >
-                  Clear Cards
-                </button>
-              )}
-            </div>
-
-            <div>
-              <h3>Card Back</h3>
-
-              <p>
-                {currentDeck.cardBack
-                  ? "Card back uploaded."
-                  : "No card back uploaded."}
-              </p>
-
-              {currentDeck.cardBack && (
-                <button
-                  type="button"
-                  className="deck-disabled-button"
-                  onClick={clearCardBack}
-                  style={{ cursor: "pointer" }}
-                >
-                  Clear Card Back
-                </button>
-              )}
-            </div>
-
-            <div style={{ gridColumn: "span 2" }}>
-              <h3>Artwork Preview</h3>
-
-              {currentDeck.cardBack && (
-                <div className="family-card-back-preview">
-                  <p>Card Back</p>
-
-                  <img
-                    src={
-                      currentDeck.cardBack.image
-                    }
-                    alt={`${currentDeckDisplayName} card back`}
-                    className="family-photo-thumb"
-                  />
-                </div>
-              )}
-
-              {currentDeck.cards.length > 0 && (
-                <div className="family-photo-preview-row">
-                  {currentDeck.cards
-                    .slice(0, 6)
-                    .map((card) => (
-                      <img
-                        key={card.id}
-                        src={card.image}
-                        alt={card.name}
-                        className="family-photo-thumb"
-                      />
-                    ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </section>
     </div>
   );
 }
-
-const fieldStyle = {
-  width: "100%",
-  padding: "10px 12px",
-  borderRadius: "10px",
-  border: "1px solid rgba(255,255,255,0.2)",
-  background: "rgba(0,0,0,0.45)",
-  color: "white",
-  fontFamily: "inherit",
-  fontSize: "0.95rem",
-};
