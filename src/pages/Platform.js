@@ -1604,12 +1604,13 @@ export default function Platform() {
               </div>
 
               <div className="deck-button-stack">
-                <Link
-                  to="/demo"
-                  className="deck-play-button"
-                >
-                  Play Blackjack
-                </Link>
+              <Link
+    to="/demo"
+    className="deck-play-button"
+    onClick={handleTestBlackjack}
+>
+    Test in Blackjack
+</Link>  
 
                 <Link
                   to="/match"
