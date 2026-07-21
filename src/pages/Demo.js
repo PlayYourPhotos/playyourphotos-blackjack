@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import fullDeck from "../data/fullDeck.js";
+import {
+  loadBlackjackDeck,
+} from "../data/blackjackDeckLoader.js";
 import Card from "../components/Card";
 import DealerHand from "../components/blackjack/DealerHand";
 import PlayerHand from "../components/blackjack/PlayerHand";
