@@ -1,8 +1,13 @@
-import { useMemo, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 import { Link } from "react-router-dom";
+
 import {
   loadBlackjackDeck,
 } from "../data/blackjackDeckLoader.js";
+
 import Card from "../components/Card";
 import DealerHand from "../components/blackjack/DealerHand";
 import PlayerHand from "../components/blackjack/PlayerHand";
@@ -13,6 +18,7 @@ import StatisticsModal from "../components/blackjack/StatisticsModal";
 import BettingPanel from "../components/blackjack/BettingPanel";
 import GameButtons from "../components/blackjack/GameButtons";
 import ChipStack from "../components/blackjack/ChipStack";
+
 import {
   sleep,
   shuffleDeck,
@@ -23,22 +29,28 @@ import {
   handOutcome,
 } from "../utils/blackjack/GameLogic";
 
-
 const tableThemes = {
   ruby: {
     name: "Ruby Table",
     className: "theme-ruby",
-    background: "/backgrounds/ruby.jpg",
+    background:
+      "/backgrounds/ruby.jpg",
   },
+
   midnight: {
     name: "Midnight Table",
-    className: "theme-midnight",
-    background: "/backgrounds/midnight.jpg",
+    className:
+      "theme-midnight",
+    background:
+      "/backgrounds/midnight.jpg",
   },
+
   emerald: {
     name: "Emerald Table",
-    className: "theme-emerald",
-    background: "/backgrounds/emerald.jpg",
+    className:
+      "theme-emerald",
+    background:
+      "/backgrounds/emerald.jpg",
   },
 };
 
@@ -55,8 +67,17 @@ const defaultStats = {
 
 function loadStats() {
   try {
-    const saved = localStorage.getItem("memoryDeckBlackjackStats");
-    return saved ? { ...defaultStats, ...JSON.parse(saved) } : defaultStats;
+    const saved =
+      localStorage.getItem(
+        "memoryDeckBlackjackStats"
+      );
+
+    return saved
+      ? {
+          ...defaultStats,
+          ...JSON.parse(saved),
+        }
+      : defaultStats;
   } catch {
     return defaultStats;
   }
@@ -64,64 +85,271 @@ function loadStats() {
 
 function playSound(path) {
   const sound = new Audio(path);
+
   sound.volume = 0.55;
-  sound.play().catch(() => {});
+
+  sound
+    .play()
+    .catch(() => {});
 }
 
 export default function Demo() {
-  const startingDeck = useMemo(() => shuffleDeck(fullDeck), []);
+  const [
+    blackjackDeck,
+    setBlackjackDeck,
+  ] = useState(null);
 
-  const [theme, setTheme] = useState("midnight");
-  const [deck, setDeck] = useState(startingDeck);
-  const [dealerHand, setDealerHand] = useState([]);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [dealerRevealed, setDealerRevealed] = useState(false);
-  const [dealerAnimating, setDealerAnimating] = useState(false);
-  const [message, setMessage] = useState("Click New Game to start");
+  const [
+    deckLoading,
+    setDeckLoading,
+  ] = useState(true);
 
-  const [galleryCards, setGalleryCards] = useState([]);
-  const [galleryIndex, setGalleryIndex] = useState(null);
-  const [showResultOverlay, setShowResultOverlay] = useState(false);
-  const [showStatsOverlay, setShowStatsOverlay] = useState(false);
+  const [
+    deckLoadError,
+    setDeckLoadError,
+  ] = useState("");
 
-  const [showInsuranceOverlay, setShowInsuranceOverlay] = useState(false);
-  const [pendingPlayerBlackjack, setPendingPlayerBlackjack] = useState(false);
-  const [pendingDealerBlackjack, setPendingDealerBlackjack] = useState(false);
+  const [
+    theme,
+    setTheme,
+  ] = useState("midnight");
 
-  const [balance, setBalance] = useState(1000);
-  const [bet, setBet] = useState(50);
-  const [roundBet, setRoundBet] = useState(0);
-  const [hasDoubled, setHasDoubled] = useState(false);
+  const [
+    deck,
+    setDeck,
+  ] = useState([]);
 
-  const [playerHands, setPlayerHands] = useState([[]]);
-  const [activeHandIndex, setActiveHandIndex] = useState(0);
-  const [splitMode, setSplitMode] = useState(false);
-  const [handBets, setHandBets] = useState([0]);
-  const [completedHands, setCompletedHands] = useState([]);
-  const [splitResults, setSplitResults] = useState([]);
+  const [
+    dealerHand,
+    setDealerHand,
+  ] = useState([]);
 
-  const [showLauncher, setShowLauncher] = useState(false);
-  const [launcherText, setLauncherText] = useState("Loading Memory Deck...");
-  const [launcherStep, setLauncherStep] = useState(0);
+  const [
+    gameStarted,
+    setGameStarted,
+  ] = useState(false);
 
-  const [stats, setStats] = useState(loadStats);
+  const [
+    dealerRevealed,
+    setDealerRevealed,
+  ] = useState(false);
 
-  const currentTheme = tableThemes[theme];
-  const activePlayerHand = playerHands[activeHandIndex] || [];
-  const playerTotal = handTotal(activePlayerHand);
+  const [
+    dealerAnimating,
+    setDealerAnimating,
+  ] = useState(false);
 
-  const dealerTotal = dealerRevealed
-    ? handTotal(dealerHand)
-    : dealerHand[0]
-    ? cardValue(dealerHand[0].rank)
-    : 0;
+  const [
+    message,
+    setMessage,
+  ] = useState(
+    "Loading selected Memory Deck..."
+  );
+
+  const [
+    galleryCards,
+    setGalleryCards,
+  ] = useState([]);
+
+  const [
+    galleryIndex,
+    setGalleryIndex,
+  ] = useState(null);
+
+  const [
+    showResultOverlay,
+    setShowResultOverlay,
+  ] = useState(false);
+
+  const [
+    showStatsOverlay,
+    setShowStatsOverlay,
+  ] = useState(false);
+
+  const [
+    showInsuranceOverlay,
+    setShowInsuranceOverlay,
+  ] = useState(false);
+
+  const [
+    pendingPlayerBlackjack,
+    setPendingPlayerBlackjack,
+  ] = useState(false);
+
+  const [
+    pendingDealerBlackjack,
+    setPendingDealerBlackjack,
+  ] = useState(false);
+
+  const [
+    balance,
+    setBalance,
+  ] = useState(1000);
+
+  const [
+    bet,
+    setBet,
+  ] = useState(50);
+
+  const [
+    roundBet,
+    setRoundBet,
+  ] = useState(0);
+
+  const [
+    hasDoubled,
+    setHasDoubled,
+  ] = useState(false);
+
+  const [
+    playerHands,
+    setPlayerHands,
+  ] = useState([[]]);
+
+  const [
+    activeHandIndex,
+    setActiveHandIndex,
+  ] = useState(0);
+
+  const [
+    splitMode,
+    setSplitMode,
+  ] = useState(false);
+
+  const [
+    handBets,
+    setHandBets,
+  ] = useState([0]);
+
+  const [
+    completedHands,
+    setCompletedHands,
+  ] = useState([]);
+
+  const [
+    splitResults,
+    setSplitResults,
+  ] = useState([]);
+
+  const [
+    showLauncher,
+    setShowLauncher,
+  ] = useState(false);
+
+  const [
+    launcherText,
+    setLauncherText,
+  ] = useState(
+    "Loading Memory Deck..."
+  );
+
+  const [
+    launcherStep,
+    setLauncherStep,
+  ] = useState(0);
+
+  const [
+    stats,
+    setStats,
+  ] = useState(loadStats);
+
+  useEffect(() => {
+    let cancelled = false;
+    let loadedDeck = null;
+
+    async function initialiseBlackjackDeck() {
+      setDeckLoading(true);
+      setDeckLoadError("");
+      setMessage(
+        "Loading selected Memory Deck..."
+      );
+
+      try {
+        loadedDeck =
+          await loadBlackjackDeck();
+
+        if (cancelled) {
+          loadedDeck.release?.();
+          return;
+        }
+
+        setBlackjackDeck(
+          loadedDeck
+        );
+
+        setDeck(
+          shuffleDeck(
+            loadedDeck.cards
+          )
+        );
+
+        setMessage(
+          `${loadedDeck.name} ready — click New Game to start`
+        );
+      } catch (error) {
+        console.error(
+          "Unable to load Blackjack deck:",
+          error
+        );
+
+        if (!cancelled) {
+          setDeckLoadError(
+            error?.message ||
+              "The selected Memory Deck could not be loaded."
+          );
+
+          setMessage(
+            "Memory Deck could not be loaded"
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setDeckLoading(false);
+        }
+      }
+    }
+
+    initialiseBlackjackDeck();
+
+    return () => {
+      cancelled = true;
+      loadedDeck?.release?.();
+    };
+  }, []);
+
+  const currentTheme =
+    tableThemes[theme];
+
+  const activePlayerHand =
+    playerHands[
+      activeHandIndex
+    ] || [];
+
+  const playerTotal =
+    handTotal(
+      activePlayerHand
+    );
+
+  const dealerTotal =
+    dealerRevealed
+      ? handTotal(dealerHand)
+      : dealerHand[0]
+      ? cardValue(
+          dealerHand[0].rank
+        )
+      : 0;
 
   const winRate =
     stats.gamesPlayed > 0
-      ? Math.round((stats.wins / stats.gamesPlayed) * 100)
+      ? Math.round(
+          (stats.wins /
+            stats.gamesPlayed) *
+            100
+        )
       : 0;
 
-  const insuranceAmount = Math.floor(roundBet / 2);
+  const insuranceAmount =
+    Math.floor(roundBet / 2);
 
   const canDoubleDown =
     gameStarted &&
@@ -140,10 +368,10 @@ export default function Demo() {
     !dealerRevealed &&
     !showInsuranceOverlay &&
     activePlayerHand.length === 2 &&
-    activePlayerHand[0]?.rank === activePlayerHand[1]?.rank &&
+    activePlayerHand[0]?.rank ===
+      activePlayerHand[1]?.rank &&
     balance >= roundBet;
-
-  function playClick() {
+    function playClick() {
     playSound("/sounds/click.mp3");
   }
 
@@ -161,21 +389,36 @@ export default function Demo() {
 
   function saveStats(nextStats) {
     setStats(nextStats);
-    localStorage.setItem("memoryDeckBlackjackStats", JSON.stringify(nextStats));
+
+    localStorage.setItem(
+      "memoryDeckBlackjackStats",
+      JSON.stringify(nextStats)
+    );
   }
 
   function updateStats(updater) {
     setStats((current) => {
-      const nextStats = updater(current);
-      localStorage.setItem("memoryDeckBlackjackStats", JSON.stringify(nextStats));
+      const nextStats =
+        updater(current);
+
+      localStorage.setItem(
+        "memoryDeckBlackjackStats",
+        JSON.stringify(nextStats)
+      );
+
       return nextStats;
     });
   }
 
-  function updateHighestBalance(nextBalance) {
+  function updateHighestBalance(
+    nextBalance
+  ) {
     updateStats((current) => ({
       ...current,
-      highestBalance: Math.max(current.highestBalance, nextBalance),
+      highestBalance: Math.max(
+        current.highestBalance,
+        nextBalance
+      ),
     }));
   }
 
@@ -184,40 +427,80 @@ export default function Demo() {
     saveStats(defaultStats);
   }
 
-  function recordSingleResult(finalMessage, blackjackPayout = false) {
-    const type = resultType(finalMessage);
+  function recordSingleResult(
+    finalMessage,
+    blackjackPayout = false
+  ) {
+    const type =
+      resultType(finalMessage);
 
     updateStats((current) => ({
       ...current,
-      gamesPlayed: current.gamesPlayed + 1,
-      wins: current.wins + (type === "win" ? 1 : 0),
-      losses: current.losses + (type === "lose" ? 1 : 0),
-      pushes: current.pushes + (type === "draw" ? 1 : 0),
-      blackjacks: current.blackjacks + (blackjackPayout ? 1 : 0),
+      gamesPlayed:
+        current.gamesPlayed + 1,
+      wins:
+        current.wins +
+        (type === "win" ? 1 : 0),
+      losses:
+        current.losses +
+        (type === "lose" ? 1 : 0),
+      pushes:
+        current.pushes +
+        (type === "draw" ? 1 : 0),
+      blackjacks:
+        current.blackjacks +
+        (blackjackPayout ? 1 : 0),
     }));
   }
 
-  function recordSplitResults(results) {
+  function recordSplitResults(
+    results
+  ) {
     updateStats((current) => ({
       ...current,
-      gamesPlayed: current.gamesPlayed + results.length,
-      wins: current.wins + results.filter((r) => r.outcome === "win").length,
+      gamesPlayed:
+        current.gamesPlayed +
+        results.length,
+      wins:
+        current.wins +
+        results.filter(
+          (result) =>
+            result.outcome === "win"
+        ).length,
       losses:
-        current.losses + results.filter((r) => r.outcome === "lose").length,
+        current.losses +
+        results.filter(
+          (result) =>
+            result.outcome === "lose"
+        ).length,
       pushes:
-        current.pushes + results.filter((r) => r.outcome === "draw").length,
+        current.pushes +
+        results.filter(
+          (result) =>
+            result.outcome === "draw"
+        ).length,
     }));
   }
 
   function placeBet(amount) {
-    if (gameStarted || dealerAnimating) return;
+    if (
+      gameStarted ||
+      dealerAnimating
+    ) {
+      return;
+    }
 
     playClick();
     setBet(amount);
   }
 
   function resetBank() {
-    if (gameStarted || dealerAnimating) return;
+    if (
+      gameStarted ||
+      dealerAnimating
+    ) {
+      return;
+    }
 
     playClick();
 
@@ -235,7 +518,9 @@ export default function Demo() {
     setShowInsuranceOverlay(false);
     setPendingPlayerBlackjack(false);
     setPendingDealerBlackjack(false);
-    setMessage("Bank reset to 1000");
+    setMessage(
+      "Bank reset to 1000"
+    );
   }
 
   function settleSingleBet(
@@ -243,12 +528,15 @@ export default function Demo() {
     finalRoundBet,
     blackjackPayout = false
   ) {
-    const type = resultType(finalMessage);
+    const type =
+      resultType(finalMessage);
 
     let payout = 0;
 
     if (blackjackPayout) {
-      payout = Math.floor(finalRoundBet * 2.5);
+      payout = Math.floor(
+        finalRoundBet * 2.5
+      );
     } else if (type === "win") {
       payout = finalRoundBet * 2;
     } else if (type === "draw") {
@@ -256,9 +544,14 @@ export default function Demo() {
     }
 
     if (payout > 0) {
-      setBalance((prev) => {
-        const nextBalance = prev + payout;
-        updateHighestBalance(nextBalance);
+      setBalance((previousBalance) => {
+        const nextBalance =
+          previousBalance + payout;
+
+        updateHighestBalance(
+          nextBalance
+        );
+
         return nextBalance;
       });
     }
@@ -268,14 +561,28 @@ export default function Demo() {
     let payout = 0;
 
     results.forEach((result) => {
-      if (result.outcome === "win") payout += result.bet * 2;
-      if (result.outcome === "draw") payout += result.bet;
+      if (
+        result.outcome === "win"
+      ) {
+        payout += result.bet * 2;
+      }
+
+      if (
+        result.outcome === "draw"
+      ) {
+        payout += result.bet;
+      }
     });
 
     if (payout > 0) {
-      setBalance((prev) => {
-        const nextBalance = prev + payout;
-        updateHighestBalance(nextBalance);
+      setBalance((previousBalance) => {
+        const nextBalance =
+          previousBalance + payout;
+
+        updateHighestBalance(
+          nextBalance
+        );
+
         return nextBalance;
       });
     }
@@ -291,10 +598,19 @@ export default function Demo() {
     setDealerAnimating(false);
     setMessage(finalMessage);
 
-    settleSingleBet(finalMessage, finalRoundBet, blackjackPayout);
-    recordSingleResult(finalMessage, blackjackPayout);
+    settleSingleBet(
+      finalMessage,
+      finalRoundBet,
+      blackjackPayout
+    );
 
-    const type = resultType(finalMessage);
+    recordSingleResult(
+      finalMessage,
+      blackjackPayout
+    );
+
+    const type =
+      resultType(finalMessage);
 
     if (type === "win") {
       playWin();
@@ -304,7 +620,7 @@ export default function Demo() {
       playClick();
     }
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setShowResultOverlay(true);
     }, 450);
   }
@@ -317,66 +633,129 @@ export default function Demo() {
     setShowInsuranceOverlay(false);
     setDealerRevealed(true);
     playDeal();
-    finishSingleGame(finalMessage, finalRoundBet, blackjackPayout);
+
+    finishSingleGame(
+      finalMessage,
+      finalRoundBet,
+      blackjackPayout
+    );
   }
 
-  async function animateDealerDraw(startDealerHand, startDeck) {
-    let animatedDealerHand = [...startDealerHand];
-    let animatedDeck = [...startDeck];
+  async function animateDealerDraw(
+    startDealerHand,
+    startDeck
+  ) {
+    let animatedDealerHand = [
+      ...startDealerHand,
+    ];
+
+    let animatedDeck = [
+      ...startDeck,
+    ];
 
     setDealerAnimating(true);
     setDealerRevealed(true);
-    setMessage("Dealer reveals card");
+    setMessage(
+      "Dealer reveals card"
+    );
+
     playDeal();
 
     await sleep(650);
 
-    while (handTotal(animatedDealerHand) < 17 && animatedDeck.length > 0) {
-      const nextCard = animatedDeck[0];
+    while (
+      handTotal(
+        animatedDealerHand
+      ) < 17 &&
+      animatedDeck.length > 0
+    ) {
+      const nextCard =
+        animatedDeck[0];
 
-      animatedDeck = animatedDeck.slice(1);
-      animatedDealerHand = [...animatedDealerHand, nextCard];
+      animatedDeck =
+        animatedDeck.slice(1);
 
-      setMessage("Dealer draws...");
-      setDealerHand(animatedDealerHand);
+      animatedDealerHand = [
+        ...animatedDealerHand,
+        nextCard,
+      ];
+
+      setMessage(
+        "Dealer draws..."
+      );
+
+      setDealerHand(
+        animatedDealerHand
+      );
+
       setDeck(animatedDeck);
+
       playDeal();
 
       await sleep(700);
     }
 
     return {
-      finalDealerHand: animatedDealerHand,
-      finalDeck: animatedDeck,
+      finalDealerHand:
+        animatedDealerHand,
+      finalDeck:
+        animatedDeck,
     };
   }
 
-  async function finishSplitGame(finalHands, remainingDeck, finalCompletedHands) {
+  async function finishSplitGame(
+    finalHands,
+    remainingDeck,
+    finalCompletedHands
+  ) {
     setGameStarted(false);
 
-    const { finalDealerHand, finalDeck } = await animateDealerDraw(
+    const {
+      finalDealerHand,
+      finalDeck,
+    } = await animateDealerDraw(
       dealerHand,
       remainingDeck
     );
 
-    const finalDealerTotal = handTotal(finalDealerHand);
+    const finalDealerTotal =
+      handTotal(finalDealerHand);
 
-    const results = finalHands.map((hand, index) => {
-      const total = handTotal(hand);
-      const betForHand = handBets[index] || roundBet;
-      const outcome = handOutcome(total, finalDealerTotal);
+    const results =
+      finalHands.map(
+        (hand, index) => {
+          const total =
+            handTotal(hand);
 
-      return {
-        handIndex: index,
-        total,
-        bet: betForHand,
-        outcome,
-      };
-    });
+          const betForHand =
+            handBets[index] ||
+            roundBet;
 
-    setDealerHand(finalDealerHand);
+          const outcome =
+            handOutcome(
+              total,
+              finalDealerTotal
+            );
+
+          return {
+            handIndex: index,
+            total,
+            bet: betForHand,
+            outcome,
+          };
+        }
+      );
+
+    setDealerHand(
+      finalDealerHand
+    );
+
     setDeck(finalDeck);
-    setCompletedHands(finalCompletedHands);
+
+    setCompletedHands(
+      finalCompletedHands
+    );
+
     setSplitResults(results);
     setDealerRevealed(true);
     setDealerAnimating(false);
@@ -384,70 +763,140 @@ export default function Demo() {
     settleSplitBets(results);
     recordSplitResults(results);
 
-    const wins = results.filter((r) => r.outcome === "win").length;
-    const losses = results.filter((r) => r.outcome === "lose").length;
-    const draws = results.filter((r) => r.outcome === "draw").length;
+    const wins =
+      results.filter(
+        (result) =>
+          result.outcome === "win"
+      ).length;
 
-    setMessage(`Split finished — ${wins} win, ${losses} lose, ${draws} push`);
+    const losses =
+      results.filter(
+        (result) =>
+          result.outcome === "lose"
+      ).length;
+
+    const draws =
+      results.filter(
+        (result) =>
+          result.outcome === "draw"
+      ).length;
+
+    setMessage(
+      `Split finished — ${wins} win, ${losses} lose, ${draws} push`
+    );
 
     if (wins > losses) {
       playWin();
-    } else if (losses > wins) {
+    } else if (
+      losses > wins
+    ) {
       playLose();
     } else {
       playClick();
     }
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setShowResultOverlay(true);
     }, 450);
   }
 
   async function newGame() {
-    if (gameStarted || dealerAnimating) return;
+    if (
+      gameStarted ||
+      dealerAnimating ||
+      deckLoading
+    ) {
+      return;
+    }
+
+    if (
+      !blackjackDeck ||
+      blackjackDeck.cards.length !== 52
+    ) {
+      setMessage(
+        "A complete Memory Deck is required."
+      );
+
+      playLose();
+
+      return;
+    }
 
     playClick();
 
     if (balance < bet) {
-      setMessage("Not enough balance");
+      setMessage(
+        "Not enough balance"
+      );
+
       playLose();
+
       return;
     }
 
     setShowLauncher(true);
     setLauncherStep(1);
-    setLauncherText("Loading Memory Deck...");
+    setLauncherText(
+      `Loading ${blackjackDeck.name}...`
+    );
     setDealerAnimating(true);
 
     await sleep(500);
 
     setLauncherStep(2);
-    setLauncherText("Loading Valkyra Artwork...");
+    setLauncherText(
+      "Loading deck artwork..."
+    );
 
     await sleep(500);
 
     setLauncherStep(3);
-    setLauncherText("Shuffling Deck...");
+    setLauncherText(
+      "Shuffling deck..."
+    );
+
     playDeal();
 
     await sleep(500);
 
     setLauncherStep(4);
-    setLauncherText("Entering Blackjack Table...");
+    setLauncherText(
+      "Entering Blackjack table..."
+    );
 
     await sleep(500);
 
-    const freshDeck = shuffleDeck(fullDeck);
+    const freshDeck =
+      shuffleDeck(
+        blackjackDeck.cards
+      );
 
-    const player = [freshDeck[0], freshDeck[2]];
-    const dealer = [freshDeck[1], freshDeck[3]];
+    const player = [
+      freshDeck[0],
+      freshDeck[2],
+    ];
 
-    const playerHasBlackjack = isBlackjack(player);
-    const dealerHasBlackjack = isBlackjack(dealer);
+    const dealer = [
+      freshDeck[1],
+      freshDeck[3],
+    ];
 
-    setBalance((prev) => prev - bet);
+    const playerHasBlackjack =
+      isBlackjack(player);
+
+    const dealerHasBlackjack =
+      isBlackjack(dealer);
+
+    setBalance(
+      (previousBalance) =>
+        previousBalance - bet
+    );
+
     setRoundBet(bet);
-    setDeck(freshDeck.slice(4));
+
+    setDeck(
+      freshDeck.slice(4)
+    );
 
     setPlayerHands([[]]);
     setDealerHand([]);
@@ -460,122 +909,269 @@ export default function Demo() {
     setHandBets([bet]);
     setCompletedHands([false]);
     setSplitResults([]);
-    setPendingPlayerBlackjack(playerHasBlackjack);
-    setPendingDealerBlackjack(dealerHasBlackjack);
+
+    setPendingPlayerBlackjack(
+      playerHasBlackjack
+    );
+
+    setPendingDealerBlackjack(
+      dealerHasBlackjack
+    );
 
     setShowLauncher(false);
 
-    setMessage("Dealing dealer card...");
-    setDealerHand([dealer[0]]);
+    setMessage(
+      "Dealing dealer card..."
+    );
+
+    setDealerHand([
+      dealer[0],
+    ]);
+
     playDeal();
+
     await sleep(360);
 
-    setMessage("Dealing player card...");
-    setPlayerHands([[player[0]]]);
+    setMessage(
+      "Dealing player card..."
+    );
+
+    setPlayerHands([
+      [player[0]],
+    ]);
+
     playDeal();
+
     await sleep(360);
 
-    setMessage("Dealing dealer hole card...");
-    setDealerHand([dealer[0], dealer[1]]);
+    setMessage(
+      "Dealing dealer hole card..."
+    );
+
+    setDealerHand([
+      dealer[0],
+      dealer[1],
+    ]);
+
     playDeal();
+
     await sleep(360);
 
-    setMessage("Dealing player card...");
-    setPlayerHands([[player[0], player[1]]]);
+    setMessage(
+      "Dealing player card..."
+    );
+
+    setPlayerHands([
+      [
+        player[0],
+        player[1],
+      ],
+    ]);
+
     playDeal();
+
     await sleep(360);
 
     setDealerAnimating(false);
 
-    if (dealer[0]?.rank === "A") {
-      setShowInsuranceOverlay(true);
-      setMessage("Dealer shows Ace — insurance?");
+    if (
+      dealer[0]?.rank === "A"
+    ) {
+      setShowInsuranceOverlay(
+        true
+      );
+
+      setMessage(
+        "Dealer shows Ace — insurance?"
+      );
+
       return;
     }
 
     setMessage("Your move");
 
-    if (playerHasBlackjack || dealerHasBlackjack) {
+    if (
+      playerHasBlackjack ||
+      dealerHasBlackjack
+    ) {
       await sleep(450);
 
-      if (playerHasBlackjack && dealerHasBlackjack) {
-        endGame("Blackjack push — draw", bet, false);
-      } else if (playerHasBlackjack) {
-        endGame("Blackjack! You win 3:2", bet, true);
+      if (
+        playerHasBlackjack &&
+        dealerHasBlackjack
+      ) {
+        endGame(
+          "Blackjack push — draw",
+          bet,
+          false
+        );
+      } else if (
+        playerHasBlackjack
+      ) {
+        endGame(
+          "Blackjack! You win 3:2",
+          bet,
+          true
+        );
       } else {
-        endGame("Dealer Blackjack wins", bet, false);
+        endGame(
+          "Dealer Blackjack wins",
+          bet,
+          false
+        );
       }
     }
   }
-
-  function finishInsuranceChoice(tookInsurance) {
+    function finishInsuranceChoice(
+    tookInsurance
+  ) {
     playClick();
 
     if (tookInsurance) {
-      if (balance < insuranceAmount) {
-        setMessage("Not enough balance for insurance");
+      if (
+        balance <
+        insuranceAmount
+      ) {
+        setMessage(
+          "Not enough balance for insurance"
+        );
+
         playLose();
+
         return;
       }
 
-      setBalance((prev) => prev - insuranceAmount);
+      setBalance(
+        (previousBalance) =>
+          previousBalance -
+          insuranceAmount
+      );
     }
 
     setShowInsuranceOverlay(false);
 
-    if (pendingDealerBlackjack && tookInsurance) {
-      const insurancePayout = insuranceAmount * 3;
+    if (
+      pendingDealerBlackjack &&
+      tookInsurance
+    ) {
+      const insurancePayout =
+        insuranceAmount * 3;
 
-      setBalance((prev) => {
-        const nextBalance = prev + insurancePayout;
-        updateHighestBalance(nextBalance);
-        return nextBalance;
-      });
+      setBalance(
+        (previousBalance) => {
+          const nextBalance =
+            previousBalance +
+            insurancePayout;
+
+          updateHighestBalance(
+            nextBalance
+          );
+
+          return nextBalance;
+        }
+      );
     }
 
-    if (pendingPlayerBlackjack && pendingDealerBlackjack) {
-      endGame("Blackjack push — draw", roundBet, false);
+    if (
+      pendingPlayerBlackjack &&
+      pendingDealerBlackjack
+    ) {
+      endGame(
+        "Blackjack push — draw",
+        roundBet,
+        false
+      );
+
       return;
     }
 
-    if (pendingDealerBlackjack) {
-      endGame("Dealer Blackjack wins", roundBet, false);
+    if (
+      pendingDealerBlackjack
+    ) {
+      endGame(
+        "Dealer Blackjack wins",
+        roundBet,
+        false
+      );
+
       return;
     }
 
-    if (pendingPlayerBlackjack) {
-      endGame("Blackjack! You win 3:2", roundBet, true);
+    if (
+      pendingPlayerBlackjack
+    ) {
+      endGame(
+        "Blackjack! You win 3:2",
+        roundBet,
+        true
+      );
+
       return;
     }
 
     if (tookInsurance) {
-      setMessage("Insurance lost — your move");
+      setMessage(
+        "Insurance lost — your move"
+      );
     } else {
       setMessage("Your move");
     }
   }
 
-  function updateActiveHand(newHand, newDeck) {
-    const updatedHands = [...playerHands];
-    updatedHands[activeHandIndex] = newHand;
+  function updateActiveHand(
+    newHand,
+    newDeck
+  ) {
+    const updatedHands = [
+      ...playerHands,
+    ];
 
-    setPlayerHands(updatedHands);
+    updatedHands[
+      activeHandIndex
+    ] = newHand;
+
+    setPlayerHands(
+      updatedHands
+    );
+
     setDeck(newDeck);
 
     return updatedHands;
   }
 
-  function moveToNextSplitHand(updatedHands, updatedDeck, updatedCompletedHands) {
-    const nextIndex = updatedCompletedHands.findIndex((done) => !done);
+  function moveToNextSplitHand(
+    updatedHands,
+    updatedDeck,
+    updatedCompletedHands
+  ) {
+    const nextIndex =
+      updatedCompletedHands.findIndex(
+        (done) => !done
+      );
 
     if (nextIndex === -1) {
-      finishSplitGame(updatedHands, updatedDeck, updatedCompletedHands);
+      finishSplitGame(
+        updatedHands,
+        updatedDeck,
+        updatedCompletedHands
+      );
+
       return;
     }
 
-    setActiveHandIndex(nextIndex);
-    setCompletedHands(updatedCompletedHands);
-    setMessage(`Playing hand ${nextIndex + 1}`);
+    setActiveHandIndex(
+      nextIndex
+    );
+
+    setCompletedHands(
+      updatedCompletedHands
+    );
+
+    setMessage(
+      `Playing hand ${
+        nextIndex + 1
+      }`
+    );
   }
 
   function hit() {
@@ -592,166 +1188,428 @@ export default function Demo() {
     playClick();
     playDeal();
 
-    const newHand = [...activePlayerHand, deck[0]];
-    const newDeck = deck.slice(1);
-    const updatedHands = updateActiveHand(newHand, newDeck);
+    const newHand = [
+      ...activePlayerHand,
+      deck[0],
+    ];
 
-    if (handTotal(newHand) > 21) {
+    const newDeck =
+      deck.slice(1);
+
+    const updatedHands =
+      updateActiveHand(
+        newHand,
+        newDeck
+      );
+
+    if (
+      handTotal(newHand) >
+      21
+    ) {
       if (splitMode) {
-        const updatedCompletedHands = [...completedHands];
-        updatedCompletedHands[activeHandIndex] = true;
+        const updatedCompletedHands =
+          [...completedHands];
 
-        setMessage(`Hand ${activeHandIndex + 1} busts`);
+        updatedCompletedHands[
+          activeHandIndex
+        ] = true;
 
-        moveToNextSplitHand(updatedHands, newDeck, updatedCompletedHands);
+        setMessage(
+          `Hand ${
+            activeHandIndex + 1
+          } busts`
+        );
+
+        moveToNextSplitHand(
+          updatedHands,
+          newDeck,
+          updatedCompletedHands
+        );
       } else {
-        endGame("Bust! Dealer wins");
+        endGame(
+          "Bust! Dealer wins"
+        );
       }
     }
   }
 
-  async function playDealerAndFinish(finalPlayerHand, remainingDeck, finalRoundBet) {
+  async function playDealerAndFinish(
+    finalPlayerHand,
+    remainingDeck,
+    finalRoundBet
+  ) {
     setGameStarted(false);
 
-    const { finalDealerHand, finalDeck } = await animateDealerDraw(
+    const {
+      finalDealerHand,
+      finalDeck,
+    } = await animateDealerDraw(
       dealerHand,
       remainingDeck
     );
 
-    const finalPlayer = handTotal(finalPlayerHand);
-    const finalDealer = handTotal(finalDealerHand);
+    const finalPlayer =
+      handTotal(
+        finalPlayerHand
+      );
 
-    setDealerHand(finalDealerHand);
+    const finalDealer =
+      handTotal(
+        finalDealerHand
+      );
+
+    setDealerHand(
+      finalDealerHand
+    );
+
     setDeck(finalDeck);
 
     if (finalDealer > 21) {
-      finishSingleGame("Dealer busts — you win!", finalRoundBet);
-    } else if (finalPlayer > finalDealer) {
-      finishSingleGame("You win!", finalRoundBet);
-    } else if (finalPlayer < finalDealer) {
-      finishSingleGame("Dealer wins", finalRoundBet);
+      finishSingleGame(
+        "Dealer busts — you win!",
+        finalRoundBet
+      );
+    } else if (
+      finalPlayer >
+      finalDealer
+    ) {
+      finishSingleGame(
+        "You win!",
+        finalRoundBet
+      );
+    } else if (
+      finalPlayer <
+      finalDealer
+    ) {
+      finishSingleGame(
+        "Dealer wins",
+        finalRoundBet
+      );
     } else {
-      finishSingleGame("Push — draw", finalRoundBet);
+      finishSingleGame(
+        "Push — draw",
+        finalRoundBet
+      );
     }
   }
 
   function stand() {
-    if (!gameStarted || dealerRevealed || dealerAnimating || showInsuranceOverlay) {
+    if (
+      !gameStarted ||
+      dealerRevealed ||
+      dealerAnimating ||
+      showInsuranceOverlay
+    ) {
       return;
     }
 
     playClick();
 
     if (splitMode) {
-      const updatedCompletedHands = [...completedHands];
-      updatedCompletedHands[activeHandIndex] = true;
+      const updatedCompletedHands =
+        [...completedHands];
 
-      moveToNextSplitHand(playerHands, deck, updatedCompletedHands);
+      updatedCompletedHands[
+        activeHandIndex
+      ] = true;
+
+      moveToNextSplitHand(
+        playerHands,
+        deck,
+        updatedCompletedHands
+      );
+
       return;
     }
 
-    playDealerAndFinish(activePlayerHand, deck, roundBet);
+    playDealerAndFinish(
+      activePlayerHand,
+      deck,
+      roundBet
+    );
   }
 
   function doubleDown() {
-    if (!canDoubleDown || deck.length === 0) return;
-
-    playClick();
-    playDeal();
-
-    updateStats((current) => ({
-      ...current,
-      doubleDowns: current.doubleDowns + 1,
-    }));
-
-    const doubledBet = roundBet * 2;
-    const newPlayerHand = [...activePlayerHand, deck[0]];
-    const remainingDeck = deck.slice(1);
-
-    setBalance((prev) => prev - roundBet);
-    setRoundBet(doubledBet);
-    setHandBets([doubledBet]);
-    setHasDoubled(true);
-    setPlayerHands([newPlayerHand]);
-    setDeck(remainingDeck);
-
-    if (handTotal(newPlayerHand) > 21) {
-      endGame("Double down bust! Dealer wins", doubledBet);
+    if (
+      !canDoubleDown ||
+      deck.length === 0
+    ) {
       return;
     }
 
-    playDealerAndFinish(newPlayerHand, remainingDeck, doubledBet);
+    playClick();
+    playDeal();
+
+    updateStats(
+      (current) => ({
+        ...current,
+        doubleDowns:
+          current.doubleDowns +
+          1,
+      })
+    );
+
+    const doubledBet =
+      roundBet * 2;
+
+    const newPlayerHand = [
+      ...activePlayerHand,
+      deck[0],
+    ];
+
+    const remainingDeck =
+      deck.slice(1);
+
+    setBalance(
+      (previousBalance) =>
+        previousBalance -
+        roundBet
+    );
+
+    setRoundBet(
+      doubledBet
+    );
+
+    setHandBets([
+      doubledBet,
+    ]);
+
+    setHasDoubled(true);
+
+    setPlayerHands([
+      newPlayerHand,
+    ]);
+
+    setDeck(
+      remainingDeck
+    );
+
+    if (
+      handTotal(
+        newPlayerHand
+      ) > 21
+    ) {
+      endGame(
+        "Double down bust! Dealer wins",
+        doubledBet
+      );
+
+      return;
+    }
+
+    playDealerAndFinish(
+      newPlayerHand,
+      remainingDeck,
+      doubledBet
+    );
   }
 
   function splitPair() {
-    if (!canSplit || deck.length < 2) return;
+    if (
+      !canSplit ||
+      deck.length < 2
+    ) {
+      return;
+    }
 
     playClick();
     playDeal();
 
-    updateStats((current) => ({
-      ...current,
-      splits: current.splits + 1,
-    }));
+    updateStats(
+      (current) => ({
+        ...current,
+        splits:
+          current.splits + 1,
+      })
+    );
 
-    const firstCard = activePlayerHand[0];
-    const secondCard = activePlayerHand[1];
+    const firstCard =
+      activePlayerHand[0];
 
-    const firstHand = [firstCard, deck[0]];
-    const secondHand = [secondCard, deck[1]];
-    const remainingDeck = deck.slice(2);
+    const secondCard =
+      activePlayerHand[1];
 
-    setBalance((prev) => prev - roundBet);
-    setDeck(remainingDeck);
-    setPlayerHands([firstHand, secondHand]);
+    const firstHand = [
+      firstCard,
+      deck[0],
+    ];
+
+    const secondHand = [
+      secondCard,
+      deck[1],
+    ];
+
+    const remainingDeck =
+      deck.slice(2);
+
+    setBalance(
+      (previousBalance) =>
+        previousBalance -
+        roundBet
+    );
+
+    setDeck(
+      remainingDeck
+    );
+
+    setPlayerHands([
+      firstHand,
+      secondHand,
+    ]);
+
     setActiveHandIndex(0);
+
     setSplitMode(true);
-    setHandBets([roundBet, roundBet]);
-    setCompletedHands([false, false]);
+
+    setHandBets([
+      roundBet,
+      roundBet,
+    ]);
+
+    setCompletedHands([
+      false,
+      false,
+    ]);
+
     setSplitResults([]);
+
     setHasDoubled(false);
-    setMessage("Split active — playing hand 1");
+
+    setMessage(
+      "Split active — playing hand 1"
+    );
   }
 
-  function openGallery(cards, index) {
+  function openGallery(
+    cards,
+    index
+  ) {
     playClick();
-    setGalleryCards(cards);
-    setGalleryIndex(index);
+
+    setGalleryCards(
+      cards
+    );
+
+    setGalleryIndex(
+      index
+    );
   }
 
   function closeGallery() {
     playClick();
+
     setGalleryCards([]);
+
     setGalleryIndex(null);
   }
 
   function previousCard() {
     playClick();
 
-    setGalleryIndex((current) =>
-      current === 0 ? galleryCards.length - 1 : current - 1
+    setGalleryIndex(
+      (current) =>
+        current === 0
+          ? galleryCards.length -
+            1
+          : current - 1
     );
   }
 
   function nextCard() {
     playClick();
 
-    setGalleryIndex((current) =>
-      current === galleryCards.length - 1 ? 0 : current + 1
+    setGalleryIndex(
+      (current) =>
+        current ===
+        galleryCards.length -
+          1
+          ? 0
+          : current + 1
     );
   }
 
   const activeGalleryCard =
-    galleryIndex !== null ? galleryCards[galleryIndex] : null;
+    galleryIndex !== null
+      ? galleryCards[
+          galleryIndex
+        ]
+      : null;
 
   const activeResultType =
-    splitMode && splitResults.length > 0
-      ? splitResults.some((r) => r.outcome === "win")
+    splitMode &&
+    splitResults.length > 0
+      ? splitResults.some(
+          (result) =>
+            result.outcome ===
+            "win"
+        )
         ? "win"
-        : splitResults.some((r) => r.outcome === "lose")
+        : splitResults.some(
+            (result) =>
+              result.outcome ===
+              "lose"
+          )
         ? "lose"
         : "draw"
       : resultType(message);
+  function outcomeLabel(outcome) {
+    if (outcome === "win") {
+      return "Win";
+    }
+
+    if (outcome === "lose") {
+      return "Lose";
+    }
+
+    return "Push";
+  }
+
+  if (deckLoading) {
+    return (
+      <div
+        className={`blackjack-page ${currentTheme.className}`}
+        style={{
+          backgroundImage: `url(${currentTheme.background})`,
+        }}
+      >
+        <div className="blackjack-deck-loading">
+          <h1>Loading Blackjack</h1>
+
+          <p>
+            Loading the selected Memory Deck from
+            browser storage...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (deckLoadError || !blackjackDeck) {
+    return (
+      <div
+        className={`blackjack-page ${currentTheme.className}`}
+        style={{
+          backgroundImage: `url(${currentTheme.background})`,
+        }}
+      >
+        <div className="blackjack-deck-loading">
+          <h1>Blackjack Deck Unavailable</h1>
+
+          <p>
+            {deckLoadError ||
+              "The selected Memory Deck could not be loaded."}
+          </p>
+
+          <Link
+            to="/platform"
+            className="primary-button"
+          >
+            Return to Memory Deck Creator
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -764,145 +1622,419 @@ export default function Demo() {
         <Link
           to="/platform"
           className="game-back-button"
-          onClick={() => playClick()}
+          onClick={playClick}
         >
           ← Back to My Memory Decks
         </Link>
 
-        <h1 className="game-title">Valkyra Blackjack</h1>
+        <h1 className="game-title">
+          {blackjackDeck.name} Blackjack
+        </h1>
 
         <div className="theme-box">
           <label>Table Theme</label>
 
           <select
             value={theme}
-            onChange={(e) => {
+            onChange={(event) => {
               playClick();
-              setTheme(e.target.value);
+              setTheme(
+                event.target.value
+              );
             }}
           >
-            <option value="midnight">Midnight Table</option>
-            <option value="ruby">Ruby Table</option>
-            <option value="emerald">Emerald Table</option>
+            <option value="midnight">
+              Midnight Table
+            </option>
+
+            <option value="ruby">
+              Ruby Table
+            </option>
+
+            <option value="emerald">
+              Emerald Table
+            </option>
           </select>
         </div>
 
-        <BettingPanel
-  balance={balance}
-  bet={bet}
-  roundBet={roundBet}
-  gameStarted={gameStarted}
-  handBets={handBets}
-  activeHandIndex={activeHandIndex}
-  splitMode={splitMode}
-  insuranceAmount={insuranceAmount}
-  showInsuranceOverlay={showInsuranceOverlay}
-  dealerAnimating={dealerAnimating}
-  onPlaceBet={placeBet}
-/>
-<GameButtons
-  gameStarted={gameStarted}
-  dealerAnimating={dealerAnimating}
-  dealerRevealed={dealerRevealed}
-  showInsuranceOverlay={showInsuranceOverlay}
-  canDoubleDown={canDoubleDown}
-  canSplit={canSplit}
-  onNewGame={newGame}
-  onResetBank={resetBank}
-  onHit={hit}
-  onStand={stand}
-  onDoubleDown={doubleDown}
-  onSplitPair={splitPair}
-  onShowStats={() => {
-    playClick();
-    setShowStatsOverlay(true);
-  }}
-/>
-<ChipStack
-  bet={bet}
-  roundBet={roundBet}
-  gameStarted={gameStarted}
-/>
+        <div className="bank-box">
+          <div>
+            Balance: {balance}
+          </div>
+
+          <div>
+            Bet:{" "}
+            {gameStarted
+              ? handBets[
+                  activeHandIndex
+                ] || roundBet
+              : bet}
+          </div>
+
+          {splitMode && (
+            <div>
+              Active Hand:{" "}
+              {activeHandIndex + 1}
+            </div>
+          )}
+
+          {showInsuranceOverlay && (
+            <div>
+              Insurance:{" "}
+              {insuranceAmount}
+            </div>
+          )}
+        </div>
+
+        <div className="chip-row">
+          {[25, 50, 100, 250].map(
+            (amount) => (
+              <button
+                key={amount}
+                className="chip-button"
+                onClick={() =>
+                  placeBet(amount)
+                }
+                disabled={
+                  gameStarted ||
+                  dealerAnimating
+                }
+              >
+                {amount}
+              </button>
+            )
+          )}
+        </div>
+
+        <div className="button-grid">
+          <button
+            className="primary-button"
+            onClick={newGame}
+            disabled={
+              gameStarted ||
+              dealerAnimating ||
+              deckLoading
+            }
+          >
+            New Game
+          </button>
+
+          <button
+            className="reset-button"
+            onClick={resetBank}
+            disabled={
+              gameStarted ||
+              dealerAnimating
+            }
+          >
+            Reset Bank
+          </button>
+
+          <button
+            className="game-button"
+            onClick={hit}
+            disabled={
+              !gameStarted ||
+              dealerRevealed ||
+              dealerAnimating ||
+              showInsuranceOverlay
+            }
+          >
+            Hit
+          </button>
+
+          <button
+            className="game-button"
+            onClick={stand}
+            disabled={
+              !gameStarted ||
+              dealerRevealed ||
+              dealerAnimating ||
+              showInsuranceOverlay
+            }
+          >
+            Stand
+          </button>
+
+          <button
+            className="double-button"
+            onClick={doubleDown}
+            disabled={!canDoubleDown}
+          >
+            Double
+          </button>
+
+          <button
+            className="split-button"
+            onClick={splitPair}
+            disabled={!canSplit}
+          >
+            Split
+          </button>
+
+          <button
+            className="stats-button"
+            onClick={() => {
+              playClick();
+              setShowStatsOverlay(
+                true
+              );
+            }}
+          >
+            Stats
+          </button>
+        </div>
+
         <div className="status-box">
           <strong>{message}</strong>
-          <div>Player: {playerTotal}</div>
-          <div>Dealer: {dealerTotal}</div>
+
+          <div>
+            Player: {playerTotal}
+          </div>
+
+          <div>
+            Dealer: {dealerTotal}
+          </div>
         </div>
       </aside>
 
       <main className="table-area">
-        <DealerHand
-          dealerHand={dealerHand}
-          dealerRevealed={dealerRevealed}
-          onOpenGallery={openGallery}
-        />
+        <section className="hand-section">
+          <h2>Dealer</h2>
 
-        <PlayerHand
-          splitMode={splitMode}
-          playerHands={playerHands}
-          activePlayerHand={activePlayerHand}
-          activeHandIndex={activeHandIndex}
-          completedHands={completedHands}
-          splitResults={splitResults}
-          gameStarted={gameStarted}
-          onOpenGallery={openGallery}
-        />
+          <div className="hand-row">
+            {dealerHand.map(
+              (card, index) => (
+                <Card
+                  key={`${card.suit}-${card.rank}-${index}`}
+                  rank={card.rank}
+                  suit={card.suit}
+                  image={card.image}
+                  cardBack={
+                    blackjackDeck.cardBack
+                  }
+                  faceDown={
+                    index === 1 &&
+                    !dealerRevealed
+                  }
+                  onClick={() =>
+                    openGallery(
+                      dealerHand,
+                      index
+                    )
+                  }
+                />
+              )
+            )}
+          </div>
+        </section>
+
+        <section className="hand-section">
+          <h2>Player</h2>
+
+          {!splitMode && (
+            <div className="hand-row">
+              {activePlayerHand.map(
+                (card, index) => (
+                  <Card
+                    key={`${card.suit}-${card.rank}-${index}`}
+                    rank={card.rank}
+                    suit={card.suit}
+                    image={card.image}
+                    cardBack={
+                      blackjackDeck.cardBack
+                    }
+                    onClick={() =>
+                      openGallery(
+                        activePlayerHand,
+                        index
+                      )
+                    }
+                  />
+                )
+              )}
+            </div>
+          )}
+
+          {splitMode && (
+            <div className="split-hands">
+              {playerHands.map(
+                (hand, handIndex) => (
+                  <div
+                    key={handIndex}
+                    className={`split-hand ${
+                      handIndex ===
+                        activeHandIndex &&
+                      gameStarted
+                        ? "active"
+                        : ""
+                    }`}
+                  >
+                    <div className="split-label">
+                      Hand{" "}
+                      {handIndex + 1} —{" "}
+                      {handTotal(hand)}
+                      {completedHands[
+                        handIndex
+                      ] && " ✓"}
+                    </div>
+
+                    <div className="hand-row split-row">
+                      {hand.map(
+                        (
+                          card,
+                          cardIndex
+                        ) => (
+                          <Card
+                            key={`${card.suit}-${card.rank}-${cardIndex}`}
+                            rank={
+                              card.rank
+                            }
+                            suit={
+                              card.suit
+                            }
+                            image={
+                              card.image
+                            }
+                            cardBack={
+                              blackjackDeck.cardBack
+                            }
+                            onClick={() =>
+                              openGallery(
+                                hand,
+                                cardIndex
+                              )
+                            }
+                          />
+                        )
+                      )}
+                    </div>
+
+                    {splitResults[
+                      handIndex
+                    ] && (
+                      <div
+                        className={`split-result ${
+                          splitResults[
+                            handIndex
+                          ].outcome
+                        }`}
+                      >
+                        {outcomeLabel(
+                          splitResults[
+                            handIndex
+                          ].outcome
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </section>
       </main>
 
       <InsuranceOverlay
-        showInsuranceOverlay={showInsuranceOverlay}
-        insuranceAmount={insuranceAmount}
-        onTakeInsurance={() => finishInsuranceChoice(true)}
-        onNoInsurance={() => finishInsuranceChoice(false)}
+        showInsuranceOverlay={
+          showInsuranceOverlay
+        }
+        insuranceAmount={
+          insuranceAmount
+        }
+        onTakeInsurance={() =>
+          finishInsuranceChoice(
+            true
+          )
+        }
+        onNoInsurance={() =>
+          finishInsuranceChoice(
+            false
+          )
+        }
       />
 
       <ResultPopup
-        showResultOverlay={showResultOverlay}
-        activeResultType={activeResultType}
+        showResultOverlay={
+          showResultOverlay
+        }
+        activeResultType={
+          activeResultType
+        }
         message={message}
         splitMode={splitMode}
-        splitResults={splitResults}
-        playerTotal={playerTotal}
-        dealerTotal={handTotal(dealerHand)}
+        splitResults={
+          splitResults
+        }
+        playerTotal={
+          playerTotal
+        }
+        dealerTotal={handTotal(
+          dealerHand
+        )}
         roundBet={roundBet}
         balance={balance}
         onClose={() => {
           playClick();
-          setShowResultOverlay(false);
+          setShowResultOverlay(
+            false
+          );
         }}
         onDealAgain={newGame}
       />
 
       <StatisticsModal
-        showStatsOverlay={showStatsOverlay}
+        showStatsOverlay={
+          showStatsOverlay
+        }
         stats={stats}
         winRate={winRate}
         onClose={() => {
           playClick();
-          setShowStatsOverlay(false);
+          setShowStatsOverlay(
+            false
+          );
         }}
         onReset={resetStats}
       />
 
       {activeGalleryCard && (
         <div className="gallery-overlay">
-          <button className="gallery-close" onClick={closeGallery}>
+          <button
+            className="gallery-close"
+            onClick={closeGallery}
+          >
             ×
           </button>
 
-          <button className="gallery-nav gallery-prev" onClick={previousCard}>
+          <button
+            className="gallery-nav gallery-prev"
+            onClick={previousCard}
+          >
             ‹
           </button>
 
           <div className="gallery-card">
             <Card
-              rank={activeGalleryCard.rank}
-              suit={activeGalleryCard.suit}
-              image={activeGalleryCard.image}
+              rank={
+                activeGalleryCard.rank
+              }
+              suit={
+                activeGalleryCard.suit
+              }
+              image={
+                activeGalleryCard.image
+              }
+              cardBack={
+                blackjackDeck.cardBack
+              }
             />
           </div>
 
-          <button className="gallery-nav gallery-next" onClick={nextCard}>
+          <button
+            className="gallery-nav gallery-next"
+            onClick={nextCard}
+          >
             ›
           </button>
         </div>
@@ -912,8 +2044,10 @@ export default function Demo() {
         showLauncher={showLauncher}
         launcherText={launcherText}
         launcherStep={launcherStep}
-        title="Valkyra Blackjack"
+        title={`${blackjackDeck.name} Blackjack`}
       />
     </div>
   );
 }
+
+  
