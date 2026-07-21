@@ -467,6 +467,7 @@ function revokeUrlMap(urlMap) {
     }
   });
 }
+
 export default function Platform() {
   const [
     deckLibrary,
@@ -1093,75 +1094,67 @@ export default function Platform() {
       setImagesLoading(false);
     }
   }
-    async function handleRemoveCard(
-    suit,
-    card
-  ) {
-    const confirmed =
-      window.confirm(
-        `Remove ${card.rank} of ${SUIT_LABELS[suit]} from this deck?`
-      );
 
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      setImagesLoading(true);
-
-      if (card.id) {
-        await deleteDeckImage(
-          card.id
+  function handleNewDeck() {
+    if (hasUnsavedChanges) {
+      const confirmed =
+        window.confirm(
+          "The current deck has unsaved information changes. Create a new deck without saving them?"
         );
+
+      if (!confirmed) {
+        return;
       }
-
-      setCurrentDeck(
-        (existingDeck) => ({
-          ...existingDeck,
-          suitCards: {
-            ...existingDeck.suitCards,
-            [suit]:
-              existingDeck.suitCards[
-                suit
-              ].filter(
-                (existingCard) =>
-                  existingCard.id !==
-                  card.id
-              ),
-          },
-        })
-      );
-
-      await refreshImageUrls();
-
-      showNotification(
-        `${card.rank} of ${SUIT_LABELS[suit]} removed.`
-      );
-    } catch (error) {
-      console.error(
-        "Unable to remove card:",
-        error
-      );
-
-      window.alert(
-        "The card could not be removed."
-      );
-    } finally {
-      setImagesLoading(false);
     }
+
+    const newDeck =
+      createBlankDeck();
+
+    setCurrentDeck(newDeck);
+    setSelectedDeckId(
+      newDeck.id
+    );
+    setLastSavedSnapshot(
+      createDeckSnapshot(
+        newDeck
+      )
+    );
+
+    saveActiveDeckId(
+      newDeck.id
+    );
+
+    showNotification(
+      "New blank deck created."
+    );
   }
 
   function handleSaveDeck() {
+    const trimmedName =
+      currentDeck.name.trim();
+
+    if (!trimmedName) {
+      window.alert(
+        "Enter a deck name before saving."
+      );
+
+      return;
+    }
+
     const now =
       new Date().toISOString();
 
     const deckToSave =
       normaliseDeck({
         ...currentDeck,
-        name:
-          currentDeck.name.trim() ||
-          "Untitled Deck",
+        name: trimmedName,
+        category:
+          currentDeck.category.trim() ||
+          "Uncategorised",
         updatedAt: now,
+        createdAt:
+          currentDeck.createdAt ||
+          now,
       });
 
     const existingIndex =
@@ -1171,41 +1164,44 @@ export default function Platform() {
           deckToSave.id
       );
 
-    let nextLibrary;
+    const nextLibrary =
+      existingIndex >= 0
+        ? deckLibrary.map(
+            (deck) =>
+              deck.id ===
+              deckToSave.id
+                ? deckToSave
+                : deck
+          )
+        : [
+            ...deckLibrary,
+            deckToSave,
+          ];
 
-    if (existingIndex >= 0) {
-      nextLibrary = [
-        ...deckLibrary,
-      ];
-
-      nextLibrary[
-        existingIndex
-      ] = deckToSave;
-    } else {
-      nextLibrary = [
-        ...deckLibrary,
-        deckToSave,
-      ];
-    }
-
-    const saved =
-      saveDeckLibrary(
+    if (
+      !saveDeckLibrary(
         nextLibrary
-      );
-
-    if (!saved) {
+      )
+    ) {
       window.alert(
-        "The deck images are safely stored in IndexedDB, but the lightweight deck library could not be saved in browser storage."
+        "The deck information could not be saved. Clear the browser's old site data and try again."
       );
 
       return;
     }
 
-    setDeckLibrary(nextLibrary);
-    setCurrentDeck(deckToSave);
+    setDeckLibrary(
+      nextLibrary
+    );
+
+    setCurrentDeck(
+      deckToSave
+    );
+
     setSelectedDeckId(
       deckToSave.id
     );
+
     setLastSavedSnapshot(
       createDeckSnapshot(
         deckToSave
@@ -1217,43 +1213,30 @@ export default function Platform() {
     );
 
     showNotification(
-      `"${deckToSave.name}" saved.`
+      `"${deckToSave.name}" saved successfully.`
     );
   }
 
-  function handleCreateNewDeck() {
-    if (
-      hasUnsavedChanges &&
-      !window.confirm(
-        "You have unsaved changes. Create a new deck anyway?"
-      )
-    ) {
+  function handleLoadDeck() {
+    if (!selectedDeckId) {
+      window.alert(
+        "Select a saved deck to load."
+      );
+
       return;
     }
 
-    const blankDeck =
-      createBlankDeck();
+    if (hasUnsavedChanges) {
+      const confirmed =
+        window.confirm(
+          "The current deck has unsaved information changes. Load another deck without saving them?"
+        );
 
-    setCurrentDeck(blankDeck);
-    setSelectedDeckId(
-      blankDeck.id
-    );
-    setLastSavedSnapshot(
-      createDeckSnapshot(
-        blankDeck
-      )
-    );
+      if (!confirmed) {
+        return;
+      }
+    }
 
-    saveActiveDeckId(
-      blankDeck.id
-    );
-
-    showNotification(
-      "New blank deck created."
-    );
-  }
-
-  function handleLoadSelectedDeck() {
     const selectedDeck =
       deckLibrary.find(
         (deck) =>
@@ -1263,63 +1246,56 @@ export default function Platform() {
 
     if (!selectedDeck) {
       window.alert(
-        "Select a saved deck first."
+        "The selected deck could not be found."
       );
 
       return;
     }
 
-    if (
-      hasUnsavedChanges &&
-      currentDeck.id !==
-        selectedDeck.id &&
-      !window.confirm(
-        "You have unsaved changes. Load the selected deck anyway?"
-      )
-    ) {
-      return;
-    }
-
-    const deckToLoad =
+    const loadedDeck =
       normaliseDeck(
         selectedDeck
       );
 
-    setCurrentDeck(deckToLoad);
+    setCurrentDeck(
+      loadedDeck
+    );
+
+    setSelectedDeckId(
+      loadedDeck.id
+    );
+
     setLastSavedSnapshot(
       createDeckSnapshot(
-        deckToLoad
+        loadedDeck
       )
     );
 
     saveActiveDeckId(
-      deckToLoad.id
+      loadedDeck.id
     );
 
     showNotification(
-      `"${deckToLoad.name}" loaded.`
+      `"${loadedDeck.name}" loaded.`
     );
   }
 
-  async function handleDeleteCurrentDeck() {
-    const savedDeck =
+  async function handleDeleteDeck() {
+    const existingDeck =
       deckLibrary.find(
         (deck) =>
           deck.id ===
           currentDeck.id
       );
 
-    if (!savedDeck) {
-      window.alert(
-        "This deck has not been saved yet."
-      );
-
-      return;
-    }
+    const deckName =
+      existingDeck?.name ||
+      currentDeck.name ||
+      "Untitled Deck";
 
     const confirmed =
       window.confirm(
-        `Delete "${savedDeck.name}" and all of its stored images?`
+        `Delete "${deckName}" and all of its card images permanently from this browser?`
       );
 
     if (!confirmed) {
@@ -1330,30 +1306,29 @@ export default function Platform() {
       setImagesLoading(true);
 
       await deleteDeckImages(
-        savedDeck.id
+        currentDeck.id
       );
 
       const nextLibrary =
         deckLibrary.filter(
           (deck) =>
             deck.id !==
-            savedDeck.id
+            currentDeck.id
         );
 
-      const saved =
-        saveDeckLibrary(
+      if (
+        !saveDeckLibrary(
           nextLibrary
+        )
+      ) {
+        throw new Error(
+          "The deck library could not be updated."
         );
-
-      if (!saved) {
-        window.alert(
-          "The deck images were removed, but the browser deck library could not be updated."
-        );
-
-        return;
       }
 
-      setDeckLibrary(nextLibrary);
+      setDeckLibrary(
+        nextLibrary
+      );
 
       const nextDeck =
         nextLibrary[0]
@@ -1362,10 +1337,14 @@ export default function Platform() {
             )
           : createBlankDeck();
 
-      setCurrentDeck(nextDeck);
+      setCurrentDeck(
+        nextDeck
+      );
+
       setSelectedDeckId(
         nextDeck.id
       );
+
       setLastSavedSnapshot(
         createDeckSnapshot(
           nextDeck
@@ -1377,7 +1356,7 @@ export default function Platform() {
       );
 
       showNotification(
-        `"${savedDeck.name}" deleted.`
+        `"${deckName}" deleted.`
       );
     } catch (error) {
       console.error(
@@ -1386,7 +1365,7 @@ export default function Platform() {
       );
 
       window.alert(
-        "The deck could not be deleted."
+        `The deck could not be deleted: ${error.message}`
       );
     } finally {
       setImagesLoading(false);
@@ -1394,15 +1373,66 @@ export default function Platform() {
   }
 
   function saveDeckForMatch() {
-    if (!matchReady) {
+    const matchCards =
+      allCurrentCards
+        .map((card) => ({
+          ...card,
+          image:
+            imageUrls[
+              card.id
+            ] || null,
+        }))
+        .filter(
+          (card) => card.image
+        );
+
+    const matchDeck = {
+      ...normaliseDeck(
+        currentDeck
+      ),
+      cards: matchCards,
+      cardBack:
+        currentDeck.cardBack
+          ? {
+              ...currentDeck.cardBack,
+              image:
+                imageUrls[
+                  currentDeck
+                    .cardBack.id
+                ] || null,
+            }
+          : null,
+    };
+
+    try {
+      /*
+       * These contain blob URLs, not base64 images.
+       * They are small and valid during this browser session.
+       */
+      const matchDeckJson =
+        JSON.stringify(
+          matchDeck
+        );
+
+      localStorage.setItem(
+        CURRENT_DECK_STORAGE_KEY,
+        matchDeckJson
+      );
+
+      localStorage.setItem(
+        LEGACY_DECK_STORAGE_KEY,
+        matchDeckJson
+      );
+
+      return true;
+    } catch (error) {
+      console.error(
+        "Unable to prepare Match deck:",
+        error
+      );
+
       return false;
     }
-
-    saveActiveDeckId(
-      currentDeck.id
-    );
-
-    return true;
   }
 
   function handleTestMatch(
@@ -1417,196 +1447,656 @@ export default function Platform() {
     }
   }
 
-  function handleTestBlackjack(
-    event
-  ) {
-    const savedDeck =
-      deckLibrary.find(
-        (deck) =>
-          deck.id ===
-          currentDeck.id
-      );
-
-    if (!savedDeck) {
-      event.preventDefault();
-
-      window.alert(
-        "Save this deck before testing it in Blackjack."
-      );
-
-      return;
-    }
-
-    if (hasUnsavedChanges) {
-      event.preventDefault();
-
-      window.alert(
-        "Save the current deck changes before testing it in Blackjack."
-      );
-
-      return;
-    }
-
-    saveActiveDeckId(
-      currentDeck.id
-    );
-  }
-
   function getReadinessMessage() {
+    if (
+      allCurrentCards.length === 0
+    ) {
+      return "Upload Suit Cards";
+    }
+
     if (blackjackReady) {
-      return "This deck is ready for Blackjack.";
+      return "Blackjack Ready";
     }
 
-    if (!currentDeck.cardBack) {
-      return "Upload a card back before testing this deck.";
+    if (matchReady) {
+      return "Match Ready";
     }
-
-    const incompleteSuits =
-      SUITS.filter(
-        (suit) =>
-          !suitValidation[suit]
-            .complete
-      );
 
     if (
-      incompleteSuits.length >
-      0
+      !currentDeck.cardBack
     ) {
-      return `Complete all four suits for Blackjack: ${incompleteSuits
-        .map(
-          (suit) =>
-            SUIT_LABELS[suit]
-        )
-        .join(", ")}.`;
+      return "Card Back Required";
     }
 
-    return "This deck is not ready for Blackjack.";
+    return `${allCurrentCards.length} / 52 Cards`;
   }
 
-  const currentDeckSaved =
-    deckLibrary.some(
-      (deck) =>
-        deck.id ===
-        currentDeck.id
-    );
+  const currentDeckDisplayName =
+    currentDeck.name.trim() ||
+    "Untitled Deck";
+
+  const currentDeckCategory =
+    currentDeck.category.trim() ||
+    "Uncategorised";
+
+  const currentDeckCoverCard =
+    allCurrentCards[0];
+
+  const currentDeckCoverUrl =
+    currentDeckCoverCard
+      ? imageUrls[
+          currentDeckCoverCard.id
+        ]
+      : null;
+
+  const deckReadiness =
+    getReadinessMessage();
 
   return (
     <div className="platform-page">
-      <header className="platform-header">
+      <header className="platform-hero">
         <div>
-          <div className="platform-eyebrow">
-            PlayYourPhotos Platform
-          </div>
+          <p className="platform-kicker">
+            Card Ledgends
+          </p>
 
           <h1>
-            Memory Deck Creator
+            Deck Publishing Studio
           </h1>
 
           <p>
-            Build one reusable deck,
-            store its images safely in
-            the browser, and prepare it
-            for multiple card games.
+            Create, organise, save,
+            test and publish complete
+            illustrated card decks
+            across multiple games.
           </p>
+
+          {notification && (
+            <p
+              style={{
+                marginTop: "8px",
+                color: "#ffe7a3",
+                fontWeight: "bold",
+              }}
+            >
+              {notification}
+            </p>
+          )}
+
+          {imagesLoading && (
+            <p
+              style={{
+                marginTop: "8px",
+                color:
+                  "rgba(255,255,255,0.75)",
+              }}
+            >
+              Processing deck
+              images…
+            </p>
+          )}
         </div>
 
-        <div className="platform-header-actions">
-          <Link
-            to="/"
-            className="platform-secondary-button"
+        <div className="platform-actions">
+          <button
+            type="button"
+            className="platform-primary"
+            onClick={
+              handleNewDeck
+            }
+            disabled={
+              imagesLoading
+            }
           >
-            Back to Home
+            + New Deck
+          </button>
+
+          <button
+            type="button"
+            className="platform-secondary"
+            onClick={
+              handleSaveDeck
+            }
+            disabled={
+              imagesLoading
+            }
+          >
+            Save Deck
+            {hasUnsavedChanges
+              ? " *"
+              : ""}
+          </button>
+
+          <Link
+            to="/demo"
+            className="platform-secondary"
+          >
+            Play Valkyra Blackjack
           </Link>
         </div>
       </header>
 
-      {notification && (
-        <div className="platform-notification">
-          {notification}
-        </div>
-      )}
+      <section className="platform-section">
+        <h2>My Card Decks</h2>
 
-      <section className="platform-summary-grid">
-        <article className="platform-summary-card">
-          <span>Saved Decks</span>
+        <div className="deck-grid">
+          <article className="deck-card">
+            <div className="deck-cover">
+              <span>V</span>
+            </div>
 
-          <strong>
-            {deckLibrary.length}
-          </strong>
-        </article>
+            <div className="deck-info">
+              <h3>Valkyra</h3>
+              <p>
+                Fantasy Warrior Art
+              </p>
 
-        <article className="platform-summary-card">
-          <span>Published</span>
+              <div className="deck-meta">
+                <span>52 Cards</span>
+                <span>Demo Deck</span>
+              </div>
 
-          <strong>
-            {publishedDeckCount}
-          </strong>
-        </article>
+              <div className="deck-games">
+                <span>Blackjack</span>
+                <span>
+                  Memory Match
+                </span>
+              </div>
 
-        <article className="platform-summary-card">
-          <span>Cards Uploaded</span>
+              <div className="deck-button-stack">
+                <Link
+                  to="/demo"
+                  className="deck-play-button"
+                >
+                  Play Blackjack
+                </Link>
 
-          <strong>
-            {allCurrentCards.length}
-          </strong>
-        </article>
+                <Link
+                  to="/match"
+                  className="deck-play-button secondary-deck-button"
+                >
+                  Play Match
+                </Link>
+              </div>
+            </div>
+          </article>
 
-        <article className="platform-summary-card">
-          <span>Current Status</span>
+          <article className="deck-card">
+            <div className="deck-cover">
+              {currentDeckCoverUrl ? (
+                <img
+                  src={
+                    currentDeckCoverUrl
+                  }
+                  alt={`${currentDeckDisplayName} cover`}
+                  className="deck-cover-image"
+                />
+              ) : (
+                <span>
+                  {currentDeckDisplayName
+                    .charAt(0)
+                    .toUpperCase()}
+                </span>
+              )}
+            </div>
 
-          <strong>
-            {currentDeck.status}
-          </strong>
-        </article>
-      </section>
+            <div className="deck-info">
+              <h3>
+                {
+                  currentDeckDisplayName
+                }
+              </h3>
 
-      <section className="platform-workspace">
-        <aside className="platform-sidebar">
-          <div className="platform-panel">
-            <div className="platform-panel-heading">
-              <div>
-                <span className="platform-section-label">
-                  Deck Library
+              <p>
+                {
+                  currentDeckCategory
+                }
+              </p>
+
+              <div className="deck-meta">
+                <span>
+                  {
+                    allCurrentCards.length
+                  }{" "}
+                  / 52 Cards
                 </span>
 
-                <h2>
-                  Saved Decks
-                </h2>
+                <span>
+                  {deckReadiness}
+                </span>
+              </div>
+
+              <div className="deck-games">
+                <span>Blackjack</span>
+                <span>
+                  Memory Match
+                </span>
+
+                {hasUnsavedChanges && (
+                  <span>
+                    Unsaved Changes
+                  </span>
+                )}
+              </div>
+
+              <div className="deck-button-stack">
+                <label className="deck-play-button secondary-deck-button">
+                  Upload Card Back
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={
+                      handleCardBackUpload
+                    }
+                    disabled={
+                      imagesLoading
+                    }
+                    hidden
+                  />
+                </label>
+
+                {matchReady ? (
+                  <Link
+                    to="/match?family=1"
+                    className="deck-play-button secondary-deck-button"
+                    onClick={
+                      handleTestMatch
+                    }
+                  >
+                    Test in Match
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    className="deck-disabled-button"
+                    disabled
+                  >
+                    Add Cards and Card
+                    Back to Test
+                  </button>
+                )}
+
+                {blackjackReady ? (
+                  <button
+                    type="button"
+                    className="deck-play-button"
+                    disabled
+                    title="Blackjack connection is the next development stage."
+                  >
+                    Blackjack Ready
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="deck-disabled-button"
+                    disabled
+                  >
+                    Blackjack Requires
+                    52 Cards
+                  </button>
+                )}
+              </div>
+            </div>
+          </article>
+
+          <article className="deck-card">
+            <div className="deck-cover">
+              <span>P</span>
+            </div>
+
+            <div className="deck-info">
+              <h3>
+                Published Decks
+              </h3>
+
+              <p>
+                Card Ledgends Catalogue
+              </p>
+
+              <div className="deck-meta">
+                <span>
+                  {
+                    publishedDeckCount
+                  }{" "}
+                  Deck
+                  {publishedDeckCount ===
+                  1
+                    ? ""
+                    : "s"}
+                </span>
+
+                <span>
+                  {
+                    deckLibrary.length
+                  }{" "}
+                  Saved
+                </span>
+              </div>
+
+              <div className="deck-games">
+                <span>Blackjack</span>
+                <span>Solitaire</span>
+                <span>
+                  Memory Match
+                </span>
               </div>
 
               <button
                 type="button"
-                className="platform-small-button"
-                onClick={
-                  handleCreateNewDeck
-                }
+                className="deck-disabled-button"
+                disabled
               >
-                + New Deck
+                Catalogue View Coming
+                Next
               </button>
             </div>
+          </article>
+        </div>
+      </section>
 
-            <label className="platform-field-label">
-              Load Saved Deck
-            </label>
+      <section className="platform-section">
+        <h2>Deck Editor</h2>
+
+        <div className="platform-feature-grid">
+          <div>
+            <h3>Deck Name</h3>
+
+            <input
+              type="text"
+              name="name"
+              value={
+                currentDeck.name
+              }
+              onChange={
+                handleDeckFieldChange
+              }
+              placeholder="Warrior Queens"
+              style={fieldStyle}
+            />
+          </div>
+
+          <div>
+            <h3>Category</h3>
+
+            <input
+              type="text"
+              name="category"
+              value={
+                currentDeck.category
+              }
+              onChange={
+                handleDeckFieldChange
+              }
+              placeholder="Fantasy"
+              style={fieldStyle}
+            />
+          </div>
+
+          <div>
+            <h3>
+              Publishing Status
+            </h3>
 
             <select
-              value={selectedDeckId}
+              name="status"
+              value={
+                currentDeck.status
+              }
+              onChange={
+                handleDeckFieldChange
+              }
+              style={{
+                ...fieldStyle,
+                background:
+                  "rgba(0,0,0,0.72)",
+              }}
+            >
+              {STATUS_OPTIONS.map(
+                (status) => (
+                  <option
+                    key={status}
+                    value={status}
+                  >
+                    {status}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+
+          <div>
+            <h3>
+              Project Information
+            </h3>
+
+            <p>
+              <strong>
+                Status:
+              </strong>{" "}
+              {currentDeck.status}
+            </p>
+
+            <p>
+              <strong>
+                Readiness:
+              </strong>{" "}
+              {deckReadiness}
+            </p>
+
+            <p>
+              <strong>
+                Last saved:
+              </strong>{" "}
+              {formatUpdatedDate(
+                currentDeck.updatedAt
+              )}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="platform-feature-grid"
+          style={{
+            marginTop: "12px",
+          }}
+        >
+          {SUITS.map((suit) => {
+            const cards =
+              currentDeck
+                .suitCards?.[
+                suit
+              ] || [];
+
+            const validation =
+              suitValidation[suit];
+
+            return (
+              <div key={suit}>
+                <h3>
+                  {
+                    SUIT_SYMBOLS[
+                      suit
+                    ]
+                  }{" "}
+                  {
+                    SUIT_LABELS[
+                      suit
+                    ]
+                  }
+                </h3>
+
+                <p>
+                  <strong>
+                    {
+                      validation.count
+                    }{" "}
+                    / 13 Cards
+                  </strong>
+                </p>
+
+                <label className="deck-play-button">
+                  Upload{" "}
+                  {
+                    SUIT_LABELS[
+                      suit
+                    ]
+                  }
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(
+                      event
+                    ) =>
+                      handleSuitUpload(
+                        event,
+                        suit
+                      )
+                    }
+                    disabled={
+                      imagesLoading
+                    }
+                    hidden
+                  />
+                </label>
+
+                {validation
+                  .missingRanks
+                  .length > 0 ? (
+                  <p
+                    style={{
+                      marginTop:
+                        "8px",
+                      fontSize:
+                        "0.8rem",
+                    }}
+                  >
+                    Missing:{" "}
+                    {validation.missingRanks.join(
+                      ", "
+                    )}
+                  </p>
+                ) : (
+                  <p
+                    style={{
+                      marginTop:
+                        "8px",
+                      color:
+                        "#ffe7a3",
+                      fontWeight:
+                        "bold",
+                    }}
+                  >
+                    Complete
+                  </p>
+                )}
+
+                {cards.length >
+                  0 && (
+                  <button
+                    type="button"
+                    className="deck-disabled-button"
+                    onClick={() =>
+                      handleClearSuit(
+                        suit
+                      )
+                    }
+                    disabled={
+                      imagesLoading
+                    }
+                    style={{
+                      cursor:
+                        "pointer",
+                      marginTop:
+                        "8px",
+                    }}
+                  >
+                    Clear{" "}
+                    {
+                      SUIT_LABELS[
+                        suit
+                      ]
+                    }
+                  </button>
+                )}
+
+                {cards.length >
+                  0 && (
+                  <div
+                    className="family-photo-preview-row"
+                    style={{
+                      gridTemplateColumns:
+                        "repeat(4, 1fr)",
+                    }}
+                  >
+                    {cards
+                      .slice(0, 4)
+                      .map(
+                        (card) => {
+                          const url =
+                            imageUrls[
+                              card
+                                .id
+                            ];
+
+                          if (!url) {
+                            return null;
+                          }
+
+                          return (
+                            <img
+                              key={
+                                card.id
+                              }
+                              src={
+                                url
+                              }
+                              alt={`${card.rank} of ${SUIT_LABELS[suit]}`}
+                              className="family-photo-thumb"
+                              title={`${card.rank} of ${SUIT_LABELS[suit]}`}
+                            />
+                          );
+                        }
+                      )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <div
+          className="platform-feature-grid"
+          style={{
+            marginTop: "12px",
+          }}
+        >
+          <div>
+            <h3>
+              Load Saved Deck
+            </h3>
+
+            <select
+              value={
+                selectedDeckId
+              }
               onChange={(event) =>
                 setSelectedDeckId(
-                  event.target.value
+                  event.target
+                    .value
                 )
               }
-              style={fieldStyle}
+              style={{
+                ...fieldStyle,
+                background:
+                  "rgba(0,0,0,0.72)",
+              }}
             >
-              {!deckLibrary.length && (
-                <option
-                  value={
-                    currentDeck.id
-                  }
-                >
-                  No saved decks yet
-                </option>
-              )}
+              <option value="">
+                Select a saved deck
+              </option>
 
               {deckLibrary.map(
                 (deck) => (
@@ -1623,725 +2113,180 @@ export default function Platform() {
 
             <button
               type="button"
-              className="platform-primary-button"
+              className="deck-play-button secondary-deck-button"
               onClick={
-                handleLoadSelectedDeck
+                handleLoadDeck
               }
               disabled={
-                deckLibrary.length ===
-                0
+                imagesLoading
               }
+              style={{
+                marginTop: "8px",
+              }}
             >
               Load Deck
             </button>
+          </div>
 
-            <div className="platform-divider" />
+          <div>
+            <h3>
+              Save Current Deck
+            </h3>
 
-            <div className="platform-current-deck">
-              <span>
-                Current Deck
-              </span>
-
-              <strong>
-                {currentDeck.name}
-              </strong>
-
-              <small>
-                {currentDeckSaved
-                  ? `Last saved ${formatUpdatedDate(
-                      currentDeck.updatedAt
-                    )}`
-                  : "Not saved yet"}
-              </small>
-
-              {hasUnsavedChanges && (
-                <em>
-                  Unsaved changes
-                </em>
-              )}
-            </div>
+            <p>
+              Save all four suits and
+              deck information to the
+              Card Ledgends library.
+            </p>
 
             <button
               type="button"
-              className="platform-danger-button"
+              className="deck-play-button"
               onClick={
-                handleDeleteCurrentDeck
+                handleSaveDeck
               }
               disabled={
-                !currentDeckSaved
+                imagesLoading
               }
             >
-              Delete Current Deck
+              Save Deck
             </button>
           </div>
 
-          <div className="platform-panel">
-            <span className="platform-section-label">
-              Game Readiness
-            </span>
+          <div>
+            <h3>Card Back</h3>
 
-            <h2>
-              Deck Status
-            </h2>
-
-            <div className="platform-readiness-list">
-              {SUITS.map((suit) => {
-                const validation =
-                  suitValidation[suit];
-
-                return (
-                  <div
-                    key={suit}
-                    className={`platform-readiness-row ${
-                      validation.complete
-                        ? "complete"
-                        : ""
-                    }`}
-                  >
-                    <span>
-                      {
-                        SUIT_SYMBOLS[
-                          suit
-                        ]
-                      }{" "}
-                      {
-                        SUIT_LABELS[
-                          suit
-                        ]
-                      }
-                    </span>
-
-                    <strong>
-                      {
-                        validation.count
-                      }
-                      /13
-                    </strong>
-                  </div>
-                );
-              })}
-
-              <div
-                className={`platform-readiness-row ${
-                  currentDeck.cardBack
-                    ? "complete"
-                    : ""
-                }`}
-              >
-                <span>Card Back</span>
-
-                <strong>
-                  {currentDeck.cardBack
-                    ? "Ready"
-                    : "Missing"}
-                </strong>
-              </div>
-            </div>
-
-            <p className="platform-readiness-message">
-              {getReadinessMessage()}
+            <p>
+              {currentDeck.cardBack
+                ? "Card back uploaded."
+                : "No card back uploaded."}
             </p>
 
-            <div className="platform-game-buttons">
-              {blackjackReady ? (
-                <Link
-                  to="/demo"
-                  className="deck-play-button"
-                  onClick={
-                    handleTestBlackjack
-                  }
-                >
-                  Test in Blackjack
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className="deck-play-button"
-                  disabled
-                >
-                  Blackjack Not Ready
-                </button>
-              )}
+            <label className="deck-play-button secondary-deck-button">
+              Upload Card Back
 
-              {matchReady ? (
-                <Link
-                  to="/match?family=1"
-                  className="deck-play-button"
-                  onClick={
-                    handleTestMatch
-                  }
-                >
-                  Test in Match
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className="deck-play-button"
-                  disabled
-                >
-                  Match Not Ready
-                </button>
-              )}
-            </div>
-          </div>
-        </aside>
-        <main className="platform-main">
-          <section className="platform-panel">
-            <div className="platform-panel-heading">
-              <div>
-                <span className="platform-section-label">
-                  Deck Information
-                </span>
-
-                <h2>
-                  Edit Current Deck
-                </h2>
-              </div>
-
-              <div className="platform-save-status">
-                {hasUnsavedChanges
-                  ? "Unsaved changes"
-                  : currentDeckSaved
-                  ? "Saved"
-                  : "New deck"}
-              </div>
-            </div>
-
-            <div className="platform-editor-grid">
-              <label className="platform-editor-field">
-                <span>Deck Name</span>
-
-                <input
-                  type="text"
-                  name="name"
-                  value={currentDeck.name}
-                  onChange={
-                    handleDeckFieldChange
-                  }
-                  placeholder="Welcome to Valkyra"
-                  style={fieldStyle}
-                />
-              </label>
-
-              <label className="platform-editor-field">
-                <span>Category</span>
-
-                <input
-                  type="text"
-                  name="category"
-                  value={
-                    currentDeck.category
-                  }
-                  onChange={
-                    handleDeckFieldChange
-                  }
-                  placeholder="Fantasy"
-                  style={fieldStyle}
-                />
-              </label>
-
-              <label className="platform-editor-field">
-                <span>
-                  Publishing Status
-                </span>
-
-                <select
-                  name="status"
-                  value={currentDeck.status}
-                  onChange={
-                    handleDeckFieldChange
-                  }
-                  style={{
-                    ...fieldStyle,
-                    background:
-                      "rgba(0,0,0,0.72)",
-                  }}
-                >
-                  {STATUS_OPTIONS.map(
-                    (status) => (
-                      <option
-                        key={status}
-                        value={status}
-                      >
-                        {status}
-                      </option>
-                    )
-                  )}
-                </select>
-              </label>
-            </div>
-
-            <label className="platform-editor-field platform-description-field">
-              <span>Deck Description</span>
-
-              <textarea
-                name="description"
-                value={
-                  currentDeck.description
-                }
+              <input
+                type="file"
+                accept="image/*"
                 onChange={
-                  handleDeckFieldChange
+                  handleCardBackUpload
                 }
-                placeholder="Describe the deck, its artwork and the experience it offers."
-                rows="5"
-                style={{
-                  ...fieldStyle,
-                  resize: "vertical",
-                  minHeight: "120px",
-                }}
+                disabled={
+                  imagesLoading
+                }
+                hidden
               />
             </label>
 
-            <div className="platform-editor-actions">
-              <button
-                type="button"
-                className="platform-primary-button"
-                onClick={handleSaveDeck}
-                disabled={imagesLoading}
-              >
-                {currentDeckSaved
-                  ? "Save Changes"
-                  : "Save Deck"}
-              </button>
-
-              <button
-                type="button"
-                className="platform-secondary-button"
-                onClick={
-                  handleCreateNewDeck
-                }
-                disabled={imagesLoading}
-              >
-                Create New Deck
-              </button>
-            </div>
-          </section>
-
-          <section className="platform-panel">
-            <div className="platform-panel-heading">
-              <div>
-                <span className="platform-section-label">
-                  Playing Cards
-                </span>
-
-                <h2>
-                  Upload the Four Suits
-                </h2>
-              </div>
-
-              <div className="platform-card-total">
-                {allCurrentCards.length}
-                /52 cards
-              </div>
-            </div>
-
-            <p className="platform-help-text">
-              Upload thirteen images for
-              each suit. Filenames must
-              identify the rank, for
-              example A.jpg, 2.jpg,
-              10.jpg, J.jpg, Q.jpg and
-              K.jpg.
-            </p>
-
-            <div className="platform-suit-grid">
-              {SUITS.map((suit) => {
-                const cards =
-                  currentDeck.suitCards?.[
-                    suit
-                  ] || [];
-
-                const validation =
-                  suitValidation[suit];
-
-                return (
-                  <article
-                    key={suit}
-                    className={`platform-suit-panel platform-suit-${suit}`}
-                  >
-                    <div className="platform-suit-heading">
-                      <div>
-                        <h3>
-                          <span>
-                            {
-                              SUIT_SYMBOLS[
-                                suit
-                              ]
-                            }
-                          </span>{" "}
-                          {
-                            SUIT_LABELS[
-                              suit
-                            ]
-                          }
-                        </h3>
-
-                        <p>
-                          {
-                            validation.count
-                          }
-                          /13 cards
-                        </p>
-                      </div>
-
-                      <span
-                        className={`platform-suit-status ${
-                          validation.complete
-                            ? "complete"
-                            : ""
-                        }`}
-                      >
-                        {validation.complete
-                          ? "Complete"
-                          : "Incomplete"}
-                      </span>
-                    </div>
-
-                    <div className="platform-suit-actions">
-                      <label className="platform-upload-button">
-                        Upload{" "}
-                        {
-                          SUIT_LABELS[
-                            suit
-                          ]
-                        }
-
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={(
-                            event
-                          ) =>
-                            handleSuitUpload(
-                              event,
-                              suit
-                            )
-                          }
-                          disabled={
-                            imagesLoading
-                          }
-                          hidden
-                        />
-                      </label>
-
-                      <button
-                        type="button"
-                        className="platform-small-button"
-                        onClick={() =>
-                          handleClearSuit(
-                            suit
-                          )
-                        }
-                        disabled={
-                          cards.length ===
-                            0 ||
-                          imagesLoading
-                        }
-                      >
-                        Clear Suit
-                      </button>
-                    </div>
-
-                    {!validation.complete &&
-                      validation
-                        .missingRanks
-                        .length > 0 && (
-                        <p className="platform-missing-ranks">
-                          Missing:{" "}
-                          {validation.missingRanks.join(
-                            ", "
-                          )}
-                        </p>
-                      )}
-
-                    <div className="platform-card-preview-grid">
-                      {cards.map(
-                        (card) => {
-                          const cardUrl =
-                            imageUrls[
-                              card.id
-                            ];
-
-                          return (
-                            <div
-                              key={
-                                card.id
-                              }
-                              className="platform-card-preview"
-                            >
-                              {cardUrl ? (
-                                <img
-                                  src={
-                                    cardUrl
-                                  }
-                                  alt={`${card.rank} of ${SUIT_LABELS[suit]}`}
-                                />
-                              ) : (
-                                <div className="platform-card-placeholder">
-                                  {
-                                    card.rank
-                                  }
-                                </div>
-                              )}
-
-                              <div className="platform-card-preview-footer">
-                                <strong>
-                                  {
-                                    card.rank
-                                  }
-                                </strong>
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleRemoveCard(
-                                      suit,
-                                      card
-                                    )
-                                  }
-                                  disabled={
-                                    imagesLoading
-                                  }
-                                  aria-label={`Remove ${card.rank} of ${SUIT_LABELS[suit]}`}
-                                  title={`Remove ${card.rank} of ${SUIT_LABELS[suit]}`}
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-                      )}
-
-                      {cards.length ===
-                        0 && (
-                        <div className="platform-empty-suit">
-                          No cards uploaded
-                        </div>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-
-          <section className="platform-panel">
-            <div className="platform-panel-heading">
-              <div>
-                <span className="platform-section-label">
-                  Shared Card Back
-                </span>
-
-                <h2>
-                  Card Back Image
-                </h2>
-              </div>
-
-              <span
-                className={`platform-suit-status ${
-                  currentDeck.cardBack
-                    ? "complete"
-                    : ""
-                }`}
-              >
-                {currentDeck.cardBack
-                  ? "Ready"
-                  : "Required"}
-              </span>
-            </div>
-
-            <p className="platform-help-text">
-              The same card-back image
-              will be used whenever a
-              card is face down in
-              Blackjack, Match and future
-              games.
-            </p>
-
-            <div className="platform-card-back-layout">
-              <div className="platform-card-back-preview">
-                {currentDeck.cardBack &&
-                imageUrls[
-                  currentDeck.cardBack.id
-                ] ? (
+            {currentDeck.cardBack && (
+              <>
+                {imageUrls[
+                  currentDeck
+                    .cardBack.id
+                ] && (
                   <img
                     src={
                       imageUrls[
                         currentDeck
-                          .cardBack.id
+                          .cardBack
+                          .id
                       ]
                     }
-                    alt={`${currentDeck.name} card back`}
+                    alt="Card back"
+                    className="family-photo-thumb"
+                    style={{
+                      marginTop:
+                        "8px",
+                    }}
                   />
-                ) : (
-                  <div className="platform-card-back-placeholder">
-                    <span>
-                      Card Back
-                    </span>
-                  </div>
                 )}
-              </div>
-
-              <div className="platform-card-back-controls">
-                <label className="platform-upload-button">
-                  {currentDeck.cardBack
-                    ? "Replace Card Back"
-                    : "Upload Card Back"}
-
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={
-                      handleCardBackUpload
-                    }
-                    disabled={
-                      imagesLoading
-                    }
-                    hidden
-                  />
-                </label>
 
                 <button
                   type="button"
-                  className="platform-small-button"
+                  className="deck-disabled-button"
                   onClick={
                     clearCardBack
                   }
                   disabled={
-                    !currentDeck.cardBack ||
                     imagesLoading
                   }
+                  style={{
+                    cursor:
+                      "pointer",
+                    marginTop:
+                      "8px",
+                  }}
                 >
-                  Remove Card Back
+                  Clear Card Back
                 </button>
+              </>
+            )}
+          </div>
 
-                {currentDeck.cardBack && (
-                  <p>
-                    <strong>
-                      Stored file:
-                    </strong>{" "}
-                    {
-                      currentDeck
-                        .cardBack.name
-                    }
-                  </p>
-                )}
-              </div>
-            </div>
-          </section>
+          <div>
+            <h3>Delete Deck</h3>
 
-          <section className="platform-panel">
-            <div className="platform-panel-heading">
-              <div>
-                <span className="platform-section-label">
-                  Final Review
-                </span>
+            <p>
+              Permanently remove the
+              loaded project and its
+              images from this browser.
+            </p>
 
-                <h2>
-                  Save and Test
-                </h2>
-              </div>
-            </div>
+            <button
+              type="button"
+              className="deck-disabled-button"
+              onClick={
+                handleDeleteDeck
+              }
+              disabled={
+                imagesLoading
+              }
+              style={{
+                cursor: "pointer",
+              }}
+            >
+              Delete Deck
+            </button>
+          </div>
+        </div>
 
-            <div className="platform-final-summary">
-              <div>
-                <span>Deck</span>
+        <div
+          className="platform-feature-grid"
+          style={{
+            marginTop: "12px",
+          }}
+        >
+          <div
+            style={{
+              gridColumn:
+                "1 / -1",
+            }}
+          >
+            <h3>
+              Deck Description
+            </h3>
 
-                <strong>
-                  {currentDeck.name}
-                </strong>
-              </div>
-
-              <div>
-                <span>Cards</span>
-
-                <strong>
-                  {
-                    allCurrentCards.length
-                  }
-                  /52
-                </strong>
-              </div>
-
-              <div>
-                <span>Card Back</span>
-
-                <strong>
-                  {currentDeck.cardBack
-                    ? "Uploaded"
-                    : "Missing"}
-                </strong>
-              </div>
-
-              <div>
-                <span>Blackjack</span>
-
-                <strong>
-                  {blackjackReady
-                    ? "Ready"
-                    : "Not Ready"}
-                </strong>
-              </div>
-            </div>
-
-            <div className="platform-editor-actions">
-              <button
-                type="button"
-                className="platform-primary-button"
-                onClick={handleSaveDeck}
-                disabled={imagesLoading}
-              >
-                {currentDeckSaved
-                  ? "Save Deck Changes"
-                  : "Save Deck"}
-              </button>
-
-              {blackjackReady ? (
-                <Link
-                  to="/demo"
-                  className="deck-play-button"
-                  onClick={
-                    handleTestBlackjack
-                  }
-                >
-                  Test in Blackjack
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className="deck-play-button"
-                  disabled
-                >
-                  Blackjack Not Ready
-                </button>
-              )}
-
-              {matchReady ? (
-                <Link
-                  to="/match?family=1"
-                  className="deck-play-button secondary-deck-button"
-                  onClick={
-                    handleTestMatch
-                  }
-                >
-                  Test in Match
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  className="deck-disabled-button"
-                  disabled
-                >
-                  Match Not Ready
-                </button>
-              )}
-            </div>
-          </section>
-        </main>
+            <textarea
+              name="description"
+              value={
+                currentDeck.description
+              }
+              onChange={
+                handleDeckFieldChange
+              }
+              placeholder="Describe the artwork, theme and collection."
+              rows={3}
+              style={{
+                ...fieldStyle,
+                resize:
+                  "vertical",
+                lineHeight:
+                  "1.4",
+              }}
+            />
+          </div>
+        </div>
       </section>
     </div>
   );
 }
-
