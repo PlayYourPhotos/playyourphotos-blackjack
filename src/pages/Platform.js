@@ -1607,7 +1607,6 @@ export default function Platform() {
               <Link
     to="/demo"
     className="deck-play-button"
-    onClick={handleTestBlackjack}
 >
     Test in Blackjack
 </Link>  
@@ -1719,14 +1718,18 @@ export default function Platform() {
                 )}
 
                 {blackjackReady ? (
-                  <button
-                    type="button"
-                    className="deck-play-button"
-                    disabled
-                    title="Blackjack connection is the next development stage."
-                  >
-                    Blackjack Ready
-                  </button>
+                <Link
+    to="/demo"
+    className="deck-play-button"
+    onClick={() => {
+        localStorage.setItem(
+            "playYourPhotosActiveDeckId",
+            currentDeck.id
+        );
+    }}
+>
+    Test in Blackjack
+</Link>
                 ) : (
                   <button
                     type="button"
